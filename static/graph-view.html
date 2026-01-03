@@ -193,7 +193,25 @@
             <!-- Employee Name Search -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterEmployeeName">Employee Name</div>
-                <input type="text" id="filter-employee-input" class="filter-input" placeholder="Search employee..." data-i18n-placeholder="filterEmployeePlaceholder" oninput="applyFilters()">
+                <select id="filter-employee-select" class="filter-select" onchange="applyFilters()">
+                    <option value="" data-i18n="filterAllEmployees">All Employees</option>
+                </select>
+            </div>
+            
+            <!-- Position Filter -->
+            <div class="filter-section">
+                <div class="filter-label" data-i18n="filterPositions">Positions</div>
+                <select id="filter-position-select" class="filter-select" onchange="applyFilters()">
+                    <option value="" data-i18n="filterAllPositions">All Positions</option>
+                </select>
+            </div>
+            
+            <!-- Project Filter -->
+            <div class="filter-section">
+                <div class="filter-label" data-i18n="filterProjects">Projects</div>
+                <select id="filter-project-select" class="filter-select" onchange="applyFilters()">
+                    <option value="" data-i18n="filterAllProjects">All Projects</option>
+                </select>
             </div>
             
             <!-- Filter Actions -->
@@ -308,9 +326,13 @@
                 'filterSkills': 'Skills',
                 'filterDepartments': 'Departments',
                 'filterEmployeeName': 'Employee Name',
-                'filterEmployeePlaceholder': 'Search employee...',
+                'filterPositions': 'Positions',
+                'filterProjects': 'Projects',
                 'filterAllSkills': 'All Skills',
                 'filterAllDepartments': 'All Departments',
+                'filterAllEmployees': 'All Employees',
+                'filterAllPositions': 'All Positions',
+                'filterAllProjects': 'All Projects',
                 'filterApply': 'Apply',
                 'filterClear': 'Clear',
                 'filterNoFilters': 'No filters applied',
@@ -374,9 +396,13 @@
                 'filterSkills': 'Compétences',
                 'filterDepartments': 'Services',
                 'filterEmployeeName': 'Nom d\'employé',
-                'filterEmployeePlaceholder': 'Rechercher employé...',
+                'filterPositions': 'Postes',
+                'filterProjects': 'Projets',
                 'filterAllSkills': 'Toutes les compétences',
                 'filterAllDepartments': 'Tous les services',
+                'filterAllEmployees': 'Tous les employés',
+                'filterAllPositions': 'Tous les postes',
+                'filterAllProjects': 'Tous les projets',
                 'filterApply': 'Appliquer',
                 'filterClear': 'Effacer',
                 'filterNoFilters': 'Aucun filtre appliqué',
@@ -438,9 +464,13 @@
                 'filterSkills': 'Competenze',
                 'filterDepartments': 'Reparti',
                 'filterEmployeeName': 'Nome dipendente',
-                'filterEmployeePlaceholder': 'Cerca dipendente...',
+                'filterPositions': 'Posizioni',
+                'filterProjects': 'Progetti',
                 'filterAllSkills': 'Tutte le competenze',
                 'filterAllDepartments': 'Tutti i reparti',
+                'filterAllEmployees': 'Tutti i dipendenti',
+                'filterAllPositions': 'Tutte le posizioni',
+                'filterAllProjects': 'Tutti i progetti',
                 'filterApply': 'Applica',
                 'filterClear': 'Cancella',
                 'filterNoFilters': 'Nessun filtro applicato',
@@ -504,9 +534,13 @@
                 'filterSkills': 'Fähigkeiten',
                 'filterDepartments': 'Abteilungen',
                 'filterEmployeeName': 'Mitarbeitername',
-                'filterEmployeePlaceholder': 'Mitarbeiter suchen...',
+                'filterPositions': 'Positionen',
+                'filterProjects': 'Projekte',
                 'filterAllSkills': 'Alle Fähigkeiten',
                 'filterAllDepartments': 'Alle Abteilungen',
+                'filterAllEmployees': 'Alle Mitarbeiter',
+                'filterAllPositions': 'Alle Positionen',
+                'filterAllProjects': 'Alle Projekte',
                 'filterApply': 'Anwenden',
                 'filterClear': 'Löschen',
                 'filterNoFilters': 'Keine Filter angewendet',
@@ -578,35 +612,46 @@
             // Fallback to pattern matching for backward compatibility
             const l = label.toLowerCase();
             
-            // Department check first - use exact department names, not partial matches
+            // FIRST: Check if this is a proper employee name (2-4 words, typical human name pattern)
+            const words = l.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2 && words.length <= 4) {
+                // Check if it looks like a human name (not a skill/position title)
+                const isLikelyName = words.every(word => {
+                    if (word.length < 2) return false;
+                    const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group'];
+                    return !skillKeywords.some(keyword => word.includes(keyword));
+                });
+                if (isLikelyName) return 'Employee';
+            }
+            
+            // Department check
             const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance'];
             if (departments.includes(l) || l === 'human resources') return 'Department';
             
             // Project check
             if (l.includes('project') || l.includes('campaign')) return 'Project';
             
+            // Position check
+            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+            
             // Skill check - comprehensive list of technical and soft skills
             const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
-            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', ' negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
+            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
             const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
             
             const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
             
-            // Check if label matches any skill pattern
+            // Check if label matches any skill pattern (whole word only)
             for (const skill of allSkills) {
-                if (l.includes(skill)) return 'Skill';
+                const regex = new RegExp('\\b' + skill + '\\b', 'i');
+                if (regex.test(l)) return 'Skill';
             }
             
-            // Position check (after skill check to avoid false positives)
-            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+            // If single word and doesn't match anything, it's likely a skill
+            if (words.length === 1) return 'Skill';
             
-            // Default to Employee for names (typically 2-3 words with spaces)
-            const words = l.split(' ').filter(w => w.length > 0);
-            if (words.length >= 2 && words.length <= 4 && !l.includes('project') && !l.includes('campaign') && !l.includes('department')) {
-                return 'Employee';
-            }
-            
-            return 'Skill'; // Unknown single words are likely skills
+            // Default fallback
+            return 'Employee';
         }
 
         function setLanguage(lang) {
@@ -812,9 +857,12 @@
         function populateFilterOptions() {
             if (!graphData || !graphData.nodes) return;
             
-            // Extract unique skills and departments
+            // Extract unique skills, departments, employees, positions, and projects
             const skillSet = new Set();
             const deptSet = new Set();
+            const employeeSet = new Set();
+            const positionSet = new Set();
+            const projectSet = new Set();
             
             graphData.nodes.forEach(node => {
                 const type = getNodeType(node.label, node.labels);
@@ -822,11 +870,20 @@
                     skillSet.add(node.label);
                 } else if (type === 'Department') {
                     deptSet.add(node.label);
+                } else if (type === 'Employee') {
+                    employeeSet.add(node.label);
+                } else if (type === 'Position') {
+                    positionSet.add(node.label);
+                } else if (type === 'Project') {
+                    projectSet.add(node.label);
                 }
             });
             
             allSkills = Array.from(skillSet).sort();
             allDepartments = Array.from(deptSet).sort();
+            const allEmployees = Array.from(employeeSet).sort();
+            const allPositions = Array.from(positionSet).sort();
+            const allProjects = Array.from(projectSet).sort();
             
             // Populate skill dropdown
             const skillSelect = document.getElementById('filter-skill-select');
@@ -847,6 +904,36 @@
                 option.textContent = dept;
                 deptSelect.appendChild(option);
             });
+            
+            // Populate employee dropdown
+            const employeeSelect = document.getElementById('filter-employee-select');
+            employeeSelect.innerHTML = `<option value="" data-i18n="filterAllEmployees">${translations[currentLang].filterAllEmployees}</option>`;
+            allEmployees.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp;
+                option.textContent = emp;
+                employeeSelect.appendChild(option);
+            });
+            
+            // Populate position dropdown
+            const positionSelect = document.getElementById('filter-position-select');
+            positionSelect.innerHTML = `<option value="" data-i18n="filterAllPositions">${translations[currentLang].filterAllPositions}</option>`;
+            allPositions.forEach(pos => {
+                const option = document.createElement('option');
+                option.value = pos;
+                option.textContent = pos;
+                positionSelect.appendChild(option);
+            });
+            
+            // Populate project dropdown
+            const projectSelect = document.getElementById('filter-project-select');
+            projectSelect.innerHTML = `<option value="" data-i18n="filterAllProjects">${translations[currentLang].filterAllProjects}</option>`;
+            allProjects.forEach(proj => {
+                const option = document.createElement('option');
+                option.value = proj;
+                option.textContent = proj;
+                projectSelect.appendChild(option);
+            });
         }
 
         function applyFilters() {
@@ -865,7 +952,9 @@
             
             const selectedSkill = document.getElementById('filter-skill-select').value;
             const selectedDepartment = document.getElementById('filter-department-select').value;
-            const employeeNameSearch = document.getElementById('filter-employee-input').value.toLowerCase().trim();
+            const selectedEmployee = document.getElementById('filter-employee-select').value;
+            const selectedPosition = document.getElementById('filter-position-select').value;
+            const selectedProject = document.getElementById('filter-project-select').value;
             
             // Store original node properties
             if (originalNodeColors.size === 0) {
@@ -913,9 +1002,19 @@
                     if (!inDepartment) return;
                 }
                 
-                // Check employee name filter (only for employee nodes)
-                if (employeeNameSearch && type === 'Employee') {
-                    if (!node.label.toLowerCase().includes(employeeNameSearch)) return;
+                // Check employee filter (only for employee nodes)
+                if (selectedEmployee && type === 'Employee') {
+                    if (node.label !== selectedEmployee) return;
+                }
+                
+                // Check position filter (only for position nodes)
+                if (selectedPosition && type === 'Position') {
+                    if (node.label !== selectedPosition) return;
+                }
+                
+                // Check project filter (only for project nodes)
+                if (selectedProject && type === 'Project') {
+                    if (node.label !== selectedProject) return;
                 }
                 
                 // Node passes all filters
@@ -941,6 +1040,30 @@
                 const deptNode = graphData.nodes.find(n => n.label === selectedDepartment && getNodeType(n.label, n.labels) === 'Department');
                 if (deptNode) {
                     filteredNodeIds.add(deptNode.id);
+                }
+            }
+            
+            // Special case: employee filter should highlight the employee node itself
+            if (selectedEmployee) {
+                const employeeNode = graphData.nodes.find(n => n.label === selectedEmployee && getNodeType(n.label, n.labels) === 'Employee');
+                if (employeeNode) {
+                    filteredNodeIds.add(employeeNode.id);
+                }
+            }
+            
+            // Special case: position filter should highlight the position node itself
+            if (selectedPosition) {
+                const positionNode = graphData.nodes.find(n => n.label === selectedPosition && getNodeType(n.label, n.labels) === 'Position');
+                if (positionNode) {
+                    filteredNodeIds.add(positionNode.id);
+                }
+            }
+            
+            // Special case: project filter should highlight the project node itself
+            if (selectedProject) {
+                const projectNode = graphData.nodes.find(n => n.label === selectedProject && getNodeType(n.label, n.labels) === 'Project');
+                if (projectNode) {
+                    filteredNodeIds.add(projectNode.id);
                 }
             }
             

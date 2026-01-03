@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="title">HR Knowledge Graph</title>
+    <style>
+        .stat-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+    </style>
 </head>
 <body style="margin:0;padding:20px;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;">
 
@@ -30,30 +36,36 @@
 
 <!-- Stats -->
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <div class="stat-box" data-type="Employee" onclick="filterByType('Employee')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
         <div id="employees" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
         <div data-translate="employees" style="color:#666;font-size:12px;">Employees</div>
     </div>
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div id="departments" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+    <div class="stat-box" data-type="Department" onclick="filterByType('Department')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
+        <div id="departments" style="font-size:28px;font-weight:bold;color:#4caf50;">-</div>
         <div data-translate="departments" style="color:#666;font-size:12px;">Departments</div>
     </div>
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div id="positions" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+    <div class="stat-box" data-type="Position" onclick="filterByType('Position')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
+        <div id="positions" style="font-size:28px;font-weight:bold;color:#ff9800;">-</div>
         <div data-translate="positions" style="color:#666;font-size:12px;">Positions</div>
     </div>
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div id="projects" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+    <div class="stat-box" data-type="Project" onclick="filterByType('Project')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
+        <div id="projects" style="font-size:28px;font-weight:bold;color:#9c27b0;">-</div>
         <div data-translate="projects" style="color:#666;font-size:12px;">Projects</div>
     </div>
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div id="skills" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+    <div class="stat-box" data-type="Skill" onclick="filterByType('Skill')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
+        <div id="skills" style="font-size:28px;font-weight:bold;color:#f44336;">-</div>
         <div data-translate="skills" style="color:#666;font-size:12px;">Skills</div>
     </div>
-    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-        <div id="edges" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+    <div class="stat-box" data-type="Relation" onclick="filterByType('Relation')" style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.2s ease;">
+        <div id="edges" style="font-size:28px;font-weight:bold;color:#607d8b;">-</div>
         <div data-translate="relations" style="color:#666;font-size:12px;">Relations</div>
     </div>
+</div>
+
+<!-- Filter Status -->
+<div id="filter-status" style="display:none;background:#e3f2fd;color:#1976d2;padding:12px 20px;border-radius:8px;margin-bottom:20px;text-align:center;font-weight:bold;">
+    <span id="filter-status-text"></span>
+    <button onclick="clearTypeFilter()" style="margin-left:15px;padding:6px 12px;background:#1976d2;color:white;border:none;border-radius:4px;cursor:pointer;">✕ <span data-i18n="filterClear">Clear</span></button>
 </div>
 
 <!-- Nodes List -->
@@ -111,7 +123,9 @@ const translations = {
         allRelationships: '🔗 All Relationships',
         search: '🔍 Search',
         searchPlaceholder: 'Type to search...',
-        sampleEmployees: '👥 Sample Employees'
+        sampleEmployees: '👥 Sample Employees',
+        filterByType: 'Filter by type: {type}',
+        showingType: 'Showing {count} {type} nodes'
     },
     fr: {
         title: 'Graphe de Connaissances RH',
@@ -132,7 +146,9 @@ const translations = {
         allRelationships: '🔗 Toutes les Relations',
         search: '🔍 Rechercher',
         searchPlaceholder: 'Tapez pour rechercher...',
-        sampleEmployees: '👥 Employés Exemples'
+        sampleEmployees: '👥 Employés Exemples',
+        filterByType: 'Filtrer par type: {type}',
+        showingType: '{count} nœuds {type} affichés'
     },
     it: {
         title: 'Grafico della Conoscenza HR',
@@ -153,7 +169,9 @@ const translations = {
         allRelationships: '🔗 Tutte le Relazioni',
         search: '🔍 Cerca',
         searchPlaceholder: 'Digita per cercare...',
-        sampleEmployees: '👥 Dipendenti Esempio'
+        sampleEmployees: '👥 Dipendenti Esempio',
+        filterByType: 'Filtra per tipo: {type}',
+        showingType: 'Visualizzazione di {count} nodi {type}'
     },
     de: {
         title: 'HR Wissensgraph',
@@ -174,7 +192,9 @@ const translations = {
         allRelationships: '🔗 Alle Beziehungen',
         search: '🔍 Suchen',
         searchPlaceholder: 'Tippen zum Suchen...',
-        sampleEmployees: '👥 Beispiel-Mitarbeiter'
+        sampleEmployees: '👥 Beispiel-Mitarbeiter',
+        filterByType: 'Filtern nach Typ: {type}',
+        showingType: '{count} {type}-Knoten werden angezeigt'
     }
 };
 
@@ -192,23 +212,30 @@ const colors = {
 
 function getType(label) {
     const l = label.toLowerCase();
+    
+    // FIRST: Check if this is a proper employee name (2-3 words, typical human name pattern)
+    const words = l.split(' ').filter(w => w.length > 0);
+    if (words.length >= 2 && words.length <= 4) {
+        // Check if it looks like a human name (not a skill/position title)
+        // Human names typically: first letter capitalized, doesn't contain skill/position keywords
+        const isLikelyName = words.every(word => {
+            // Skip if word is too short or looks like a skill/position
+            if (word.length < 2) return false;
+            const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group'];
+            return !skillKeywords.some(keyword => word.includes(keyword));
+        });
+        if (isLikelyName) return 'Employee';
+    }
+    
+    // Department check
     const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
     if (departments.some(dept => l.includes(dept))) return 'Department';
     if (l.includes('dept') || l.includes('department')) return 'Department';
+    
+    // Project check
     if (l.includes('project') || l.includes('campaign')) return 'Project';
     
-    // Comprehensive skill check
-    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
-    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
-    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
-    
-    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
-    
-    for (const skill of allSkills) {
-        if (l.includes(skill)) return 'Skill';
-    }
-    
-    // Position check
+    // Position check (after name check)
     if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
         l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || 
         l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
@@ -216,13 +243,24 @@ function getType(label) {
         l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
         l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
     
-    // Default to Employee for names (typically 2-3 words with spaces)
-    const words = l.split(' ').filter(w => w.length > 0);
-    if (words.length >= 2 && words.length <= 4 && !l.includes('project') && !l.includes('campaign')) {
-        return 'Employee';
+    // Skill check
+    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
+    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
+    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+    
+    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+    
+    for (const skill of allSkills) {
+        // Only match whole words, not substrings
+        const regex = new RegExp('\\b' + skill + '\\b', 'i');
+        if (regex.test(l)) return 'Skill';
     }
     
-    return 'Skill'; // Unknown single words are likely skills
+    // If single word and doesn't match anything, it's likely a skill
+    if (words.length === 1) return 'Skill';
+    
+    // Default fallback
+    return 'Employee';
 }
 
 function setLanguage(lang) {
@@ -251,10 +289,93 @@ function setLanguage(lang) {
     });
 }
 
+let currentFilterType = null;
+let allGraphData = null;
+
+function filterByType(type) {
+    if (!allGraphData) return;
+    
+    currentFilterType = type;
+    const t = translations[currentLang];
+    
+    // Update stats display to show only filtered count
+    const filteredNodes = allGraphData.nodes.filter(n => getType(n.label) === type);
+    document.getElementById('employees').textContent = type === 'Employee' ? filteredNodes.length : '-';
+    document.getElementById('departments').textContent = type === 'Department' ? filteredNodes.length : '-';
+    document.getElementById('positions').textContent = type === 'Position' ? filteredNodes.length : '-';
+    document.getElementById('projects').textContent = type === 'Project' ? filteredNodes.length : '-';
+    document.getElementById('skills').textContent = type === 'Skill' ? filteredNodes.length : '-';
+    
+    // Update filter status
+    const filterStatus = document.getElementById('filter-status');
+    const filterStatusText = document.getElementById('filter-status-text');
+    filterStatus.style.display = 'block';
+    const typeLabel = t[type.toLowerCase()] || t[type] || type;
+    filterStatusText.textContent = t.filterByType.replace('{type}', typeLabel) + ' - ' + t.showingType.replace('{count}', filteredNodes.length).replace('{type}', typeLabel.toLowerCase());
+    
+    // Highlight selected stat box
+    document.querySelectorAll('.stat-box').forEach(box => {
+        if (box.dataset.type === type) {
+            box.style.border = '3px solid #667eea';
+            box.style.transform = 'scale(1.05)';
+        } else {
+            box.style.border = 'none';
+            box.style.transform = 'scale(1)';
+            box.style.opacity = '0.5';
+        }
+    });
+    
+    // Update nodes list to show only filtered nodes
+    updateNodesList(filteredNodes);
+}
+
+function clearTypeFilter() {
+    if (!allGraphData) return;
+    
+    currentFilterType = null;
+    
+    // Restore stats display
+    const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
+    allGraphData.nodes.forEach(n => {
+        stats[getType(n.label)]++;
+    });
+    
+    document.getElementById('employees').textContent = stats.Employee;
+    document.getElementById('departments').textContent = stats.Department;
+    document.getElementById('positions').textContent = stats.Position;
+    document.getElementById('projects').textContent = stats.Project;
+    document.getElementById('skills').textContent = stats.Skill;
+    
+    // Hide filter status
+    document.getElementById('filter-status').style.display = 'none';
+    
+    // Reset stat boxes
+    document.querySelectorAll('.stat-box').forEach(box => {
+        box.style.border = 'none';
+        box.style.transform = 'scale(1)';
+        box.style.opacity = '1';
+    });
+    
+    // Show all nodes
+    updateNodesList(allGraphData.nodes);
+}
+
+function updateNodesList(nodes) {
+    let nodesHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+    nodes.forEach(n => {
+        const type = getType(n.label);
+        nodesHtml += `<span style="background:${colors[type]};color:white;padding:6px 12px;border-radius:20px;font-size:13px;">${n.label}</span>`;
+    });
+    nodesHtml += '</div>';
+    document.getElementById('nodes').innerHTML = nodesHtml;
+}
+
 function init() {
     fetch('/graph')
         .then(r => r.json())
         .then(data => {
+            allGraphData = data;
+            
             // Update stats
             const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
             const employees = [];
