@@ -124,7 +124,14 @@ class HRTemporalGraph:
                 y = random.uniform(-100, 100)
                 size = 1
                 nodes.append(
-                    {"id": node_id, "label": label, "x": x, "y": y, "size": size}
+                    {
+                        "id": node_id,
+                        "label": label,
+                        "x": x,
+                        "y": y,
+                        "size": size,
+                        "labels": labels,
+                    }
                 )
 
             # Get edges - only if we have FalkorDB connection

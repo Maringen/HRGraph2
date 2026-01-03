@@ -238,19 +238,20 @@
     
     <div id="legend">
         <h4 data-i18n="nodeTypes">Node Types</h4>
-        <div class="legend-item"><div class="legend-color" style="background:#667eea"></div><span data-i18n="nodeEmployee">Employee</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div><span data-i18n="nodeDepartment">Department</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div><span data-i18n="nodePosition">Position</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div><span data-i18n="nodeProject">Project</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#00bcd4"></div><span data-i18n="nodeSkill">Skill</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#42a5f5"></div><span data-i18n="nodeEmployee">Employee</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div><span data-i18n="nodeDepartment">Department</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div><span data-i18n="nodePosition">Position</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#9c27b0"></div><span data-i18n="nodeProject">Project</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#f44336"></div><span data-i18n="nodeSkill">Skill</span></div>
         <hr style="margin:10px 0;border:none;border-top:1px solid #eee;">
         <h4 data-i18n="relTypes">Relationships</h4>
-        <div class="legend-item"><div class="legend-color" style="background:#667eea"></div><span data-i18n="relProficient">PROFICIENT_IN</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div><span data-i18n="relWorksIn">WORKS_IN</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div><span data-i18n="relBelongsTo">BELONGS_TO</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div><span data-i18n="relReportsTo">REPORTS_TO</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#00bcd4"></div><span data-i18n="relWorksOn">WORKS_ON</span></div>
-        <div class="legend-item"><div class="legend-color" style="background:#9c27b0"></div><span data-i18n="relCollaborates">COLLABORATES</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#667eea"></div><span data-i18n="relProficient">PROFICIENT_IN</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div><span data-i18n="relWorksIn">WORKS_IN</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div><span data-i18n="relBelongsTo">BELONGS_TO</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div><span data-i18n="relReportsTo">REPORTS_TO</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#00bcd4"></div><span data-i18n="relWorksOn">WORKS_ON</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#9c27b0"></div><span data-i18n="relCollaborates">COLLABORATES_WITH</span></div>
+                    <div class="legend-item"><div class="legend-color" style="background:#f44336"></div><span data-i18n="relManages">MANAGES</span></div>
     </div>
     
     <div id="loading">
@@ -534,11 +535,23 @@
 
         // Node configuration
         const nodeConfig = {
-            'Employee': { color: '#667eea', size: 25, shape: 'dot' },
-            'Department': { color: '#4caf50', size: 35, shape: 'diamond' },
-            'Position': { color: '#ff9800', size: 22, shape: 'dot' },
-            'Project': { color: '#e91e63', size: 30, shape: 'box' },
-            'Skill': { color: '#00bcd4', size: 18, shape: 'dot' }
+            'Employee': { color: { background: '#42a5f5', border: '#1e88e5' }, size: 25, shape: 'ellipse' },
+            'Position': { color: { background: '#ff9800', border: '#f57c00' }, size: 22, shape: 'ellipse' },
+            'Department': { color: { background: '#4caf50', border: '#388e3c' }, size: 30, shape: 'diamond' },
+            'Project': { color: { background: '#9c27b0', border: '#7b1fa2' }, size: 25, shape: 'hexagon' },
+            'Skill': { color: { background: '#f44336', border: '#d32f2f' }, size: 18, shape: 'ellipse' }
+        };
+        
+        // Edge configuration for different relationship types
+        const edgeConfig = {
+            'PROFICIENT_IN': { color: '#667eea', width: 2, arrow: 'to' },
+            'WORKS_IN': { color: '#4caf50', width: 2, arrow: 'to' },
+            'BELONGS_TO': { color: '#ff9800', width: 2, arrow: 'to' },
+            'REPORTS_TO': { color: '#e91e63', width: 2, arrow: 'to' },
+            'WORKS_ON': { color: '#00bcd4', width: 2, arrow: 'to' },
+            'COLLABORATES_WITH': { color: '#9c27b0', width: 2, arrow: 'to,from' },
+            'MANAGES': { color: '#f44336', width: 2, arrow: 'to' },
+            'default': { color: '#ccc', width: 1, arrow: 'to' }
         };
 
         let currentLang = 'en';
@@ -551,7 +564,18 @@
         let originalNodeColors = new Map();
         let originalNodeSizes = new Map();
 
-        function getNodeType(label) {
+        function getNodeType(label, labels = []) {
+            // First, check if we have the original database labels
+            if (labels && labels.length > 0) {
+                // Check for exact database labels first
+                if (labels.includes('Employee')) return 'Employee';
+                if (labels.includes('Position')) return 'Position';
+                if (labels.includes('Department')) return 'Department';
+                if (labels.includes('Project')) return 'Project';
+                if (labels.includes('Skill')) return 'Skill';
+            }
+            
+            // Fallback to pattern matching for backward compatibility
             const l = label.toLowerCase();
             // Department check first - use exact department names, not partial matches
             const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance'];
@@ -630,23 +654,33 @@
                     
                     // Process nodes
                     const nodes = data.nodes.map(n => {
-                        const type = getNodeType(n.label);
+                        const type = getNodeType(n.label, n.labels);
                         const config = nodeConfig[type];
                         return { id: n.id, label: n.label, color: config.color, size: config.size, shape: config.shape, type: type, font: { size: 12, color: '#333' } };
                     });
                     
-                    // Process edges with translated labels
+                    // Process edges with translated labels and colors
                     const edges = data.edges.map((e, i) => {
                         const t = translations[currentLang];
                         const translatedLabel = t[e.label] || e.label || '';
+                        const config = edgeConfig[e.label] || edgeConfig['default'];
+                        const arrowConfig = {};
+                        if (config.arrow.includes('to')) {
+                            arrowConfig.to = { enabled: true, scaleFactor: 0.8, color: config.color };
+                        }
+                        if (config.arrow.includes('from')) {
+                            arrowConfig.from = { enabled: true, scaleFactor: 0.6, color: config.color };
+                        }
                         return {
                             id: 'e' + i,
                             from: e.source,
                             to: e.target,
                             label: translatedLabel,
-                            color: { color: '#ccc' },
-                            font: { size: 10, color: '#999' },
-                            smooth: { type: 'continuous' }
+                            color: { color: config.color, highlight: config.color },
+                            font: { size: 10, color: config.color, align: 'middle' },
+                            width: config.width,
+                            arrows: arrowConfig,
+                            smooth: { type: 'continuous', roundness: 0.5 }
                         };
                     });
                     
@@ -741,7 +775,7 @@
             const deptSet = new Set();
             
             graphData.nodes.forEach(node => {
-                const type = getNodeType(node.label);
+                const type = getNodeType(node.label, node.labels);
                 if (type === 'Skill') {
                     skillSet.add(node.label);
                 } else if (type === 'Department') {
@@ -804,7 +838,7 @@
             const relatedNodeIds = new Set();
             
             graphData.nodes.forEach(node => {
-                const type = getNodeType(node.label);
+                const type = getNodeType(node.label, node.labels);
                 
                 // Check node type filter
                 if (!enabledTypes[type]) return;
@@ -817,7 +851,7 @@
                         graphData.nodes.some(n => 
                             (n.id === edge.source || n.id === edge.target) && 
                             n.label === selectedSkill && 
-                            getNodeType(n.label) === 'Skill'
+                            getNodeType(n.label, n.labels) === 'Skill'
                         )
                     );
                     if (!hasSkill) return;
@@ -831,7 +865,7 @@
                         graphData.nodes.some(n => 
                             (n.id === edge.source || n.id === edge.target) && 
                             n.label === selectedDepartment && 
-                            getNodeType(n.label) === 'Department'
+                            getNodeType(n.label, n.labels) === 'Department'
                         )
                     );
                     if (!inDepartment) return;
@@ -854,7 +888,7 @@
             
             // Special case: skill filter should highlight the skill node itself
             if (selectedSkill) {
-                const skillNode = graphData.nodes.find(n => n.label === selectedSkill && getNodeType(n.label) === 'Skill');
+                const skillNode = graphData.nodes.find(n => n.label === selectedSkill && getNodeType(n.label, n.labels) === 'Skill');
                 if (skillNode) {
                     filteredNodeIds.add(skillNode.id);
                 }
@@ -862,7 +896,7 @@
             
             // Special case: department filter should highlight the department node itself
             if (selectedDepartment) {
-                const deptNode = graphData.nodes.find(n => n.label === selectedDepartment && getNodeType(n.label) === 'Department');
+                const deptNode = graphData.nodes.find(n => n.label === selectedDepartment && getNodeType(n.label, n.labels) === 'Department');
                 if (deptNode) {
                     filteredNodeIds.add(deptNode.id);
                 }
@@ -1122,7 +1156,7 @@
                 // Try to find exact position match with extracted position
                 if (positionQuery) {
                     const allPositionNodes = graphData.nodes
-                        .filter(n => getNodeType(n.label) === 'Position')
+                        .filter(n => getNodeType(n.label, n.labels) === 'Position')
                         .map(n => n.label);
                     
                     for (const position of allPositionNodes) {
@@ -1151,7 +1185,7 @@
                     if (lowerQuery.includes(pattern)) {
                         // Find all position nodes that match this pattern
                         let matchingPositions = graphData.nodes
-                            .filter(n => getNodeType(n.label) === 'Position' && 
+                            .filter(n => getNodeType(n.label, n.labels) === 'Position' && 
                                      n.label.toLowerCase().includes(pattern))
                             .map(n => n.label);
                         
@@ -1265,7 +1299,7 @@
                 for (const pattern of positionPatterns) {
                     if (upperQuery.includes(pattern)) {
                         const matchingPositions = graphData.nodes
-                            .filter(n => getNodeType(n.label) === 'Position' && 
+                            .filter(n => getNodeType(n.label, n.labels) === 'Position' && 
                                      n.label.toUpperCase().includes(pattern))
                             .map(n => n.label);
                         
@@ -1305,7 +1339,7 @@
             if (!graphData || !graphData.nodes || !graphData.edges) return [];
             
             const employees = [];
-            const skillNode = graphData.nodes.find(n => n.label === skill && getNodeType(n.label) === 'Skill');
+            const skillNode = graphData.nodes.find(n => n.label === skill && getNodeType(n.label, n.labels) === 'Skill');
             
             if (!skillNode) return employees;
             
@@ -1326,14 +1360,14 @@
             if (!graphData || !graphData.nodes || !graphData.edges) return [];
             
             const employees = [];
-            const deptNode = graphData.nodes.find(n => n.label === department && getNodeType(n.label) === 'Department');
+            const deptNode = graphData.nodes.find(n => n.label === department && getNodeType(n.label, n.labels) === 'Department');
             
             if (!deptNode) return employees;
             
             graphData.edges.forEach(edge => {
                 if (edge.label === 'WORKS_IN' && (edge.source === deptNode.id || edge.target === deptNode.id)) {
                     const employeeId = edge.source === deptNode.id ? edge.target : edge.source;
-                    const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label) === 'Employee');
+                    const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label, n.labels) === 'Employee');
                     if (employee) {
                         employees.push(employee.label);
                     }
@@ -1347,14 +1381,14 @@
             if (!graphData || !graphData.nodes || !graphData.edges) return [];
             
             const employees = [];
-            const positionNode = graphData.nodes.find(n => n.label === position && getNodeType(n.label) === 'Position');
+            const positionNode = graphData.nodes.find(n => n.label === position && getNodeType(n.label, n.labels) === 'Position');
             
             if (!positionNode) return employees;
             
             graphData.edges.forEach(edge => {
                 if (edge.label === 'WORKS_IN' && (edge.source === positionNode.id || edge.target === positionNode.id)) {
                     const employeeId = edge.source === positionNode.id ? edge.target : edge.source;
-                    const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label) === 'Employee');
+                    const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label, n.labels) === 'Employee');
                     if (employee) {
                         employees.push(employee.label);
                     }
@@ -1367,7 +1401,7 @@
         function findAllEmployees() {
             if (!graphData || !graphData.nodes) return [];
             return graphData.nodes
-                .filter(n => getNodeType(n.label) === 'Employee')
+                .filter(n => getNodeType(n.label, n.labels) === 'Employee')
                 .map(n => n.label)
                 .sort();
         }
@@ -1375,7 +1409,7 @@
         function findNodesByType(nodeType) {
             if (!graphData || !graphData.nodes) return [];
             return graphData.nodes
-                .filter(n => getNodeType(n.label) === nodeType)
+                .filter(n => getNodeType(n.label, n.labels) === nodeType)
                 .map(n => n.label)
                 .sort();
         }
