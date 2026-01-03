@@ -35,30 +35,30 @@
         #loading-text { font-size: 18px; color: #333; animation: pulse 1.5s ease-in-out infinite; }
         
         /* Filter Panel Styles */
-        #filter-panel { position: fixed; left: 20px; top: 140px; width: 280px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 99; max-height: calc(100vh - 320px); overflow-y: auto; transition: all 0.3s ease; }
+        #filter-panel { position: fixed; left: 20px; top: 140px; width: 320px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 99; max-height: calc(100vh - 180px); overflow-y: auto; transition: all 0.3s ease; }
         #filter-panel:hover { box-shadow: 0 6px 25px rgba(0,0,0,0.2); }
-        #filter-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none; }
-        #filter-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
-        #filter-content { padding: 15px; }
-        .filter-section { margin-bottom: 20px; }
-        .filter-section:last-child { margin-bottom: 0; }
-        .filter-label { font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .filter-checkboxes { display: flex; flex-direction: column; gap: 8px; }
-        .filter-checkbox { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; transition: background-color 0.2s; cursor: pointer; }
+        #filter-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 12px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none; }
+        #filter-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
+        #filter-content { padding: 12px; }
+        .filter-section { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+        .filter-section:last-child { margin-bottom: 0; border-bottom: none; }
+        .filter-label { font-weight: 600; color: #333; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-checkboxes { display: flex; flex-direction: column; gap: 4px; }
+        .filter-checkbox { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; transition: background-color 0.2s; cursor: pointer; }
         .filter-checkbox:hover { background-color: #f5f5f5; }
         .filter-checkbox input[type="checkbox"] { margin: 0; cursor: pointer; }
-        .filter-checkbox label { margin: 0; cursor: pointer; font-size: 13px; color: #555; flex: 1; }
-        .filter-select { width: 100%; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 13px; background: white; cursor: pointer; transition: border-color 0.2s; }
+        .filter-checkbox label { margin: 0; cursor: pointer; font-size: 12px; color: #555; flex: 1; }
+        .filter-select { width: 100%; padding: 6px 8px; border: 2px solid #ddd; border-radius: 4px; font-size: 12px; background: white; cursor: pointer; transition: border-color 0.2s; }
         .filter-select:focus { outline: none; border-color: #667eea; }
-        .filter-input { width: 100%; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 13px; transition: border-color 0.2s; }
+        .filter-input { width: 100%; padding: 6px 8px; border: 2px solid #ddd; border-radius: 4px; font-size: 12px; transition: border-color 0.2s; }
         .filter-input:focus { outline: none; border-color: #667eea; }
-        .filter-actions { display: flex; gap: 8px; margin-top: 15px; }
-        .filter-btn { flex: 1; padding: 8px 12px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .filter-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .filter-btn { flex: 1; padding: 6px 8px; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .filter-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .filter-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4); }
         .filter-btn-secondary { background: #f0f0f0; color: #666; }
         .filter-btn-secondary:hover { background: #e0e0e0; }
-        #filter-results { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 12px; color: #666; text-align: center; }
+        #filter-results { background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 11px; color: #666; text-align: center; }
         #filter-results.active { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea; font-weight: 600; }
         
         /* Adjust legend position to avoid overlap */
