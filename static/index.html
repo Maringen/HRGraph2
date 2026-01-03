@@ -213,19 +213,52 @@ const colors = {
 function getType(label) {
     const l = label.toLowerCase();
     
-    // FIRST: Check if this is a proper employee name (2-3 words, typical human name pattern)
+    // FIRST: Check for skills (including compound skills) - BEFORE name check
+    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data analysis', 'data engineering', 'data visualization', 'big data', 'cloud computing', 'cyber security', 'web development', 'mobile development', 'frontend', 'backend', 'fullstack', 'devops', 'cloud architecture', 'microservices', 'agile', 'scrum', 'ci/cd', 'test automation', 'quality assurance', 'ux design', 'ui design', 'product management', 'business analysis', 'technical writing', 'project management'];
+    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills'];
+    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+    
+    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+    
+    // Check if label matches any skill pattern (including compound skills)
+    for (const skill of allSkills) {
+        if (l.includes(skill)) return 'Skill';
+    }
+    
+    // Department check
+    const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
+    if (departments.some(dept => l.includes(dept))) return 'Department';
+    if (l.includes('dept') || l.includes('department')) return 'Department';
+    
+    // Project check
+    if (l.includes('project') || l.includes('campaign')) return 'Project';
+    
+    // Position check
+    if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
+        l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || 
+        l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
+        l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
+        l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
+        l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+    
+    // Default to Employee for names (typically 2-3 words with spaces, typical human name pattern)
     const words = l.split(' ').filter(w => w.length > 0);
     if (words.length >= 2 && words.length <= 4) {
         // Check if it looks like a human name (not a skill/position title)
-        // Human names typically: first letter capitalized, doesn't contain skill/position keywords
         const isLikelyName = words.every(word => {
-            // Skip if word is too short or looks like a skill/position
             if (word.length < 2) return false;
-            const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group'];
+            const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group', 'science', 'analysis', 'engineering', 'visualization', 'computing', 'security', 'development', 'testing', 'quality', 'design', 'management'];
             return !skillKeywords.some(keyword => word.includes(keyword));
         });
         if (isLikelyName) return 'Employee';
     }
+    
+    // If single word and doesn't match anything, it's likely a skill
+    if (words.length === 1) return 'Skill';
+    
+    // Default fallback
+    return 'Employee';
+}
     
     // Department check
     const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
@@ -292,20 +325,16 @@ function setLanguage(lang) {
 
 let currentFilterType = null;
 let allGraphData = null;
+let originalStats = null;
 
 function filterByType(type) {
-    if (!allGraphData) return;
+    if (!allGraphData || !originalStats) return;
     
     currentFilterType = type;
     const t = translations[currentLang];
     
-    // Update stats display to show only filtered count
+    // Get filtered nodes count
     const filteredNodes = allGraphData.nodes.filter(n => getType(n.label) === type);
-    document.getElementById('employees').textContent = type === 'Employee' ? filteredNodes.length : '-';
-    document.getElementById('departments').textContent = type === 'Department' ? filteredNodes.length : '-';
-    document.getElementById('positions').textContent = type === 'Position' ? filteredNodes.length : '-';
-    document.getElementById('projects').textContent = type === 'Project' ? filteredNodes.length : '-';
-    document.getElementById('skills').textContent = type === 'Skill' ? filteredNodes.length : '-';
     
     // Update filter status
     const filterStatus = document.getElementById('filter-status');
@@ -331,21 +360,9 @@ function filterByType(type) {
 }
 
 function clearTypeFilter() {
-    if (!allGraphData) return;
+    if (!allGraphData || !originalStats) return;
     
     currentFilterType = null;
-    
-    // Restore stats display
-    const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
-    allGraphData.nodes.forEach(n => {
-        stats[getType(n.label)]++;
-    });
-    
-    document.getElementById('employees').textContent = stats.Employee;
-    document.getElementById('departments').textContent = stats.Department;
-    document.getElementById('positions').textContent = stats.Position;
-    document.getElementById('projects').textContent = stats.Project;
-    document.getElementById('skills').textContent = stats.Skill;
     
     // Hide filter status
     document.getElementById('filter-status').style.display = 'none';
@@ -386,6 +403,9 @@ function init() {
                 stats[type]++;
                 if (type === 'Employee') employees.push(n.label);
             });
+            
+            // Store original stats for reference
+            originalStats = { ...stats };
             
             document.getElementById('employees').textContent = stats.Employee;
             document.getElementById('departments').textContent = stats.Department;

@@ -612,16 +612,16 @@
             // Fallback to pattern matching for backward compatibility
             const l = label.toLowerCase();
             
-            // FIRST: Check if this is a proper employee name (2-4 words, typical human name pattern)
-            const words = l.split(' ').filter(w => w.length > 0);
-            if (words.length >= 2 && words.length <= 4) {
-                // Check if it looks like a human name (not a skill/position title)
-                const isLikelyName = words.every(word => {
-                    if (word.length < 2) return false;
-                    const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group'];
-                    return !skillKeywords.some(keyword => word.includes(keyword));
-                });
-                if (isLikelyName) return 'Employee';
+            // FIRST: Check for skills (including compound skills) - BEFORE name check
+            const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data analysis', 'data engineering', 'data visualization', 'big data', 'cloud computing', 'cyber security', 'web development', 'mobile development', 'frontend', 'backend', 'fullstack', 'devops', 'cloud architecture', 'microservices', 'agile', 'scrum', 'ci/cd', 'test automation', 'quality assurance', 'ux design', 'ui design', 'product management', 'business analysis', 'technical writing', 'project management'];
+            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills'];
+            const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+            
+            const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+            
+            // Check if label matches any skill pattern (including compound skills)
+            for (const skill of allSkills) {
+                if (l.includes(skill)) return 'Skill';
             }
             
             // Department check
@@ -634,18 +634,16 @@
             // Position check
             if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
             
-            // Skill check - comprehensive list of technical and soft skills
-            const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
-            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
-            const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
-            
-            const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
-            
-            // Check if label matches any skill pattern (whole word only)
-            for (const skill of allSkills) {
-                const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const regex = new RegExp('\\b' + escapedSkill + '\\b', 'i');
-                if (regex.test(l)) return 'Skill';
+            // Default to Employee for names (typically 2-4 words, typical human name pattern)
+            const words = l.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2 && words.length <= 4) {
+                // Check if it looks like a human name (not a skill/position title)
+                const isLikelyName = words.every(word => {
+                    if (word.length < 2) return false;
+                    const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group', 'science', 'analysis', 'engineering', 'visualization', 'computing', 'security', 'development', 'testing', 'quality', 'design', 'management'];
+                    return !skillKeywords.some(keyword => word.includes(keyword));
+                });
+                if (isLikelyName) return 'Employee';
             }
             
             // If single word and doesn't match anything, it's likely a skill
