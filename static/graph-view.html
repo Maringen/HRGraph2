@@ -533,12 +533,12 @@
             }
         };
 
-        // Node configuration
+        // Node configuration - all nodes as circles (ellipse)
         const nodeConfig = {
             'Employee': { color: { background: '#42a5f5', border: '#1e88e5' }, size: 25, shape: 'ellipse' },
             'Position': { color: { background: '#ff9800', border: '#f57c00' }, size: 22, shape: 'ellipse' },
-            'Department': { color: { background: '#4caf50', border: '#388e3c' }, size: 30, shape: 'diamond' },
-            'Project': { color: { background: '#9c27b0', border: '#7b1fa2' }, size: 25, shape: 'hexagon' },
+            'Department': { color: { background: '#4caf50', border: '#388e3c' }, size: 30, shape: 'ellipse' },
+            'Project': { color: { background: '#9c27b0', border: '#7b1fa2' }, size: 25, shape: 'ellipse' },
             'Skill': { color: { background: '#f44336', border: '#d32f2f' }, size: 18, shape: 'ellipse' }
         };
         
@@ -577,16 +577,36 @@
             
             // Fallback to pattern matching for backward compatibility
             const l = label.toLowerCase();
+            
             // Department check first - use exact department names, not partial matches
             const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance'];
             if (departments.includes(l) || l === 'human resources') return 'Department';
-            // Position check
-            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo')) return 'Position';
+            
             // Project check
             if (l.includes('project') || l.includes('campaign')) return 'Project';
-            // Skill check (without sales/marketing since they're departments)
-            if (l.includes('skill') || l.includes('python') || l.includes('javascript') || l.includes('java') || l.includes('leadership') || l.includes('communication') || l.includes('react') || l.includes('node') || l.includes('kubernetes') || l.includes('docker') || l.includes('aws') || l.includes('go')) return 'Skill';
-            return 'Employee';
+            
+            // Skill check - comprehensive list of technical and soft skills
+            const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
+            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', ' negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
+            const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+            
+            const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+            
+            // Check if label matches any skill pattern
+            for (const skill of allSkills) {
+                if (l.includes(skill)) return 'Skill';
+            }
+            
+            // Position check (after skill check to avoid false positives)
+            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+            
+            // Default to Employee for names (typically 2-3 words with spaces)
+            const words = l.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2 && words.length <= 4 && !l.includes('project') && !l.includes('campaign') && !l.includes('department')) {
+                return 'Employee';
+            }
+            
+            return 'Skill'; // Unknown single words are likely skills
         }
 
         function setLanguage(lang) {
@@ -709,6 +729,28 @@
                     
                     network = new vis.Network(container, visData, options);
                     console.log('Graph initialized successfully in ' + currentLang.toUpperCase() + ' language');
+                    
+                    // Add zoom event listener to show/hide edge labels
+                    network.on('zoom', function (params) {
+                        const scale = params.scale;
+                        const edgeIds = network.body.data.edges.getIds();
+                        const newOptions = {};
+                        
+                        // Show labels only when zoomed in (scale > 1.5)
+                        const showLabels = scale > 1.5;
+                        
+                        edgeIds.forEach(edgeId => {
+                            newOptions[edgeId] = {
+                                font: { 
+                                    size: showLabels ? 10 : 0, 
+                                    color: showLabels ? edgeConfig['default'].color : 'transparent',
+                                    strokeWidth: showLabels ? 0 : 0
+                                }
+                            };
+                        });
+                        
+                        network.body.data.edges.update(newOptions);
+                    });
                 })
                 .catch(err => {
                     console.error('Graph load error:', err);

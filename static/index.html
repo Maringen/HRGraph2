@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Knowledge Graph</title>
+    <title data-i18n="title">HR Knowledge Graph</title>
 </head>
 <body style="margin:0;padding:20px;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;">
 
@@ -11,7 +11,7 @@
 
 <!-- Title -->
 <h1 style="color:white;text-align:center;margin-bottom:30px;text-shadow:2px 2px 4px rgba(0,0,0,0.3);font-size:32px;">
-    📊 HR Knowledge Graph
+    📊 <span data-i18n="title">HR Knowledge Graph</span>
 </h1>
 <div style="text-align:center;margin-bottom:20px;">
     <button id="lang-en" onclick="setLanguage('en')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">EN</button>
@@ -20,12 +20,12 @@
     <button id="lang-de" onclick="setLanguage('de')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">DE</button>
 </div>
 <div style="text-align:center;margin-bottom:20px;">
-    <a href="/static/graph-view.html" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🎨 Open Visual Graph View</a>
+    <a href="/static/graph-view.html" data-i18n="openGraph" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🎨 Open Visual Graph View</a>
 </div>
 
 <!-- Status -->
-<div id="status" style="background:#e8f5e9;color:#2e7d32;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;font-weight:bold;">
-    Loading...
+<div id="status" style="background:#fff3cd;color:#856404;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;font-weight:bold;">
+    <span data-i18n="loading">Loading...</span>
 </div>
 
 <!-- Stats -->
@@ -59,16 +59,16 @@
 <!-- Nodes List -->
 <div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
     <h2 data-translate="allNodes" style="margin:0 0 15px 0;color:#333;">🖊️ All Nodes</h2>
-    <div id="nodes" style="max-height:300px;overflow-y:auto;">
-        Loading nodes...
+    <div id="nodes" style="max-height:300px;overflow-y:auto;" data-i18n="loading">
+        <span data-i18n="loading">Loading...</span>
     </div>
 </div>
 
 <!-- Edges List -->
 <div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
     <h2 data-translate="allRelationships" style="margin:0 0 15px 0;color:#333;">🔗 All Relationships</h2>
-    <div id="edges-list" style="max-height:200px;overflow-y:auto;">
-        Loading edges...
+    <div id="edges-list" style="max-height:200px;overflow-y:auto;" data-i18n="loading">
+        <span data-i18n="loading">Loading...</span>
     </div>
 </div>
 
@@ -93,6 +93,14 @@
 // Translations
 const translations = {
     en: {
+        title: 'HR Knowledge Graph',
+        openGraph: '🎨 Open Visual Graph View',
+        loading: 'Loading...',
+        loaded: 'Loaded',
+        nodes: 'nodes',
+        edges: 'edges',
+        noMatches: 'No matches',
+        noRelationships: 'No relationships',
         employees: 'Employees',
         departments: 'Departments',
         positions: 'Positions',
@@ -106,6 +114,14 @@ const translations = {
         sampleEmployees: '👥 Sample Employees'
     },
     fr: {
+        title: 'Graphe de Connaissances RH',
+        openGraph: '🎨 Ouvrir la Vue Graphique',
+        loading: 'Chargement...',
+        loaded: 'Chargé',
+        nodes: 'nœuds',
+        edges: 'liens',
+        noMatches: 'Aucune correspondance',
+        noRelationships: 'Aucune relation',
         employees: 'Employés',
         departments: 'Départements',
         positions: 'Postes',
@@ -119,6 +135,14 @@ const translations = {
         sampleEmployees: '👥 Employés Exemples'
     },
     it: {
+        title: 'Grafico della Conoscenza HR',
+        openGraph: '🎨 Apri Visualizzazione Grafico',
+        loading: 'Caricamento...',
+        loaded: 'Caricato',
+        nodes: 'nodi',
+        edges: 'archi',
+        noMatches: 'Nessuna corrispondenza',
+        noRelationships: 'Nessuna relazione',
         employees: 'Dipendenti',
         departments: 'Dipartimenti',
         positions: 'Posizioni',
@@ -132,6 +156,14 @@ const translations = {
         sampleEmployees: '👥 Dipendenti Esempio'
     },
     de: {
+        title: 'HR Wissensgraph',
+        openGraph: '🎨 Grafische Ansicht Öffnen',
+        loading: 'Laden...',
+        loaded: 'Geladen',
+        nodes: 'Knoten',
+        edges: 'Kanten',
+        noMatches: 'Keine Übereinstimmungen',
+        noRelationships: 'Keine Beziehungen',
         employees: 'Mitarbeiter',
         departments: 'Abteilungen',
         positions: 'Positionen',
@@ -163,13 +195,34 @@ function getType(label) {
     const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
     if (departments.some(dept => l.includes(dept))) return 'Department';
     if (l.includes('dept') || l.includes('department')) return 'Department';
-    if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
-        l.includes('director') || l.includes('cto') || l.includes('cfo')) return 'Position';
     if (l.includes('project') || l.includes('campaign')) return 'Project';
-    if (l.includes('skill') || l.includes('python') || l.includes('javascript') || 
-        l.includes('java') || l.includes('leadership') || l.includes('communication') || 
-        l.includes('react') || l.includes('node') || l.includes('aws') || l.includes('go')) return 'Skill';
-    return 'Employee';
+    
+    // Comprehensive skill check
+    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
+    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
+    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+    
+    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+    
+    for (const skill of allSkills) {
+        if (l.includes(skill)) return 'Skill';
+    }
+    
+    // Position check
+    if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
+        l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || 
+        l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
+        l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
+        l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
+        l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+    
+    // Default to Employee for names (typically 2-3 words with spaces)
+    const words = l.split(' ').filter(w => w.length > 0);
+    if (words.length >= 2 && words.length <= 4 && !l.includes('project') && !l.includes('campaign')) {
+        return 'Employee';
+    }
+    
+    return 'Skill'; // Unknown single words are likely skills
 }
 
 function setLanguage(lang) {
@@ -235,7 +288,7 @@ function init() {
                     <strong>${e.label || 'REL'}</strong>: ${e.source} → ${e.target}
                 </div>`;
             });
-            document.getElementById('edges-list').innerHTML = edgesHtml || 'No relationships';
+            document.getElementById('edges-list').innerHTML = edgesHtml || '<p data-i18n="noRelationships" style="color:#666;">No relationships</p>';
             
             // Show employees
             document.getElementById('employees-list').innerHTML = 
@@ -244,12 +297,12 @@ function init() {
                     `<span style="background:${colors.Employee};color:white;padding:8px 16px;border-radius:20px;">👤 ${e}</span>`
                 ).join('') + '</div>';
             
-            document.getElementById('status').innerHTML = '✅ Loaded: ' + data.nodes.length + ' nodes, ' + data.edges.length + ' edges';
+            document.getElementById('status').innerHTML = '✅ <span data-i18n="loaded">Loaded</span>: ' + data.nodes.length + ' <span data-i18n="nodes">nodes</span>, ' + data.edges.length + ' <span data-i18n="edges">edges</span>';
             document.getElementById('status').style.background = '#e8f5e9';
             document.getElementById('status').style.color = '#2e7d32';
         })
         .catch(err => {
-            document.getElementById('status').innerHTML = '❌ Error: ' + err.message;
+            document.getElementById('status').innerHTML = '❌ <span data-i18n="error">Error</span>: ' + err.message;
             document.getElementById('status').style.background = '#ffebee';
             document.getElementById('status').style.color = '#c62828';
         });
@@ -265,7 +318,7 @@ function handleSearch(q) {
         .then(data => {
             const matches = data.nodes.filter(n => n.label.toLowerCase().includes(q.toLowerCase()));
             if (matches.length === 0) {
-                document.getElementById('search-results').innerHTML = '<p style="color:#666;">No matches</p>';
+                document.getElementById('search-results').innerHTML = '<p style="color:#666;" data-i18n="noMatches">No matches</p>';
             } else {
                 document.getElementById('search-results').innerHTML = 
                     '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
