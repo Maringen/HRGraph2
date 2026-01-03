@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Knowledge Graph</title>
+</head>
+<body style="margin:0;padding:20px;font-family:Arial,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;">
+
+<div style="max-width:1200px;margin:0 auto;">
+
+<!-- Title -->
+<h1 style="color:white;text-align:center;margin-bottom:30px;text-shadow:2px 2px 4px rgba(0,0,0,0.3);font-size:32px;">
+    📊 HR Knowledge Graph
+</h1>
+<div style="text-align:center;margin-bottom:20px;">
+    <button id="lang-en" onclick="setLanguage('en')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">EN</button>
+    <button id="lang-fr" onclick="setLanguage('fr')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">FR</button>
+    <button id="lang-it" onclick="setLanguage('it')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">IT</button>
+    <button id="lang-de" onclick="setLanguage('de')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">DE</button>
+</div>
+<div style="text-align:center;margin-bottom:20px;">
+    <a href="/static/graph-view.html" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🎨 Open Visual Graph View</a>
+</div>
+
+<!-- Status -->
+<div id="status" style="background:#e8f5e9;color:#2e7d32;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;font-weight:bold;">
+    Loading...
+</div>
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;">
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="employees" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="employees" style="color:#666;font-size:12px;">Employees</div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="departments" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="departments" style="color:#666;font-size:12px;">Departments</div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="positions" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="positions" style="color:#666;font-size:12px;">Positions</div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="projects" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="projects" style="color:#666;font-size:12px;">Projects</div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="skills" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="skills" style="color:#666;font-size:12px;">Skills</div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+        <div id="edges" style="font-size:28px;font-weight:bold;color:#667eea;">-</div>
+        <div data-translate="relations" style="color:#666;font-size:12px;">Relations</div>
+    </div>
+</div>
+
+<!-- Nodes List -->
+<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <h2 data-translate="allNodes" style="margin:0 0 15px 0;color:#333;">🖊️ All Nodes</h2>
+    <div id="nodes" style="max-height:300px;overflow-y:auto;">
+        Loading nodes...
+    </div>
+</div>
+
+<!-- Edges List -->
+<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <h2 data-translate="allRelationships" style="margin:0 0 15px 0;color:#333;">🔗 All Relationships</h2>
+    <div id="edges-list" style="max-height:200px;overflow-y:auto;">
+        Loading edges...
+    </div>
+</div>
+
+<!-- Search -->
+<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <h2 data-translate="search" style="margin:0 0 15px 0;color:#333;">🔍 Search</h2>
+    <input type="text" id="search" data-translate="searchPlaceholder" placeholder="Type to search..." 
+           style="width:100%;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;box-sizing:border-box;"
+           oninput="handleSearch(this.value)">
+    <div id="search-results" style="margin-top:15px;"></div>
+</div>
+
+<!-- Sample Data -->
+<div style="background:white;border-radius:12px;padding:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <h2 data-translate="sampleEmployees" style="margin:0 0 15px 0;color:#333;">👥 Sample Employees</h2>
+    <div id="employees-list"></div>
+</div>
+
+</div>
+
+<script>
+// Translations
+const translations = {
+    en: {
+        employees: 'Employees',
+        departments: 'Departments',
+        positions: 'Positions',
+        projects: 'Projects',
+        skills: 'Skills',
+        relations: 'Relations',
+        allNodes: '🖊️ All Nodes',
+        allRelationships: '🔗 All Relationships',
+        search: '🔍 Search',
+        searchPlaceholder: 'Type to search...',
+        sampleEmployees: '👥 Sample Employees'
+    },
+    fr: {
+        employees: 'Employés',
+        departments: 'Départements',
+        positions: 'Postes',
+        projects: 'Projets',
+        skills: 'Compétences',
+        relations: 'Relations',
+        allNodes: '🖊️ Tous les Nœuds',
+        allRelationships: '🔗 Toutes les Relations',
+        search: '🔍 Rechercher',
+        searchPlaceholder: 'Tapez pour rechercher...',
+        sampleEmployees: '👥 Employés Exemples'
+    },
+    it: {
+        employees: 'Dipendenti',
+        departments: 'Dipartimenti',
+        positions: 'Posizioni',
+        projects: 'Progetti',
+        skills: 'Competenze',
+        relations: 'Relazioni',
+        allNodes: '🖊️ Tutti i Nodi',
+        allRelationships: '🔗 Tutte le Relazioni',
+        search: '🔍 Cerca',
+        searchPlaceholder: 'Digita per cercare...',
+        sampleEmployees: '👥 Dipendenti Esempio'
+    },
+    de: {
+        employees: 'Mitarbeiter',
+        departments: 'Abteilungen',
+        positions: 'Positionen',
+        projects: 'Projekte',
+        skills: 'Fähigkeiten',
+        relations: 'Beziehungen',
+        allNodes: '🖊️ Alle Knoten',
+        allRelationships: '🔗 Alle Beziehungen',
+        search: '🔍 Suchen',
+        searchPlaceholder: 'Tippen zum Suchen...',
+        sampleEmployees: '👥 Beispiel-Mitarbeiter'
+    }
+};
+
+// Current language
+let currentLang = localStorage.getItem('language') || 'en';
+
+// Node colors
+const colors = {
+    'Employee': '#667eea',
+    'Department': '#4caf50',
+    'Position': '#ff9800',
+    'Project': '#e91e63',
+    'Skill': '#00bcd4'
+};
+
+function getType(label) {
+    const l = label.toLowerCase();
+    const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
+    if (departments.some(dept => l.includes(dept))) return 'Department';
+    if (l.includes('dept') || l.includes('department')) return 'Department';
+    if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
+        l.includes('director') || l.includes('cto') || l.includes('cfo')) return 'Position';
+    if (l.includes('project') || l.includes('campaign')) return 'Project';
+    if (l.includes('skill') || l.includes('python') || l.includes('javascript') || 
+        l.includes('java') || l.includes('leadership') || l.includes('communication') || 
+        l.includes('react') || l.includes('node') || l.includes('aws') || l.includes('go')) return 'Skill';
+    return 'Employee';
+}
+
+function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('language', lang);
+    
+    // Update button styles
+    document.querySelectorAll('[id^="lang-"]').forEach(btn => {
+        btn.style.background = '#f0f0f0';
+        btn.style.color = '#667eea';
+    });
+    document.getElementById('lang-' + lang).style.background = '#667eea';
+    document.getElementById('lang-' + lang).style.color = 'white';
+    
+    // Update text elements
+    const t = translations[lang];
+    document.querySelectorAll('[data-translate]').forEach(elem => {
+        const key = elem.getAttribute('data-translate');
+        if (t[key]) {
+            if (elem.tagName === 'INPUT') {
+                elem.placeholder = t[key];
+            } else {
+                elem.textContent = t[key];
+            }
+        }
+    });
+}
+
+function init() {
+    fetch('/graph')
+        .then(r => r.json())
+        .then(data => {
+            // Update stats
+            const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
+            const employees = [];
+            
+            data.nodes.forEach(n => {
+                const type = getType(n.label);
+                stats[type]++;
+                if (type === 'Employee') employees.push(n.label);
+            });
+            
+            document.getElementById('employees').textContent = stats.Employee;
+            document.getElementById('departments').textContent = stats.Department;
+            document.getElementById('positions').textContent = stats.Position;
+            document.getElementById('projects').textContent = stats.Project;
+            document.getElementById('skills').textContent = stats.Skill;
+            document.getElementById('edges').textContent = data.edges.length;
+            
+            // Show nodes
+            let nodesHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
+            data.nodes.forEach(n => {
+                const type = getType(n.label);
+                nodesHtml += `<span style="background:${colors[type]};color:white;padding:6px 12px;border-radius:20px;font-size:13px;">${n.label}</span>`;
+            });
+            nodesHtml += '</div>';
+            document.getElementById('nodes').innerHTML = nodesHtml;
+            
+            // Show edges
+            let edgesHtml = '';
+            data.edges.forEach(e => {
+                edgesHtml += `<div style="background:#f0f0f0;padding:6px 10px;border-radius:4px;margin:4px 0;font-size:12px;font-family:monospace;">
+                    <strong>${e.label || 'REL'}</strong>: ${e.source} → ${e.target}
+                </div>`;
+            });
+            document.getElementById('edges-list').innerHTML = edgesHtml || 'No relationships';
+            
+            // Show employees
+            document.getElementById('employees-list').innerHTML = 
+                '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+                employees.slice(0, 10).map(e => 
+                    `<span style="background:${colors.Employee};color:white;padding:8px 16px;border-radius:20px;">👤 ${e}</span>`
+                ).join('') + '</div>';
+            
+            document.getElementById('status').innerHTML = '✅ Loaded: ' + data.nodes.length + ' nodes, ' + data.edges.length + ' edges';
+            document.getElementById('status').style.background = '#e8f5e9';
+            document.getElementById('status').style.color = '#2e7d32';
+        })
+        .catch(err => {
+            document.getElementById('status').innerHTML = '❌ Error: ' + err.message;
+            document.getElementById('status').style.background = '#ffebee';
+            document.getElementById('status').style.color = '#c62828';
+        });
+}
+
+function handleSearch(q) {
+    if (!q || q.length < 2) {
+        document.getElementById('search-results').innerHTML = '';
+        return;
+    }
+    fetch('/graph')
+        .then(r => r.json())
+        .then(data => {
+            const matches = data.nodes.filter(n => n.label.toLowerCase().includes(q.toLowerCase()));
+            if (matches.length === 0) {
+                document.getElementById('search-results').innerHTML = '<p style="color:#666;">No matches</p>';
+            } else {
+                document.getElementById('search-results').innerHTML = 
+                    '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+                    matches.map(m => {
+                        const type = getType(m.label);
+                        return `<span style="background:${colors[type]};color:white;padding:8px 16px;border-radius:20px;">${m.label}</span>`;
+                    }).join('') + '</div>';
+            }
+        });
+}
+
+// Initialize language
+setLanguage(currentLang);
+
+init();
+</script>
+
+</body>
+</html>

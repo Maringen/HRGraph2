@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "graphiti": {
+      "command": "uvicorn",
+      "args": ["graphiti_core.mcp.server:app", "--host", "localhost", "--port", "8000"],
+      "env": {
+        "FALKORDB_HOST": "localhost",
+        "FALKORDB_PORT": "6379"
+      }
+    }
+  }
+}

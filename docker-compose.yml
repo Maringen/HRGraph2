@@ -1,0 +1,13 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6379:6379"
+      - "0.0.0.0:7687:7687"  # Bolt port for Cypher
+    volumes:
+      - falkordb_data:/data
+    command: ["falkordb", "--port", "6379", "--bolt-port", "7687"]
+
+
+volumes:
+  falkordb_data:
