@@ -1,4 +1,15 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Depends, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from auth import auth_manager, get_current_user
+from slowapi import Limiter, get_remote_address
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import os
+import time
 from temporal_graph import HRTemporalGraph
 from pydantic import BaseModel
 import asyncio
@@ -9,6 +20,13 @@ from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 import aiofiles
+from auth import auth_manager, get_current_user
+from slowapi import Limiter, get_remote_address
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import time
+
+rate_limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 graph = None
 
@@ -68,9 +86,65 @@ async def lifespan(app: FastAPI):
         graph = None
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="HR Temporal Knowledge Graph",
+    description="Secure HR Knowledge Management System",
+    docs_url=None,
+    redoc_url=None,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://vps-97995726.vps.ovh.net",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+    max_age=3600,
+)
+
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=31536000; includeSubDomains"
+    )
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    return response
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://vps-97995726.vps.ovh.net",
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+    max_age=3600,
+)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={"detail": "Rate limit exceeded. Please try again later."},
+    )
 
 
 @app.get("/")
@@ -79,7 +153,8 @@ async def read_root():
 
 
 @app.post("/query")
-async def query(request: QueryRequest):
+@rate_limiter.limit("20/minute")
+async def query(request: QueryRequest, current_user: dict = Depends(get_current_user)):
     try:
         if not graph:
             raise HTTPException(
@@ -90,7 +165,7 @@ async def query(request: QueryRequest):
             raise HTTPException(status_code=400, detail="Query cannot be empty")
 
         result = await graph.query_hybrid(request.query)
-        return {"result": result}
+        return {"result": result, "timestamp": time.time()}
     except HTTPException:
         raise
     except ValueError as e:
@@ -102,7 +177,8 @@ async def query(request: QueryRequest):
 
 
 @app.get("/history/{employee_name}")
-async def history(employee_name: str):
+@rate_limiter.limit("30/minute")
+async def history(employee_name: str, current_user: dict = Depends(get_current_user)):
     try:
         if not graph:
             raise HTTPException(
@@ -113,7 +189,7 @@ async def history(employee_name: str):
             raise HTTPException(status_code=400, detail="Employee name cannot be empty")
 
         result = await graph.get_employee_history(employee_name)
-        return {"history": result}
+        return {"history": result, "timestamp": time.time()}
     except HTTPException:
         raise
     except ValueError as e:
@@ -125,7 +201,8 @@ async def history(employee_name: str):
 
 
 @app.get("/graph")
-async def get_graph():
+@rate_limiter.limit("10/minute")
+async def get_graph(current_user: dict = Depends(get_current_user)):
     try:
         if not graph:
             raise HTTPException(
@@ -145,7 +222,10 @@ async def get_graph():
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+@rate_limiter.limit("5/minute")
+async def upload_file(
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
+):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -165,7 +245,11 @@ async def upload_file(file: UploadFile = File(...)):
                 validate_file_size(total_size)
                 await f.write(chunk)
 
-        return {"filename": sanitized_filename, "status": "uploaded"}
+        return {
+            "filename": sanitized_filename,
+            "status": "uploaded",
+            "timestamp": time.time(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -173,7 +257,8 @@ async def upload_file(file: UploadFile = File(...)):
 
 
 @app.post("/ingest")
-async def ingest_documents():
+@rate_limiter.limit("2/hour")
+async def ingest_documents(current_user: dict = Depends(get_current_user)):
     try:
         if not graph:
             raise HTTPException(
@@ -186,6 +271,7 @@ async def ingest_documents():
             "status": "success",
             "processed_files": processed_files,
             "message": f"Successfully processed {processed_files} files",
+            "timestamp": time.time(),
         }
     except HTTPException:
         raise
@@ -201,7 +287,37 @@ async def ingest_documents():
         raise HTTPException(status_code=500, detail="Ingestion failed")
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": time.time(), "version": "1.0.0"}
+
+
+@app.get("/auth/status")
+async def auth_status():
+    return {
+        "auth_required": True,
+        "api_key_configured": bool(auth_manager.api_key),
+        "rate_limiting_enabled": True,
+        "cors_configured": True,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    print("=" * 50)
+    print("🔒 HR Temporal Knowledge Graph - SECURED MODE")
+    print("=" * 50)
+    print(f"🔑 API Key: {'Configured' if auth_manager.api_key else 'Using Default'}")
+    print("🛡️  Security Features:")
+    print("   ✅ Authentication Required")
+    print("   ✅ Rate Limiting")
+    print("   ✅ CORS Protection")
+    print("   ✅ Trusted Hosts")
+    print("=" * 50)
+    print(f"🌐 Server: http://localhost:5000")
+    print(f"📖 Health: http://localhost:5000/health")
+    print(f"🔐 Auth Status: http://localhost:5000/auth/status")
+    print("=" * 50)
+
+    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")

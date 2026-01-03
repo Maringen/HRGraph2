@@ -26,10 +26,7 @@ FALKORDB_DB = os.getenv("FALKORDB_DB", "hr_temporal")
 
 GRAPHITI_DB_URL = os.getenv("GRAPHITI_DB_URL")
 if not GRAPHITI_DB_URL:
-    if FALKORDB_HOST != "localhost":
-        GRAPHITI_DB_URL = f"bolt://{FALKORDB_HOST}:7687"
-    else:
-        GRAPHITI_DB_URL = "sqlite:///graphiti.db"
+    GRAPHITI_DB_URL = "sqlite:///graphiti.db"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
