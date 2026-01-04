@@ -26,7 +26,20 @@
     <button id="lang-de" onclick="setLanguage('de')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">DE</button>
 </div>
 <div style="text-align:center;margin-bottom:20px;">
-    <a href="/static/graph-view.html" data-i18n="openGraph" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🎨 Open Visual Graph View</a>
+    <a href="/static/graph-view.html" data-i18n="openGraph" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🎨 Vis-Network View</a>
+    <a href="/static/graph-view-g6.html" style="background:white;color:#9c27b0;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">⚡ AntV G6 View</a>
+    <a href="http://localhost:3001" target="_blank" style="background:white;color:#ff9800;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🗄️ FalkorDB Browser</a>
+</div>
+
+<!-- API Key Input -->
+<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    <h2 style="margin:0 0 15px 0;color:#333;">🔐 API Key</h2>
+    <div style="display:flex;gap:10px;">
+        <input type="password" id="api-key" placeholder="Enter API key..." 
+               style="flex:1;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;">
+        <button onclick="saveApiKey()" style="background:#667eea;color:white;padding:12px 24px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Save</button>
+    </div>
+    <p style="color:#666;font-size:12px;margin-top:10px;">Enter the API key to access the knowledge graph. Check server console for the generated key.</p>
 </div>
 
 <!-- Status -->
@@ -103,6 +116,7 @@ const translations = {
     en: {
         title: 'HR Knowledge Graph',
         openGraph: '🎨 Open Visual Graph View',
+        openFalkorDB: '🗄️ FalkorDB Browser',
         loading: 'Loading...',
         loaded: 'Loaded',
         nodes: 'nodes',
@@ -126,6 +140,7 @@ const translations = {
     fr: {
         title: 'Graphe de Connaissances RH',
         openGraph: '🎨 Ouvrir la Vue Graphique',
+        openFalkorDB: '🗄️ Navigateur FalkorDB',
         loading: 'Chargement...',
         loaded: 'Chargé',
         nodes: 'nœuds',
@@ -149,6 +164,7 @@ const translations = {
     it: {
         title: 'Grafico della Conoscenza HR',
         openGraph: '🎨 Apri Visualizzazione Grafico',
+        openFalkorDB: '🗄️ Browser FalkorDB',
         loading: 'Caricamento...',
         loaded: 'Caricato',
         nodes: 'nodi',
@@ -172,6 +188,7 @@ const translations = {
     de: {
         title: 'HR Wissensgraph',
         openGraph: '🎨 Grafische Ansicht Öffnen',
+        openFalkorDB: '🗄️ FalkorDB Browser',
         loading: 'Laden...',
         loaded: 'Geladen',
         nodes: 'Knoten',
@@ -197,6 +214,24 @@ const translations = {
 // Current language
 let currentLang = localStorage.getItem('language') || 'en';
 
+// API Key management
+let apiKey = localStorage.getItem('hr_api_key') || '';
+
+function saveApiKey() {
+    const keyInput = document.getElementById('api-key');
+    if (keyInput.value) {
+        apiKey = keyInput.value;
+        localStorage.setItem('hr_api_key', apiKey);
+        // Re-initialize with new key
+        init();
+    }
+}
+
+// Load saved API key on page load
+if (apiKey) {
+    document.getElementById('api-key').value = apiKey;
+}
+
 // Node colors
 const colors = {
     'Employee': '#667eea',
@@ -207,87 +242,115 @@ const colors = {
 };
 
 function getType(label) {
-    const l = label.toLowerCase();
+    const l = label.toLowerCase().trim();
     
-    // FIRST: Check for skills (including compound skills) - BEFORE name check
-    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data analysis', 'data engineering', 'data visualization', 'big data', 'cloud computing', 'cyber security', 'web development', 'mobile development', 'frontend', 'backend', 'fullstack', 'devops', 'cloud architecture', 'microservices', 'agile', 'scrum', 'ci/cd', 'test automation', 'quality assurance', 'ux design', 'ui design', 'product management', 'business analysis', 'technical writing', 'project management'];
-    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills'];
-    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+    // Remove common name substrings from skill matching to prevent false positives
+    const nameSubstrings = ['john', 'smith', 'jones', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson', 'thomas', 'jackson', 'white', 'harris', 'martin', 'thompson', 'garcia', 'martinez', 'robinson', 'clark', 'rodriguez', 'lewis', 'lee', 'walker', 'hall', 'allen', 'young', 'hernandez', 'king', 'wright', 'lopez', 'hill', 'scott', 'green', 'adams', 'baker', 'nelson', 'carter', 'mitchell', 'perez', 'roberts', 'turner', 'phillips', 'campbell', 'parker', 'evans', 'edwards', 'collins', 'stewart', 'sanchez', 'morris', 'murphy', 'cook', 'rogers', 'gutierrez', 'ortiz', 'morgan', 'cooper', 'peterson', 'bailey', 'reed', 'kelly', 'howard', 'ramos', 'kim', 'cox', 'ward', 'richardson', 'watson', 'brooks', 'chavez', 'wood', 'james', 'bennett', 'gray', 'mendoza', 'ruiz', 'hughes', 'price', 'alvarez', 'castillo', 'sanders', 'patel', 'myers', 'ross', 'foster', 'jimenez', 'powell', 'jenkins', 'perry', 'russell', 'sullivan', 'bell', 'coleman', 'butler', 'henderson', 'barnes', 'gonzales', 'fisher', 'vasquez', 'simmons', 'romero', 'jordan', 'patterson', 'alexander', 'hamilton', 'graham', 'kumar', 'singh', 'sharma', 'tiwari', 'gupta', 'wang', 'zhang', 'chen', 'liu', 'yang', 'huang', 'zhao', 'wu', 'zhou', 'xu', 'sun', 'lu', 'hu', 'guo', 'lin', 'cao', 'luo', 'ming', 'wei', 'yu', 'xie', 'tang', 'deng', 'cui', 'peng', 'zou', 'liang', 'lai', 'feng', 'bao', 'shi', 'su', 'ren', 'mao'];
+    for (const namePart of nameSubstrings) {
+        if (l === namePart) return 'Employee';
+    }
     
-    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+    // FIRST: Check for departments (BEFORE skills - departments take priority)
+    const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr', 'it', 'operations', 'legal', 'design', 'product', 'research', 'customer success'];
+    if (departments.includes(l) || l === 'human resources' || l === 'customer success') return 'Department';
+    if (l.includes('department') || l.includes('dept')) return 'Department';
     
-    // Check if label matches any skill pattern (including compound skills)
+    // SECOND: Check for single-word position titles (CTO, CFO, CEO, etc.)
+    const positionTitles = ['cto', 'cfo', 'ceo', 'coo', 'cio', 'cmo', 'chro', 'cpo', 'ciso'];
+    if (positionTitles.includes(l)) return 'Position';
+    
+    // Check for common position single words
+    if (l === 'auditor' || l === 'analyst' || l === 'architect') return 'Position';
+    
+    // THIRD: Check for projects
+    if (l.includes('project') || l.includes('campaign')) return 'Project';
+    
+    // FOURTH: Check for skills (comprehensive lists)
+    // Note: Only check skills with 2+ characters to avoid false positives like 'r' matching any name
+    const techSkills = [
+        // Programming languages (removed single-char 'r')
+        'python', 'javascript', 'java', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'matlab', 'perl', 'bash', 'shell',
+        // Databases
+        'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'cassandra', 'oracle', 'sqlite', 'mariadb', 'dynamodb', 'firestore', 'neptune',
+        // Cloud & DevOps
+        'aws', 'azure', 'gcp', 'kubernetes', 'docker', 'terraform', 'ansible', 'jenkins', 'circleci', 'github actions', 'gitlab ci', 'ci/cd', 'devops', 'cloud', 'serverless', 'lambda', 'ecs', 'eks', 'cloudformation', 'openstack',
+        // ML/AI
+        'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data engineering', 'spark', 'hadoop', 'hive', 'airflow', 'databricks',
+        // Frontend
+        'react', 'reactjs', 'vue', 'vuejs', 'angular', 'svelte', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'jquery', 'nextjs', 'nuxt', 'gatsby',
+        // Backend
+        'node', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'spring', 'springboot', 'rails', 'laravel', 'asp.net', 'graphql', 'rest', 'api', 'microservices',
+        // Other tech
+        'blockchain', 'ethereum', 'solidity', 'iot', 'vr', 'cyber security', 'penetration testing', 'ethical hacking', 'forensics', 'cryptography',
+        // Tools
+        'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator', 'xd', 'zeplin', 'invision'
+    ];
+    
+    const softSkills = [
+        'leadership', 'communication', 'teamwork', 'collaboration', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills', 'attention to detail', 'troubleshooting', 'research', 'planning', 'prioritization'
+    ];
+    
+    const domainSkills = [
+        // Business (removed partial matches like 'hris' which matches 'christopher')
+        'analytics', 'data analysis', 'business analysis', 'financial analysis', 'market research', 'seo', 'sem', 'ppc', 'crm', 'erp', 'branding', 'content strategy', 'copywriting', 'social media', 'email marketing', 'affiliate marketing', 'growth hacking',
+        // Finance
+        'budgeting', 'forecasting', 'financial planning', 'accounting', 'auditing', 'tax', 'compliance', 'risk management', 'investments', 'treasury', 'controller',
+        // HR (use full 'hr management' instead of 'hris' to avoid partial matches)
+        'recruitment', 'talent acquisition', 'onboarding', 'training', 'development', 'performance management', 'compensation', 'benefits', 'employee relations', 'hr management', 'workday',
+        // Design
+        'ui/ux', 'ui design', 'ux design', 'visual design', 'graphic design', 'typography', 'illustration', 'icon design', 'motion design', 'interaction design', 'prototyping', 'wireframing', 'user research', 'usability testing',
+        // Product
+        'product management', 'product strategy', 'roadmap', 'stakeholder management', 'user stories', 'agile', 'kanban', 'lean',
+        // Operations
+        'logistics', 'supply chain', 'procurement', 'inventory', 'manufacturing', 'quality assurance', 'qa', 'testing', 'automation',
+        // Legal
+        'contracts', 'intellectual property', 'corporate law', 'employment law', 'regulatory',
+        // Science
+        'chemistry', 'biology', 'physics', 'statistics', 'experimental design'
+    ];
+    
+    const allSkills = [...techSkills, ...softSkills, ...domainSkills];
+    
+    // Check if label matches any skill pattern (2+ char matches only)
     for (const skill of allSkills) {
         if (l.includes(skill)) return 'Skill';
     }
     
-    // Department check
-    const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
-    if (departments.some(dept => l.includes(dept))) return 'Department';
-    if (l.includes('dept') || l.includes('department')) return 'Department';
-    
-    // Project check
-    if (l.includes('project') || l.includes('campaign')) return 'Project';
-    
-    // Position check
+    // FIFTH: Position check (multi-word positions)
     if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
-        l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || 
+        l.includes('director') || 
         l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
         l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
         l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
-        l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+        l.includes('advisor') || l.includes('lead') || l.includes('head') ||
+        l.includes('officer') || l.includes('president') || l.includes('vice') ||
+        l.includes('senior') || l.includes('junior') || l.includes('associate') || l.includes('intern') || l.includes('rep') || l.includes('fellow')) return 'Position';
     
-    // Default to Employee for names (typically 2-3 words with spaces, typical human name pattern)
+    // SIXTH: Employee name check (2-4 words that look like human names)
     const words = l.split(' ').filter(w => w.length > 0);
     if (words.length >= 2 && words.length <= 4) {
         // Check if it looks like a human name (not a skill/position title)
         const isLikelyName = words.every(word => {
             if (word.length < 2) return false;
-            const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group', 'science', 'analysis', 'engineering', 'visualization', 'computing', 'security', 'development', 'testing', 'quality', 'design', 'management'];
+            const skillKeywords = [
+                'python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 
+                'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 
+                'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 
+                'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 
+                'department', 'team', 'group', 'science', 'analysis', 'engineering', 
+                'visualization', 'computing', 'security', 'development', 'testing', 'quality', 
+                'design', 'management', 'marketing', 'sales', 'finance', 'recruitment',
+                'product', 'analytics', 'strategy', 'operations', 'research'
+            ];
             return !skillKeywords.some(keyword => word.includes(keyword));
         });
         if (isLikelyName) return 'Employee';
     }
     
-    // If single word and doesn't match anything, it's likely a skill
-    if (words.length === 1) return 'Skill';
-    
-    // Default fallback
-    return 'Employee';
-}
-    
-    // Department check
-    const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr'];
-    if (departments.some(dept => l.includes(dept))) return 'Department';
-    if (l.includes('dept') || l.includes('department')) return 'Department';
-    
-    // Project check
-    if (l.includes('project') || l.includes('campaign')) return 'Project';
-    
-    // Position check (after name check)
-    if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
-        l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || 
-        l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
-        l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
-        l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
-        l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
-    
-    // Skill check
-    const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl'];
-    const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making'];
-    const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
-    
-    const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
-    
-    for (const skill of allSkills) {
-        // Only match whole words, not substrings - escape special regex chars
-        const escapedSkill = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('\\b' + escapedSkill + '\\b', 'i');
-        if (regex.test(l)) return 'Skill';
+    // SEVENTH: Single word fallback
+    if (words.length === 1) {
+        return 'Skill';
     }
-    
-    // If single word and doesn't match anything, it's likely a skill
-    if (words.length === 1) return 'Skill';
     
     // Default fallback
     return 'Employee';
@@ -305,9 +368,9 @@ function setLanguage(lang) {
     document.getElementById('lang-' + lang).style.background = '#667eea';
     document.getElementById('lang-' + lang).style.color = 'white';
     
-    // Update text elements
+    // Update text elements (exclude dynamic content areas)
     const t = translations[lang];
-    document.querySelectorAll('[data-translate]').forEach(elem => {
+    document.querySelectorAll('[data-translate]:not(#nodes):not(#edges-list):not(#employees-list):not(#status)').forEach(elem => {
         const key = elem.getAttribute('data-translate');
         if (t[key]) {
             if (elem.tagName === 'INPUT') {
@@ -385,9 +448,22 @@ function updateNodesList(nodes) {
 }
 
 function init() {
-    fetch('/graph')
-        .then(r => r.json())
+    console.log('init() called');
+    
+    const headers = {};
+    if (apiKey) {
+        headers['Authorization'] = 'Bearer ' + apiKey;
+    }
+    
+    console.log('Fetching /graph...');
+    fetch('/graph', { headers })
+        .then(r => {
+            console.log('Fetch response status:', r.status);
+            if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'Server error: ' + r.status);
+            return r.json();
+        })
         .then(data => {
+            console.log('Data received:', data.nodes.length, 'nodes,', data.edges.length, 'edges');
             allGraphData = data;
             
             // Update stats
@@ -410,28 +486,35 @@ function init() {
             document.getElementById('skills').textContent = stats.Skill;
             document.getElementById('edges').textContent = data.edges.length;
             
-            // Show nodes
+            // Show nodes (sorted alphabetically)
             let nodesHtml = '<div style="display:flex;flex-wrap:wrap;gap:8px;">';
-            data.nodes.forEach(n => {
+            const sortedNodes = [...data.nodes].sort((a, b) => a.label.localeCompare(b.label));
+            sortedNodes.forEach(n => {
                 const type = getType(n.label);
                 nodesHtml += `<span style="background:${colors[type]};color:white;padding:6px 12px;border-radius:20px;font-size:13px;">${n.label}</span>`;
             });
             nodesHtml += '</div>';
             document.getElementById('nodes').innerHTML = nodesHtml;
             
-            // Show edges
+            // Show edges (sorted alphabetically)
             let edgesHtml = '';
-            data.edges.forEach(e => {
+            const sortedEdges = [...data.edges].sort((a, b) => {
+                const labelA = (a.label || '').toLowerCase();
+                const labelB = (b.label || '').toLowerCase();
+                return labelA.localeCompare(labelB);
+            });
+            sortedEdges.forEach(e => {
                 edgesHtml += `<div style="background:#f0f0f0;padding:6px 10px;border-radius:4px;margin:4px 0;font-size:12px;font-family:monospace;">
                     <strong>${e.label || 'REL'}</strong>: ${e.source} → ${e.target}
                 </div>`;
             });
             document.getElementById('edges-list').innerHTML = edgesHtml || '<p data-i18n="noRelationships" style="color:#666;">No relationships</p>';
             
-            // Show employees
+            // Show employees (sorted alphabetically)
+            const sortedEmployees = [...employees].sort((a, b) => a.localeCompare(b));
             document.getElementById('employees-list').innerHTML = 
                 '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
-                employees.slice(0, 10).map(e => 
+                sortedEmployees.slice(0, 10).map(e => 
                     `<span style="background:${colors.Employee};color:white;padding:8px 16px;border-radius:20px;">👤 ${e}</span>`
                 ).join('') + '</div>';
             
@@ -440,6 +523,7 @@ function init() {
             document.getElementById('status').style.color = '#2e7d32';
         })
         .catch(err => {
+            console.error('Error loading graph:', err);
             document.getElementById('status').innerHTML = '❌ <span data-i18n="error">Error</span>: ' + err.message;
             document.getElementById('status').style.background = '#ffebee';
             document.getElementById('status').style.color = '#c62828';
@@ -451,7 +535,11 @@ function handleSearch(q) {
         document.getElementById('search-results').innerHTML = '';
         return;
     }
-    fetch('/graph')
+    const headers = {};
+    if (apiKey) {
+        headers['Authorization'] = 'Bearer ' + apiKey;
+    }
+    fetch('/graph', { headers })
         .then(r => r.json())
         .then(data => {
             const matches = data.nodes.filter(n => n.label.toLowerCase().includes(q.toLowerCase()));

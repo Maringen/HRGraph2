@@ -1,13 +1,71 @@
+version: '3.8'
+
+
+
 services:
+
   falkordb:
+
     image: falkordb/falkordb:latest
+
+    container_name: falkordb_server
+
     ports:
+
       - "6379:6379"
-      - "0.0.0.0:7687:7687"  # Bolt port for Cypher
+
+      - "7687:7687"  # Port Bolt
+
     volumes:
+
       - falkordb_data:/data
-    command: ["falkordb", "--port", "6379", "--bolt-port", "7687"]
+
+    # On laisse l'image charger ses modules par défaut, 
+
+    # mais on active Bolt via les variables d'environnement si nécessaire
+
+    # ou via les arguments Redis classiques.
+
+    command: ["redis-server", "--loadmodule", "/usr/lib/redis/modules/falkordb.so", "bolt-port", "7687"]
+
+    healthcheck:
+
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+
+      interval: 10s
+
+      timeout: 5s
+
+      retries: 5
+
+
+
+  falkordb-browser:
+
+    image: falkordb/falkordb-browser:latest
+
+    container_name: falkordb_gui
+
+    ports:
+
+      - "3001:3000" # Port standard 3000
+
+    environment:
+
+      - REDIS_HOST=falkordb
+
+      - REDIS_PORT=6379
+
+    depends_on:
+
+      falkordb:
+
+        condition: service_healthy
+
+    restart: always
+
 
 
 volumes:
+
   falkordb_data:

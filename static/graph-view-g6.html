@@ -1,0 +1,2944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Knowledge Graph - AntV G6</title>
+    <script src="https://gw.alipayobjects.com/os/lib/antv/g6/4.8.24/dist/g6.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        #header { 
+            background: white; 
+            padding: 12px 24px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        #header h1 { color: #333; font-size: 20px; }
+        #header-right { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .lang-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .lang-btn:hover { border-color: #667eea; }
+        .lang-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        #lang-selector { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+        #lang-selector span { font-size: 12px; color: #666; margin-right: 5px; }
+        #stats { display: flex; gap: 15px; }
+        .stat { text-align: center; }
+        .stat-number { font-size: 18px; font-weight: bold; color: #667eea; }
+        .stat-label { font-size: 10px; color: #666; text-transform: uppercase; }
+        #toolbar { 
+            background: #f8f9fa; 
+            padding: 10px 24px; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+        #toolbar button { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 6px; 
+            cursor: pointer;
+            font-size: 13px;
+        }
+        #toolbar button:hover { transform: translateY(-1px); }
+        #toolbar input { 
+            padding: 8px 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 14px;
+        }
+        #graph-container { 
+            height: calc(100vh - 120px); 
+            background: #fafafa; 
+        }
+        #legend { 
+            position: fixed; 
+            top: 130px; 
+            right: 20px; 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); 
+            z-index: 100;
+        }
+        #legend h4 { margin-bottom: 10px; color: #333; font-size: 14px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; }
+        .legend-color { width: 16px; height: 16px; border-radius: 50%; }
+        
+        /* Draggable Panel Styles */
+        .draggable { cursor: move; position: fixed; }
+        .draggable.dragging { opacity: 0.9; cursor: grabbing; }
+        
+        /* Risk Analysis Panel */
+        #risk-panel { position: fixed; bottom: 20px; left: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 98; min-width: 200px; }
+        #risk-panel h4 { margin-bottom: 10px; color: #333; font-size: 14px; }
+        .risk-item { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; }
+        .risk-bar { width: 60px; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+        .risk-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+        .risk-high { background: #f44336; }
+        .risk-medium { background: #ff9800; }
+        .risk-low { background: #4caf50; }
+        
+        /* Toggle for risk analysis */
+        #risk-toggle { cursor: pointer; user-select: none; }
+        #risk-toggle:hover { opacity: 0.8; }
+        
+        /* Risk badge on nodes */
+        .risk-badge { position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: white; font-weight: bold; }
+        #loading { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: white; 
+            padding: 40px 60px; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            text-align: center; 
+            z-index: 1000;
+        }
+        .spinner { 
+            width: 60px; height: 60px; 
+            border: 6px solid #f0f0f0; 
+            border-top-color: #667eea; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto 20px; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #loading-text { font-size: 18px; color: #333; animation: pulse 1.5s ease-in-out infinite; }
+        
+        /* API Key */
+        #api-key-container { display: flex; align-items: center; gap: 8px; }
+        #api-key { 
+            padding: 6px 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 12px; 
+            width: 120px;
+        }
+        #api-key-btn { 
+            padding: 6px 12px; 
+            background: #667eea; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        /* Filter Panel */
+        #filter-panel {
+            position: fixed;
+            left: 20px;
+            top: 130px;
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 99;
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+        }
+        #filter-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #filter-header h3 { margin: 0; font-size: 14px; }
+        #filter-content { padding: 15px; }
+        .filter-section { margin-bottom: 15px; }
+        .filter-label { font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px; }
+        .filter-checkboxes { display: flex; flex-direction: column; gap: 6px; }
+        .filter-checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .filter-checkbox input { margin: 0; }
+        
+        /* Search count */
+        #search-count { color: #666; font-size: 13px; margin-left: 10px; }
+        
+        /* Sparkle animation for selected nodes */
+        @keyframes sparkle-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7), 0 0 10px 5px rgba(102, 126, 234, 0.3);
+            }
+            25% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.5), 0 0 20px 10px rgba(102, 126, 234, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(102, 126, 234, 0.3), 0 0 30px 15px rgba(102, 126, 234, 0.1);
+            }
+            75% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.5), 0 0 20px 10px rgba(102, 126, 234, 0.2);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7), 0 0 10px 5px rgba(102, 126, 234, 0.3);
+            }
+        }
+        
+        @keyframes sparkle-glow {
+            0%, 100% {
+                border-color: #667eea;
+                filter: brightness(1);
+            }
+            50% {
+                border-color: #764ba2;
+                filter: brightness(1.3);
+            }
+        }
+        
+        @keyframes sparkle-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Sparkle effect wrapper */
+        .sparkle-selected {
+            animation: sparkle-pulse 2s ease-in-out infinite, sparkle-glow 1s ease-in-out infinite;
+        }
+        
+        /* Particle-like sparkle decorations */
+        .sparkle-decoration {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #fff 0%, #667eea 100%);
+            border-radius: 50%;
+            animation: sparkle-float 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle-float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateY(-10px) scale(1.2);
+                opacity: 1;
+            }
+        }
+        
+        /* Chat Panel Styles */
+        #chat-panel.collapsed { height: 50px; }
+        #chat-history::-webkit-scrollbar { width: 6px; }
+        #chat-history::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+        #chat-history::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        #chat-history::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        .chat-message { margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; max-width: 85%; }
+        .chat-user { background: #667eea; color: white; align-self: flex-end; margin-left: auto; }
+        .chat-assistant { background: #f0f0f0; color: #333; align-self: flex-start; margin-right: auto; }
+        .chat-message .query-mode { font-size: 10px; opacity: 0.7; margin-bottom: 4px; font-weight: 600; }
+        .chat-loading { display: none; text-align: center; padding: 10px; color: #667eea; font-style: italic; }
+        .chat-loading.active { display: block; }
+        .chat-results { margin-top: 8px; padding: 8px; background: rgba(102, 126, 234, 0.1); border-radius: 4px; border-left: 3px solid #667eea; }
+        .chat-results .chat-result-item { padding: 4px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .chat-results .chat-result-item:hover { background: rgba(102, 126, 234, 0.2); }
+        .chat-results .chat-result-item.single-node { font-weight: 600; color: #667eea; }
+        .chat-results .chat-result-item .click-hint { font-size: 9px; color: #999; font-weight: normal; margin-left: 6px; }
+        .empty-state { text-align: center; color: #999; padding: 20px; font-style: italic; }
+        #chat-input:focus { outline: none; border-color: #667eea; }
+        #chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1 data-i18n="title">📊 HR Knowledge Graph (AntV G6)</h1>
+        <div id="header-right">
+            <div id="stats">
+                <div class="stat"><div class="stat-number" id="s-employees">-</div><div class="stat-label" data-i18n="statsEmployees">Employees</div></div>
+                <div class="stat"><div class="stat-number" id="s-departments">-</div><div class="stat-label" data-i18n="statsDepts">Depts</div></div>
+                <div class="stat"><div class="stat-number" id="s-positions">-</div><div class="stat-label" data-i18n="statsPositions">Positions</div></div>
+                <div class="stat"><div class="stat-number" id="s-projects">-</div><div class="stat-label" data-i18n="statsProjects">Projects</div></div>
+                <div class="stat"><div class="stat-number" id="s-skills">-</div><div class="stat-label" data-i18n="statsSkills">Skills</div></div>
+                <div class="stat"><div class="stat-number" id="s-edges">-</div><div class="stat-label" data-i18n="statsEdges">Edges</div></div>
+            </div>
+            <div id="api-key-container">
+                <input type="password" id="api-key" placeholder="API key">
+                <button id="api-key-btn" onclick="saveApiKey()">OK</button>
+            </div>
+            <div id="lang-selector">
+                <span>Lang:</span>
+                <button class="lang-btn" onclick="setLanguage('en')" id="lang-en">EN</button>
+                <button class="lang-btn" onclick="setLanguage('fr')" id="lang-fr">FR</button>
+                <button class="lang-btn" onclick="setLanguage('it')" id="lang-it">IT</button>
+                <button class="lang-btn" onclick="setLanguage('de')" id="lang-de">DE</button>
+            </div>
+            <a href="/" style="color: #667eea; font-size: 13px;" data-i18n="dashboard">Dashboard</a>
+        </div>
+    </div>
+    
+    <div id="toolbar" style="background: #f8f9fa; padding: 10px 24px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button onclick="fitView()" data-i18n="fitView" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Fit View</button>
+        <button onclick="toggleLayout()" data-i18n="layout" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Layout: Network</button>
+        <button onclick="togglePhysics()" data-i18n="physics" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Physics</button>
+        <button onclick="zoomIn()" data-i18n="zoomIn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Zoom +</button>
+        <button onclick="zoomOut()" data-i18n="zoomOut" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Zoom -</button>
+        <button id="edge-labels-btn" onclick="toggleEdgeLabels()" data-i18n="edgeLabels" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Labels</button>
+        <button id="risk-btn" onclick="toggleRiskAnalysis()" data-i18n="risk" style="background: #607d8b; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Risk</button>
+        <button id="diff-btn" onclick="toggleDiffPanel()" data-i18n="diff" style="background: #9c27b0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Temporal Diff</button>
+        <button id="collab-btn" onclick="toggleCollabPanel()" data-i18n="implicitTeams" style="background: #00bcd4; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px;">Implicit Teams</button>
+        <input type="text" id="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search nodes..." oninput="searchNodes(this.value)" style="padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; width: 200px;">
+        <span id="search-count" style="color: #666; font-size: 13px;"></span>
+    </div>
+    
+    <!-- Filter Panel -->
+    <div id="filter-panel" style="position: fixed; left: 20px; top: 140px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 99; max-height: calc(100vh - 200px); overflow-y: auto; width: 260px;">
+        <div id="filter-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;" data-i18n="filterTitle">Filters</h3>
+            <span style="font-size:11px;opacity:0.8;">(drag)</span>
+        </div>
+        <div id="filter-content" style="padding: 15px;">
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px; text-transform: uppercase;" data-i18n="filterNodeTypes">Node Types</div>
+                <div class="filter-checkboxes" id="type-filters" style="display: flex; flex-direction: column; gap: 6px;"></div>
+            </div>
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px;" data-i18n="filterDepartment">Department</div>
+                <select id="filter-department" onchange="onG6FilterChange('filter-department')" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:13px;">
+                    <option value="" data-i18n="allDepartments">All Departments</option>
+                </select>
+            </div>
+            
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px;" data-i18n="filterEmployee">Employee</div>
+                <select id="filter-employee" onchange="onG6FilterChange('filter-employee')" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:13px;">
+                    <option value="" data-i18n="allEmployees">All Employees</option>
+                </select>
+            </div>
+            
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px;" data-i18n="filterPosition">Position</div>
+                <select id="filter-position" onchange="onG6FilterChange('filter-position')" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:13px;">
+                    <option value="" data-i18n="allPositions">All Positions</option>
+                </select>
+            </div>
+            
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px;" data-i18n="filterProject">Project</div>
+                <select id="filter-project" onchange="onG6FilterChange('filter-project')" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:13px;">
+                    <option value="" data-i18n="allProjects">All Projects</option>
+                </select>
+            </div>
+            
+            <div class="filter-section" style="margin-bottom: 15px;">
+                <div class="filter-label" style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 12px;" data-i18n="filterSkill">Skill</div>
+                <select id="filter-skill" onchange="onG6FilterChange('filter-skill')" style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:13px;">
+                    <option value="" data-i18n="allSkills">All Skills</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                <button onclick="applyG6Filters()" style="flex: 1; padding: 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;" data-i18n="filterApply">Apply</button>
+                <button onclick="clearG6Filters()" style="flex: 1; padding: 8px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer; font-size: 12px;" data-i18n="filterClear">Clear</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Panel -->
+    <div id="chat-panel" style="position: fixed; right: 20px; bottom: 20px; width: 320px; height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; display: flex; flex-direction: column; transition: box-shadow 0.3s ease;">
+        <div id="chat-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;" data-i18n="chatTitle">Query Chat</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="chat-mode-toggle" style="display:flex;gap:4px;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px;">
+                    <button type="button" id="mode-natural" onclick="toggleQueryMode('natural')" style="background:transparent;border:none;color:white;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">NL</button>
+                    <button type="button" id="mode-cypher" onclick="toggleQueryMode('cypher')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Cypher</button>
+                </div>
+                <button id="chat-toggle" onclick="event.stopPropagation(); toggleChatPanel()" title="Toggle Chat Panel" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.2s;">−</button>
+            </div>
+        </div>
+        <div id="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="chat-history" style="flex: 1; padding: 15px; overflow-y: auto; border-bottom: 1px solid #eee; font-size: 12px; line-height: 1.4;"></div>
+            <div id="chat-input-container" style="padding: 12px; border-top: 1px solid #eee;">
+                <div id="chat-input-wrapper" style="display: flex; gap: 8px; align-items: flex-end;">
+                    <textarea id="chat-input" placeholder="Type your query here..." data-i18n-placeholder="chatInputPlaceholder" onkeypress="handleChatKeypress(event)" rows="1" style="flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; resize: none; min-height: 34px; max-height: 80px; font-family: inherit; transition: border-color 0.2s;"></textarea>
+                    <button id="chat-send" onclick="sendQuery()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;" data-i18n="chatSend">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Panel -->
+    <div id="chat-panel" style="position: fixed; right: 20px; bottom: 20px; width: 320px; height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; display: flex; flex-direction: column; transition: box-shadow 0.3s ease;">
+        <div id="chat-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;" data-i18n="chatTitle">Query Chat</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="chat-mode-toggle" style="display:flex;gap:4px;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px;">
+                    <button type="button" id="mode-natural" onclick="toggleQueryMode('natural')" style="background:transparent;border:none;color:white;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">NL</button>
+                    <button type="button" id="mode-cypher" onclick="toggleQueryMode('cypher')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Cypher</button>
+                </div>
+                <button id="chat-toggle" onclick="event.stopPropagation(); toggleChatPanel()" title="Toggle Chat Panel" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.2s;">−</button>
+            </div>
+        </div>
+        <div id="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="chat-history" style="flex: 1; padding: 15px; overflow-y: auto; border-bottom: 1px solid #eee; font-size: 12px; line-height: 1.4;"></div>
+            <div id="chat-input-container" style="padding: 12px; border-top: 1px solid #eee;">
+                <div id="chat-input-wrapper" style="display: flex; gap: 8px; align-items: flex-end;">
+                    <textarea id="chat-input" placeholder="Type your query here..." data-i18n-placeholder="chatInputPlaceholder" onkeypress="handleChatKeypress(event)" rows="1" style="flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; resize: none; min-height: 34px; max-height: 80px; font-family: inherit; transition: border-color 0.2s;"></textarea>
+                    <button id="chat-send" onclick="sendQuery()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;" data-i18n="chatSend">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Panel -->
+    <div id="chat-panel" style="position: fixed; right: 20px; bottom: 20px; width: 320px; height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; display: flex; flex-direction: column; transition: box-shadow 0.3s ease;">
+        <div id="chat-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;" data-i18n="chatTitle">Query Chat</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="chat-mode-toggle" style="display:flex;gap:4px;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px;">
+                    <button type="button" id="mode-natural" onclick="toggleQueryMode('natural')" style="background:transparent;border:none;color:white;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">NL</button>
+                    <button type="button" id="mode-cypher" onclick="toggleQueryMode('cypher')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Cypher</button>
+                </div>
+                <button id="chat-toggle" onclick="event.stopPropagation(); toggleChatPanel()" title="Toggle Chat Panel" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.2s;">−</button>
+            </div>
+        </div>
+        <div id="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="chat-history" style="flex: 1; padding: 15px; overflow-y: auto; border-bottom: 1px solid #eee; font-size: 12px; line-height: 1.4;"></div>
+            <div id="chat-input-container" style="padding: 12px; border-top: 1px solid #eee;">
+                <div id="chat-input-wrapper" style="display: flex; gap: 8px; align-items: flex-end;">
+                    <textarea id="chat-input" placeholder="Type your query here..." data-i18n-placeholder="chatInputPlaceholder" onkeypress="handleChatKeypress(event)" rows="1" style="flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; resize: none; min-height: 34px; max-height: 80px; font-family: inherit; transition: border-color 0.2s;"></textarea>
+                    <button id="chat-send" onclick="sendQuery()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;" data-i18n="chatSend">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="chat-panel" style="position: fixed; right: 20px; bottom: 20px; width: 320px; height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 100; display: flex; flex-direction: column; transition: box-shadow 0.3s ease;">
+        <div id="chat-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: 600;" data-i18n="chatTitle">Query Chat</h3>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div id="chat-mode-toggle" style="display:flex;gap:4px;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px;">
+                    <button type="button" id="mode-natural" onclick="toggleQueryMode('natural')" style="background:transparent;border:none;color:white;padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">NL</button>
+                    <button type="button" id="mode-cypher" onclick="toggleQueryMode('cypher')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);padding:4px 8px;border-radius:3px;cursor:pointer;font-size:11px;">Cypher</button>
+                </div>
+                <button id="chat-toggle" onclick="event.stopPropagation(); toggleChatPanel()" title="Toggle Chat Panel" style="background: none; border: none; color: white; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background 0.2s;">−</button>
+            </div>
+        </div>
+        <div id="chat-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="chat-history" style="flex: 1; padding: 15px; overflow-y: auto; border-bottom: 1px solid #eee; font-size: 12px; line-height: 1.4;"></div>
+            <div id="chat-input-container" style="padding: 12px; border-top: 1px solid #eee;">
+                <div id="chat-input-wrapper" style="display: flex; gap: 8px; align-items: flex-end;">
+                    <textarea id="chat-input" placeholder="Type your query here..." data-i18n-placeholder="chatInputPlaceholder" onkeypress="handleChatKeypress(event)" rows="1" style="flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; resize: none; min-height: 34px; max-height: 80px; font-family: inherit; transition: border-color 0.2s;"></textarea>
+                    <button id="chat-send" onclick="sendQuery()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; white-space: nowrap;" data-i18n="chatSend">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Risk Analysis Panel -->
+    <div id="risk-panel" style="display: none;">
+        <h4>🔴 <span data-i18n="riskAnalysis">Risk Analysis</span> <span id="risk-toggle" onclick="toggleRiskAnalysis()" data-i18n="riskToggleHide" style="font-size: 11px; color: #666; cursor: pointer;">(hide)</span></h4>
+        <div id="risk-content">
+            <p data-i18n="riskClickNode" style="font-size: 11px; color: #666; margin-bottom: 10px;">Click on a node to analyze risk</p>
+        </div>
+    </div>
+    
+    <!-- Temporal Diff Panel -->
+    <div id="diff-panel" style="display: none; position: fixed; bottom: 20px; left: 260px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 98; min-width: 280px;">
+        <h4>📊 <span data-i18n="temporalDiff">Temporal Diff</span> <span id="diff-toggle" onclick="toggleDiffPanel()" data-i18n="diffToggleHide" style="font-size: 11px; color: #666; cursor: pointer;">(hide)</span></h4>
+        <div id="diff-content">
+            <div style="margin-bottom: 10px;">
+                <label data-i18n="diffBefore" style="font-size: 12px; font-weight: 600;">Before:</label>
+                <input type="date" id="diff-before" style="width: 100%; padding: 6px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label data-i18n="diffAfter" style="font-size: 12px; font-weight: 600;">After:</label>
+                <input type="date" id="diff-after" style="width: 100%; padding: 6px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; margin-top: 4px;">
+            </div>
+            <button onclick="runDiffAnalysis()" data-i18n="diffCompare" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%;">Compare</button>
+            <div id="diff-results" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+    
+    <!-- Implicit Teams Panel -->
+    <div id="collab-panel" style="display: none; position: fixed; bottom: 20px; right: 220px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 98; min-width: 260px;">
+        <h4>👥 <span data-i18n="implicitTeams">Implicit Teams</span> <span id="collab-toggle" onclick="toggleCollabPanel()" data-i18n="collabToggleHide" style="font-size: 11px; color: #666; cursor: pointer;">(hide)</span></h4>
+        <div id="collab-content">
+            <div style="margin-bottom: 10px;">
+                <label data-i18n="collabMinInteractions" style="font-size: 12px; font-weight: 600;">Min interactions:</label>
+                <input type="number" id="collab-min" value="2" min="1" max="10" style="width: 60px; padding: 6px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; margin-left: 8px;">
+            </div>
+            <button onclick="loadCollaborations()" data-i18n="collabFindTeams" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%;">Find Teams</button>
+            <div id="collab-results" style="margin-top: 10px; max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+    
+    <!-- Legend -->
+    <div id="legend">
+        <h4 data-i18n="nodeTypes">Legend</h4>
+        <div class="legend-item"><div class="legend-color" style="background:#667eea"></div><span data-i18n="nodeEmployee">Employee</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#4caf50"></div><span data-i18n="nodeDepartment">Department</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#ff9800"></div><span data-i18n="nodePosition">Position</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#e91e63"></div><span data-i18n="nodeProject">Project</span></div>
+        <div class="legend-item"><div class="legend-color" style="background:#00bcd4"></div><span data-i18n="nodeSkill">Skill</span></div>
+        <hr style="margin: 8px 0; border: none; border-top: 1px solid #eee;">
+        <div class="legend-item"><div style="width:16px;height:3px;background:#4caf50"></div><span data-i18n="legendDiffNew">New (diff)</span></div>
+        <div class="legend-item"><div style="width:16px;height:2px;background:#f44336;border-top:2px dashed #f44336"></div><span data-i18n="legendDiffRemoved">Removed (diff)</span></div>
+        <div class="legend-item"><div style="width:16px;height:2px;background:#9c27b0;border-top:2px dashed #9c27b0"></div><span data-i18n="legendDiffImplicit">Implicit team</span></div>
+    </div>
+    
+    <!-- Graph Container -->
+    <div id="graph-container"></div>
+    
+    <!-- Loading -->
+    <div id="loading" style="display: block;">
+        <div class="spinner"></div>
+        <div id="loading-text" data-i18n="loading">Loading graph...</div>
+    </div>
+
+    <script>
+        // API Key management
+        let apiKey = localStorage.getItem('hr_api_key') || '';
+        
+        function saveApiKey() {
+            const keyInput = document.getElementById('api-key');
+            if (keyInput.value) {
+                apiKey = keyInput.value;
+                localStorage.setItem('hr_api_key', apiKey);
+                waitForG6(initGraph);
+            }
+        }
+        
+        // Language management - Comprehensive translations for all UI elements
+        const translations = {
+            en: {
+                // Header
+                title: 'HR Knowledge Graph (AntV G6)',
+                employees: 'Employees', departments: 'Depts', positions: 'Positions',
+                projects: 'Projects', skills: 'Skills', edges: 'Edges',
+                // Toolbar
+                fitView: 'Fit View', layout: 'Layout', physics: 'Physics',
+                zoomIn: 'Zoom +', zoomOut: 'Zoom -', search: 'Search...',
+                searchPlaceholder: 'Search nodes...',
+                // Legend
+                nodeTypes: 'Node Types',
+                nodeEmployee: 'Employee', nodeDepartment: 'Department',
+                nodePosition: 'Position', nodeProject: 'Project', nodeSkill: 'Skill',
+                // Relationships
+                relTypes: 'Relationships',
+                relProficient: 'Proficient In', relWorksIn: 'Works as',
+                relBelongsTo: 'Belongs To', relReportsTo: 'Reports To',
+                relWorksOn: 'Works On', relCollaborates: 'Collaborates With', relManages: 'Manages',
+                // Edge labels
+                PROFICIENT_IN: 'Proficient In', WORKS_IN: 'Works as',
+                BELONGS_TO: 'Belongs To', REPORTS_TO: 'Reports To',
+                WORKS_ON: 'Works On', COLLABORATES_WITH: 'Collaborates With', MANAGES: 'Manages',
+                // Filter Panel
+                filterTitle: 'Filters', filterNodeTypes: 'Node Types',
+                filterDepartment: 'Department', filterEmployee: 'Employee',
+                filterPosition: 'Position', filterProject: 'Project', filterSkill: 'Skill',
+                allDepartments: 'All Departments', allEmployees: 'All Employees',
+                allPositions: 'All Positions', allProjects: 'All Projects', allSkills: 'All Skills',
+                filterApply: 'Apply', filterClear: 'Clear',
+                // Risk Panel
+                riskAnalysis: 'Risk Analysis', risk: 'Risk',
+                riskToggleShow: '(show)', riskToggleHide: '(hide)',
+                riskClickNode: 'Click on a node to analyze risk',
+                riskNoSelection: 'No nodes selected',
+                // Temporal Diff Panel
+                temporalDiff: 'Temporal Diff', diff: 'Temporal Diff',
+                diffToggleShow: '(show)', diffToggleHide: '(hide)',
+                diffBefore: 'Before:', diffAfter: 'After:',
+                diffCompare: 'Compare', diffLoading: 'Analyzing...',
+                diffError: 'Error: {error}',
+                diffNew: 'New', diffRemoved: 'Removed',
+                diffFromTo: 'From {before} to {after}',
+                // Implicit Teams Panel
+                implicitTeams: 'Implicit Teams', collabToggleShow: '(show)', collabToggleHide: '(hide)',
+                collabMinInteractions: 'Min interactions:',
+                collabFindTeams: 'Find Teams', collabLoading: 'Analyzing collaboration patterns...',
+                collabConnections: 'implicit connections found',
+                collabJointProjects: 'joint projects',
+                collabProjects: 'projects',
+                collabAndMore: '...and {count} more',
+                // Chat Panel
+                chatTitle: 'Query Chat', chatInputPlaceholder: 'Type your query here...', chatSend: 'Send',
+                chatModeNatural: 'Natural Language', chatModeCypher: 'Cypher Query',
+                chatEmptyState: 'Ask me anything about the HR graph!',
+                chatClickToView: 'click to view',
+                chatFoundSkill: 'Found {count} employees skilled in {skill}:',
+                chatFoundInDept: 'Found {count} employees in {dept}:',
+                chatFoundPosition: 'Found {count} employees in position {position}:',
+                chatFoundEmployees: 'Found {count} employees in the system:',
+                chatCypherSuccess: 'Cypher query executed successfully. Found {count} results:',
+                chatCypherNodes: 'Cypher query executed. Found {count} {type} nodes:',
+                chatCypherError: 'Cypher query executed. No results found or query not recognized.',
+                chatNoResults: 'I couldn\'t find any matching results. Try rephrasing your query.',
+                chatHelp: "I understand you're asking about the HR knowledge graph. Try queries like:\n• 'Who is skilled in Python?'\n• 'Show me all employees in Engineering'\n• 'Who works as Marketing Manager?'\n• 'Who is our CFO?'\n• 'Who is the CTO?'",
+                // Legend diff
+                legendDiffNew: 'New (diff)', legendDiffRemoved: 'Removed (diff)', legendDiffImplicit: 'Implicit team',
+                // Stats
+                statsEmployees: 'Employees', statsDepts: 'Depts', statsPositions: 'Positions',
+                statsProjects: 'Projects', statsSkills: 'Skills', statsEdges: 'Edges',
+                // Loading
+                loading: 'Loading graph...',
+                // Search
+                found: 'found',
+                // Dashboard
+                dashboard: 'Dashboard',
+                // Edge labels
+                edgeLabels: 'Labels'
+            },
+            fr: {
+                title: 'Graphe de Connaissances RH (AntV G6)',
+                employees: 'Employés', departments: 'Services', positions: 'Postes',
+                projects: 'Projets', skills: 'Compétences', edges: 'Liens',
+                fitView: 'Ajuster', layout: 'Disposition', physics: 'Physique',
+                zoomIn: 'Zoom +', zoomOut: 'Zoom -', search: 'Rechercher...',
+                searchPlaceholder: 'Rechercher des nœuds...',
+                nodeTypes: 'Types de Nœuds',
+                nodeEmployee: 'Employé', nodeDepartment: 'Service',
+                nodePosition: 'Poste', nodeProject: 'Projet', nodeSkill: 'Compétence',
+                relTypes: 'Relations',
+                relProficient: 'Expert en', relWorksIn: 'Travaille comme',
+                relBelongsTo: 'Appartient à', relReportsTo: 'Rapporte à',
+                relWorksOn: 'Travaille sur', relCollaborates: 'Collabore avec', relManages: 'Gère',
+                PROFICIENT_IN: 'Expert en', WORKS_IN: 'Travaille comme',
+                BELONGS_TO: 'Appartient à', REPORTS_TO: 'Rapporte à',
+                WORKS_ON: 'Travaille sur', COLLABORATES_WITH: 'Collabore avec', MANAGES: 'Gère',
+                filterTitle: 'Filtres', filterNodeTypes: 'Types de Nœuds',
+                filterDepartment: 'Service', filterEmployee: 'Employé',
+                filterPosition: 'Poste', filterProject: 'Projet', filterSkill: 'Compétence',
+                allDepartments: 'Tous les Services', allEmployees: 'Tous les Employés',
+                allPositions: 'Tous les Postes', allProjects: 'Tous les Projets', allSkills: 'Toutes les Compétences',
+                filterApply: 'Appliquer', filterClear: 'Effacer',
+                riskAnalysis: 'Analyse de Risque', risk: 'Risque',
+                riskToggleShow: '(afficher)', riskToggleHide: '(masquer)',
+                riskClickNode: 'Cliquez sur un nœud pour analyser le risque',
+                riskNoSelection: 'Aucun nœud sélectionné',
+                temporalDiff: 'Diff Temporelle', diff: 'Diff Temp',
+                diffToggleShow: '(afficher)', diffToggleHide: '(masquer)',
+                diffBefore: 'Avant:', diffAfter: 'Après:',
+                diffCompare: 'Comparer', diffLoading: 'Analyse en cours...',
+                diffError: 'Erreur: {error}',
+                diffNew: 'Nouveau', diffRemoved: 'Supprimé',
+                diffFromTo: 'Du {before} au {after}',
+                implicitTeams: 'Équipes Implicites', collabToggleShow: '(afficher)', collabToggleHide: '(masquer)',
+                collabMinInteractions: 'Interactions min:',
+                collabFindTeams: 'Trouver équipes', collabLoading: 'Analyse des schémas de collaboration...',
+                collabConnections: 'connexions implicites trouvées',
+                collabJointProjects: 'projets communs',
+                collabProjects: 'projets',
+                collabAndMore: '...et {count} de plus',
+                legendDiffNew: 'Nouveau (diff)', legendDiffRemoved: 'Supprimé (diff)', legendDiffImplicit: 'Équipe implicite',
+                statsEmployees: 'Employés', statsDepts: 'Services', statsPositions: 'Postes',
+                statsProjects: 'Projets', statsSkills: 'Compétences', statsEdges: 'Liens',
+                loading: 'Chargement...',
+                found: 'trouvé(s)',
+                dashboard: 'Tableau de Bord',
+                edgeLabels: 'Labels'
+            },
+            it: {
+                title: 'Grafico della Conoscenza HR (AntV G6)',
+                employees: 'Dipendenti', departments: 'Reparti', positions: 'Posizioni',
+                projects: 'Progetti', skills: 'Competenze', edges: 'Archi',
+                fitView: 'Adatta', layout: 'Layout', physics: 'Fisica',
+                zoomIn: 'Zoom +', zoomOut: 'Zoom -', search: 'Cerca...',
+                searchPlaceholder: 'Cerca nodi...',
+                nodeTypes: 'Tipi di Nodi',
+                nodeEmployee: 'Dipendente', nodeDepartment: 'Reparto',
+                nodePosition: 'Posizione', nodeProject: 'Progetto', nodeSkill: 'Competenza',
+                relTypes: 'Relazioni',
+                relProficient: 'Esperto in', relWorksIn: 'Lavora come',
+                relBelongsTo: 'Appartiene a', relReportsTo: 'Riporta a',
+                relWorksOn: 'Lavora su', relCollaborates: 'Collabora con', relManages: 'Gestisce',
+                PROFICIENT_IN: 'Esperto in', WORKS_IN: 'Lavora come',
+                BELONGS_TO: 'Appartiene a', REPORTS_TO: 'Riporta a',
+                WORKS_ON: 'Lavora su', COLLABORATES_WITH: 'Collabora con', MANAGES: 'Gestisce',
+                filterTitle: 'Filtri', filterNodeTypes: 'Tipi di Nodi',
+                filterDepartment: 'Reparto', filterEmployee: 'Dipendente',
+                filterPosition: 'Posizione', filterProject: 'Progetto', filterSkill: 'Competenza',
+                allDepartments: 'Tutti i Reparti', allEmployees: 'Tutti i Dipendenti',
+                allPositions: 'Tutte le Posizioni', allProjects: 'Tutti i Progetti', allSkills: 'Tutte le Competenze',
+                filterApply: 'Applica', filterClear: 'Cancella',
+                riskAnalysis: 'Analisi del Rischio', risk: 'Rischio',
+                riskToggleShow: '(mostra)', riskToggleHide: '(nascondi)',
+                riskClickNode: 'Clicca su un nodo per analizzare il rischio',
+                riskNoSelection: 'Nessun nodo selezionato',
+                temporalDiff: 'Diff Temporale', diff: 'Diff Temp',
+                diffToggleShow: '(mostra)', diffToggleHide: '(nascondi)',
+                diffBefore: 'Prima:', diffAfter: 'Dopo:',
+                diffCompare: 'Confronta', diffLoading: 'Analisi in corso...',
+                diffError: 'Errore: {error}',
+                diffNew: 'Nuovo', diffRemoved: 'Rimosso',
+                diffFromTo: 'Dal {before} al {after}',
+                implicitTeams: 'Team Impliciti', collabToggleShow: '(mostra)', collabToggleHide: '(nascondi)',
+                collabMinInteractions: 'Interazioni min:',
+                collabFindTeams: 'Trova team', collabLoading: 'Analisi dei pattern di collaborazione...',
+                collabConnections: 'connessioni implicite trovate',
+                collabJointProjects: 'progetti comuni',
+                collabProjects: 'progetti',
+                collabAndMore: '...e altri {count}',
+                // Chat Panel
+                chatTitle: 'Chat di Query', chatInputPlaceholder: 'Scrivi la tua query qui...', chatSend: 'Invia',
+                chatModeNatural: 'Linguaggio Naturale', chatModeCypher: 'Query Cypher',
+                chatEmptyState: 'Chiedimi qualsiasi cosa sul grafo HR!',
+                chatClickToView: 'clicca per visualizzare',
+                chatFoundSkill: 'Trovati {count} dipendenti competenti in {skill}:',
+                chatFoundInDept: 'Trovati {count} dipendenti in {dept}:',
+                chatFoundPosition: 'Trovati {count} dipendenti nella posizione {position}:',
+                chatFoundEmployees: 'Trovati {count} dipendenti nel sistema:',
+                chatCypherSuccess: 'Query Cypher eseguita con successo. Trovati {count} risultati:',
+                chatCypherNodes: 'Query Cypher eseguita. Trovati {count} nodi {type}:',
+                chatCypherError: 'Query Cypher eseguita. Nessun risultato trovato o query non riconosciuta.',
+                chatNoResults: 'Non ho trovato risultati corrispondenti. Prova a riformulare la tua query.',
+                chatHelp: "Capisco che stai chiedendo informazioni sul grafo della conoscenza HR. Prova query come:\n• 'Chi è esperto in Python?'\n• 'Mostrami tutti i dipendenti di Engineering'\n• 'Chi lavora come Responsabile Marketing?'\n• 'Chi è il nostro CFO?'\n• 'Chi è il CTO?'",
+                legendDiffNew: 'Nuovo (diff)', legendDiffRemoved: 'Rimosso (diff)', legendDiffImplicit: 'Team implicito',
+                statsEmployees: 'Dipendenti', statsDepts: 'Reparti', statsPositions: 'Posizioni',
+                statsProjects: 'Progetti', statsSkills: 'Competenze', statsEdges: 'Archi',
+                loading: 'Caricamento...',
+                found: 'trovato(i)',
+                dashboard: 'Dashboard',
+                edgeLabels: 'Etichette'
+            },
+            de: {
+                title: 'HR Wissensgraph (AntV G6)',
+                employees: 'Mitarbeiter', departments: 'Abteilungen', positions: 'Positionen',
+                projects: 'Projekte', skills: 'Fähigkeiten', edges: 'Kanten',
+                fitView: 'Ansicht', layout: 'Layout', physics: 'Physik',
+                zoomIn: 'Zoom +', zoomOut: 'Zoom -', search: 'Suchen...',
+                searchPlaceholder: 'Knoten suchen...',
+                nodeTypes: 'Knotentypen',
+                nodeEmployee: 'Mitarbeiter', nodeDepartment: 'Abteilung',
+                nodePosition: 'Position', nodeProject: 'Projekt', nodeSkill: 'Fähigkeit',
+                relTypes: 'Beziehungen',
+                relProficient: 'Experte in', relWorksIn: 'Arbeitet als',
+                relBelongsTo: 'Gehört zu', relReportsTo: 'Berichtet an',
+                relWorksOn: 'Arbeitet an', relCollaborates: 'Arbeitet zusammen mit', relManages: 'Leitet',
+                PROFICIENT_IN: 'Experte in', WORKS_IN: 'Arbeitet als',
+                BELONGS_TO: 'Gehört zu', REPORTS_TO: 'Berichtet an',
+                WORKS_ON: 'Arbeitet an', COLLABORATES_WITH: 'Arbeitet zusammen mit', MANAGES: 'Leitet',
+                filterTitle: 'Filter', filterNodeTypes: 'Knotentypen',
+                filterDepartment: 'Abteilung', filterEmployee: 'Mitarbeiter',
+                filterPosition: 'Position', filterProject: 'Projekt', filterSkill: 'Fähigkeit',
+                allDepartments: 'Alle Abteilungen', allEmployees: 'Alle Mitarbeiter',
+                allPositions: 'Alle Positionen', allProjects: 'Alle Projekte', allSkills: 'Alle Fähigkeiten',
+                filterApply: 'Anwenden', filterClear: 'Löschen',
+                riskAnalysis: 'Risikoanalyse', risk: 'Risiko',
+                riskToggleShow: '(zeigen)', riskToggleHide: '(verstecken)',
+                riskClickNode: 'Klicken Sie auf einen Knoten zur Risikoanalyse',
+                riskNoSelection: 'Keine Knoten ausgewählt',
+                temporalDiff: 'Zeitliche Diff', diff: 'Zeitl. Diff',
+                diffToggleShow: '(zeigen)', diffToggleHide: '(verstecken)',
+                diffBefore: 'Vor:', diffAfter: 'Nach:',
+                diffCompare: 'Vergleichen', diffLoading: 'Analysiere...',
+                diffError: 'Fehler: {error}',
+                diffNew: 'Neu', diffRemoved: 'Entfernt',
+                diffFromTo: 'Von {before} bis {after}',
+                implicitTeams: 'Implizite Teams', collabToggleShow: '(zeigen)', collabToggleHide: '(verstecken)',
+                collabMinInteractions: 'Min. Interaktionen:',
+                collabFindTeams: 'Teams finden', collabLoading: 'Analysiere Kollaborationsmuster...',
+                collabConnections: 'implizite Verbindungen gefunden',
+                collabJointProjects: 'gemeinsame Projekte',
+                collabProjects: 'Projekte',
+                collabAndMore: '...und {count} mehr',
+                // Chat Panel
+                chatTitle: 'Query-Chat', chatInputPlaceholder: 'Schreiben Sie Ihre Anfrage hier...', chatSend: 'Senden',
+                chatModeNatural: 'Natürliche Sprache', chatModeCypher: 'Cypher-Abfrage',
+                chatEmptyState: 'Fragen Sie mich alles über den HR-Graphen!',
+                chatClickToView: 'klicken zum Anzeigen',
+                chatFoundSkill: '{count} Mitarbeiter mit {skill}-Kenntnissen gefunden:',
+                chatFoundInDept: '{count} Mitarbeiter in {dept} gefunden:',
+                chatFoundPosition: '{count} Mitarbeiter in Position {position} gefunden:',
+                chatFoundEmployees: '{count} Mitarbeiter im System gefunden:',
+                chatCypherSuccess: 'Cypher-Abfrage erfolgreich ausgeführt. {count} Ergebnisse gefunden:',
+                chatCypherNodes: 'Cypher-Abfrage ausgeführt. {count} {type}-Knoten gefunden:',
+                chatCypherError: 'Cypher-Abfrage ausgeführt. Keine Ergebnisse gefunden oder Abfrage nicht erkannt.',
+                chatNoResults: 'Ich konnte keine passenden Ergebnisse finden. Versuchen Sie, Ihre Anfrage umzuformulieren.',
+                chatHelp: "Ich verstehe, dass Sie nach dem HR-Wissensgraphen fragen. Versuchen Sie Abfragen wie:\n• 'Wer ist in Python erfahren?'\n• 'Zeigen Sie mir alle Mitarbeiter in Engineering'\n• 'Wer arbeitet als Marketing-Manager?'\n• 'Wer ist unser CFO?'\n• 'Wer ist der CTO?'",
+                legendDiffNew: 'Neu (diff)', legendDiffRemoved: 'Entfernt (diff)', legendDiffImplicit: 'Implizites Team',
+                statsEmployees: 'Mitarbeiter', statsDepts: 'Abteilungen', statsPositions: 'Positionen',
+                statsProjects: 'Projekte', statsSkills: 'Fähigkeiten', statsEdges: 'Kanten',
+                loading: 'Wird geladen...',
+                found: 'gefunden',
+                dashboard: 'Dashboard',
+                edgeLabels: 'Labels'
+            }
+        };
+        
+        let currentLang = localStorage.getItem('language') || localStorage.getItem('hr_graph_lang') || 'en';
+        
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            
+            const t = translations[lang];
+            
+            // Update button styles
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('lang-' + lang).classList.add('active');
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            // Update all elements with data-i18n-placeholder attribute
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key]) el.placeholder = t[key];
+            });
+            
+            // Update filter dropdowns
+            setTimeout(() => {
+                if (typeof generateFilters === 'function') {
+                    generateFilters(Object.keys({ Employee: 1, Department: 1, Position: 1, Project: 1, Skill: 1 }));
+                }
+            }, 500);
+        }
+        
+        // Initialize language on load (don't call initGraph here - it's called separately)
+        function initializeLanguage() {
+            const t = translations[currentLang];
+            // Update button styles
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById('lang-' + currentLang).classList.add('active');
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            // Update all elements with data-i18n-placeholder attribute
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key]) el.placeholder = t[key];
+            });
+            
+            // Initialize edge labels button state
+            const edgeLabelsBtn = document.getElementById('edge-labels-btn');
+            if (edgeLabelsBtn) {
+                edgeLabelsBtn.innerHTML = '⚡ ' + (t.edgeLabels || 'Labels') + ' ✓';
+            }
+        }
+        
+        initializeLanguage();
+        
+        // Node type configuration
+        const nodeConfig = {
+            'Employee': { color: '#667eea', size: 30 },
+            'Position': { color: '#ff9800', size: 26 },
+            'Department': { color: '#4caf50', size: 35 },
+            'Project': { color: '#e91e63', size: 28 },
+            'Skill': { color: '#00bcd4', size: 22 }
+        };
+        
+        // Edge configuration
+        const edgeConfig = {
+            'PROFICIENT_IN': { color: '#667eea', lineWidth: 2 },
+            'WORKS_IN': { color: '#4caf50', lineWidth: 2 },
+            'BELONGS_TO': { color: '#ff9800', lineWidth: 2 },
+            'REPORTS_TO': { color: '#e91e63', lineWidth: 2 },
+            'WORKS_ON': { color: '#00bcd4', lineWidth: 2 },
+            'COLLABORATES_WITH': { color: '#9c27b0', lineWidth: 2 },
+            'MANAGES': { color: '#f44336', lineWidth: 2 },
+            'default': { color: '#ccc', lineWidth: 1 }
+        };
+        
+        let graph = null;
+        let allGraphData = null;
+        let physicsEnabled = true;
+        let activeFilters = { Employee: true, Position: true, Department: true, Project: true, Skill: true };
+        let edgeLabelsEnabled = true;
+        
+        function getType(label) {
+            const l = label.toLowerCase().trim();
+            
+            const nameSubstrings = ['john', 'smith', 'jones', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson', 'thomas', 'jackson', 'white', 'harris', 'martin', 'thompson', 'garcia', 'martinez', 'robinson', 'clark', 'rodriguez', 'lewis', 'lee', 'walker', 'hall', 'allen', 'young', 'hernandez', 'king', 'wright', 'lopez', 'hill', 'scott', 'green', 'adams', 'baker', 'nelson', 'carter', 'mitchell', 'perez', 'roberts', 'turner', 'phillips', 'campbell', 'parker', 'evans', 'edwards', 'collins', 'stewart', 'sanchez', 'morris', 'murphy', 'cook', 'rogers', 'gutierrez', 'ortiz', 'morgan', 'cooper', 'peterson', 'bailey', 'reed', 'kelly', 'howard', 'ramos', 'kim', 'cox', 'ward', 'richardson', 'watson', 'brooks', 'chavez', 'wood', 'james', 'bennett', 'gray', 'mendoza', 'ruiz', 'hughes', 'price', 'alvarez', 'castillo', 'sanders', 'patel', 'myers', 'ross', 'foster', 'jimenez', 'powell', 'jenkins', 'perry', 'russell', 'sullivan', 'bell', 'coleman', 'butler', 'henderson', 'barnes', 'gonzales', 'fisher', 'vasquez', 'simmons', 'romero', 'jordan', 'patterson', 'alexander', 'hamilton', 'graham', 'kumar', 'singh', 'sharma', 'tiwari', 'gupta', 'wang', 'zhang', 'chen', 'liu', 'yang', 'huang', 'zhao', 'wu', 'zhou', 'xu', 'sun', 'lu', 'hu', 'guo', 'lin', 'cao', 'luo', 'ming', 'wei', 'yu', 'xie', 'tang', 'deng', 'cui', 'peng', 'zou', 'liang', 'lai', 'feng', 'bao', 'shi', 'su', 'ren', 'mao'];
+            for (const namePart of nameSubstrings) {
+                if (l === namePart) return 'Employee';
+            }
+            
+            const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr', 'it', 'operations', 'legal', 'design', 'product', 'research', 'customer success'];
+            if (departments.includes(l) || l === 'human resources' || l === 'customer success') return 'Department';
+            if (l.includes('department') || l.includes('dept')) return 'Department';
+            
+            const positionTitles = ['cto', 'cfo', 'ceo', 'coo', 'cio', 'cmo', 'chro', 'cpo', 'ciso'];
+            if (positionTitles.includes(l)) return 'Position';
+            if (l === 'auditor' || l === 'analyst' || l === 'architect') return 'Position';
+            
+            if (l.includes('project') || l.includes('campaign')) return 'Project';
+            
+            const allSkills = [
+                'python', 'javascript', 'java', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'matlab', 'perl', 'bash', 'shell',
+                'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'cassandra', 'oracle', 'sqlite', 'mariadb', 'dynamodb', 'firestore', 'neptune',
+                'aws', 'azure', 'gcp', 'kubernetes', 'docker', 'terraform', 'ansible', 'jenkins', 'circleci', 'github actions', 'gitlab ci', 'ci/cd', 'devops', 'cloud', 'serverless', 'lambda', 'ecs', 'eks', 'cloudformation', 'openstack',
+                'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data engineering', 'spark', 'hadoop', 'hive', 'airflow', 'databricks',
+                'react', 'reactjs', 'vue', 'vuejs', 'angular', 'svelte', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'jquery', 'nextjs', 'nuxt', 'gatsby',
+                'node', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'spring', 'springboot', 'rails', 'laravel', 'asp.net', 'graphql', 'rest', 'api', 'microservices',
+                'blockchain', 'ethereum', 'solidity', 'iot', 'vr', 'cyber security', 'penetration testing', 'ethical hacking', 'forensics', 'cryptography',
+                'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator', 'xd', 'zeplin', 'invision',
+                'leadership', 'communication', 'teamwork', 'collaboration', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills', 'attention to detail', 'troubleshooting', 'research', 'planning', 'prioritization',
+                'analytics', 'data analysis', 'business analysis', 'financial analysis', 'market research', 'seo', 'sem', 'ppc', 'crm', 'erp', 'branding', 'content strategy', 'copywriting', 'social media', 'email marketing', 'affiliate marketing', 'growth hacking',
+                'budgeting', 'forecasting', 'financial planning', 'accounting', 'auditing', 'tax', 'compliance', 'risk management', 'investments', 'treasury', 'controller',
+                'recruitment', 'talent acquisition', 'onboarding', 'training', 'development', 'performance management', 'compensation', 'benefits', 'employee relations', 'hr management', 'workday',
+                'ui/ux', 'ui design', 'ux design', 'visual design', 'graphic design', 'typography', 'illustration', 'icon design', 'motion design', 'interaction design', 'prototyping', 'wireframing', 'user research', 'usability testing',
+                'product management', 'product strategy', 'roadmap', 'stakeholder management', 'user stories', 'agile', 'kanban', 'lean',
+                'logistics', 'supply chain', 'procurement', 'inventory', 'manufacturing', 'quality assurance', 'qa', 'testing', 'automation',
+                'contracts', 'intellectual property', 'corporate law', 'employment law', 'regulatory',
+                'chemistry', 'biology', 'physics', 'statistics', 'experimental design',
+                'mobile app dev', 'data pipeline'
+            ];
+            
+            for (const skill of allSkills) {
+                if (l.includes(skill)) return 'Skill';
+            }
+            
+            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
+                l.includes('director') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
+                l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
+                l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
+                l.includes('advisor') || l.includes('lead') || l.includes('head') ||
+                l.includes('officer') || l.includes('president') || l.includes('vice') ||
+                l.includes('senior') || l.includes('junior') || l.includes('associate') || l.includes('intern') || l.includes('rep') || l.includes('fellow')) return 'Position';
+            
+            const words = l.split(' ').filter(w => w.length > 0);
+            if (words.length >= 2 && words.length <= 4) {
+                const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group', 'science', 'analysis', 'engineering', 'visualization', 'computing', 'security', 'development', 'testing', 'quality', 'design', 'management', 'marketing', 'sales', 'finance', 'recruitment', 'product', 'analytics', 'strategy', 'operations', 'research'];
+                const isLikelyName = words.every(word => !skillKeywords.some(keyword => word.includes(keyword)));
+                if (isLikelyName) return 'Employee';
+            }
+            
+            if (words.length === 1) return 'Skill';
+            return 'Employee';
+        }
+        
+        function initGraph() {
+            console.log('Initializing AntV G6 graph...');
+            console.log('G6 available:', typeof G6 !== 'undefined');
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            const headers = {};
+            if (apiKey) {
+                headers['Authorization'] = 'Bearer ' + apiKey;
+            }
+            
+            console.log('Fetching /graph...');
+            fetch('/graph', { headers })
+                .then(r => {
+                    console.log('Fetch response status:', r.status);
+                    if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'Server error: ' + r.status);
+                    return r.json();
+                })
+                .then(data => {
+                    console.log('Data received:', data.nodes.length, 'nodes,', data.edges.length, 'edges');
+                    allGraphData = data;
+                    
+                    try {
+                        // Process nodes for AntV G6 format
+                        const nodes = data.nodes.map((n, i) => {
+                            const type = getType(n.label);
+                            const config = nodeConfig[type] || nodeConfig.Employee;
+                            return {
+                                id: String(n.id),
+                                label: n.label,
+                                nodeType: type,
+                                size: config.size,
+                                style: {
+                                    fill: config.color,
+                                    stroke: config.color,
+                                    lineWidth: 2
+                                },
+                                labelCfg: {
+                                    style: {
+                                        fill: '#333',
+                                        fontSize: 11
+                                    }
+                                },
+                                x: n.x || Math.random() * 500,
+                                y: n.y || Math.random() * 500
+                            };
+                        });
+                        
+                        // Process edges for AntV G6 format
+                        const edges = data.edges.map((e, i) => {
+                            const config = edgeConfig[e.label] || edgeConfig.default;
+                            const displayLabel = edgeLabelsEnabled ? e.label : '';
+                            return {
+                                id: String(e.id),
+                                source: String(e.source),
+                                target: String(e.target),
+                                label: displayLabel,
+                                originalLabel: e.label,
+                                type: 'cubic',
+                                style: {
+                                    stroke: config.color,
+                                    lineWidth: config.width,
+                                    endArrow: {
+                                        path: G6.Arrow.triangle(8, 10, 0),
+                                        fill: config.color,
+                                        stroke: config.color
+                                    }
+                                },
+                                labelCfg: {
+                                    autoRotate: true,
+                                    style: {
+                                        fill: '#666',
+                                        fontSize: edgeLabelsEnabled ? 9 : 0,
+                                        background: {
+                                            fill: '#fff',
+                                            padding: [2, 4, 2, 4],
+                                            radius: 2
+                                        }
+                                    }
+                                }
+                            };
+                        });
+                        
+                        console.log('Processed:', nodes.length, 'nodes,', edges.length, 'edges');
+                        
+                        // Update stats
+                        const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
+                        nodes.forEach(n => {
+                            if (stats.hasOwnProperty(n.nodeType)) {
+                                stats[n.nodeType]++;
+                            }
+                        });
+                        
+                        document.getElementById('s-employees').textContent = stats.Employee;
+                        document.getElementById('s-departments').textContent = stats.Department;
+                        document.getElementById('s-positions').textContent = stats.Position;
+                        document.getElementById('s-projects').textContent = stats.Project;
+                        document.getElementById('s-skills').textContent = stats.Skill;
+                        document.getElementById('s-edges').textContent = data.edges.length;
+                        
+                        // Generate filter checkboxes
+                        generateFilters(Object.keys(stats));
+                        
+                        // Create G6 graph
+                        console.log('Creating G6 graph...');
+                        
+                        if (graph) {
+                            graph.destroy();
+                        }
+                        
+                        const container = document.getElementById('graph-container');
+                        console.log('Container size:', container.clientWidth, 'x', container.clientHeight);
+                        
+                        graph = new G6.Graph({
+                            container: 'graph-container',
+                            width: container.clientWidth || 800,
+                            height: container.clientHeight || 600,
+                            fitView: true,
+                            fitViewPadding: 50,
+                            animate: true,
+                            defaultNode: {
+                                type: 'circle',
+                                labelCfg: {
+                                    position: 'bottom',
+                                    offset: 5
+                                }
+                            },
+                            defaultEdge: {
+                                type: 'cubic',
+                                labelCfg: {
+                                    autoRotate: true
+                                }
+                            },
+                            modes: {
+                                default: ['drag-canvas', 'zoom-canvas', 'drag-node']
+                            },
+                            layout: {
+                                type: physicsEnabled ? 'force' : 'circular',
+                                preventOverlap: true,
+                                nodeSpacing: 50,
+                                linkDistance: 150,
+                                nodeStrength: -300,
+                                edgeStrength: 0.1,
+                                collideStrength: 0.8
+                            },
+                            nodeStateStyles: {
+                                hover: {
+                                    lineWidth: 4,
+                                    shadowColor: '#667eea',
+                                    shadowBlur: 10
+                                },
+                                selected: {
+                                    lineWidth: 4,
+                                    stroke: '#667eea'
+                                }
+                            }
+                        });
+                        
+                        console.log('Adding data to graph...');
+                        graph.data({ nodes, edges });
+                        graph.render();
+                        console.log('Graph rendered successfully!');
+                        
+                        // Event handlers
+                        graph.on('node:mouseenter', (e) => {
+                            graph.setItemState(e.item, 'hover', true);
+                        });
+                        
+                        graph.on('node:mouseleave', (e) => {
+                            graph.setItemState(e.item, 'hover', false);
+                        });
+                        
+                        graph.on('node:click', (e) => {
+                            // Clear all selected states
+                            graph.getNodes().forEach(node => {
+                                graph.clearItemStates(node, 'selected');
+                            });
+                            // Set selected state on clicked node
+                            graph.setItemState(e.item, 'selected', true);
+                            // Update risk panel if enabled
+                            if (riskAnalysisEnabled) {
+                                showSelectedNodeRisk();
+                            }
+                        });
+                        
+                        graph.on('canvas:click', (e) => {
+                            // Clear selection when clicking on canvas
+                            graph.getNodes().forEach(node => {
+                                graph.clearItemStates(node, 'selected');
+                            });
+                            if (riskAnalysisEnabled) {
+                                showSelectedNodeRisk();
+                            }
+                        });
+                        
+                        document.getElementById('loading').style.display = 'none';
+                    } catch (err) {
+                        console.error('Error creating graph:', err);
+                        document.getElementById('loading').style.display = 'none';
+                        alert('Error creating graph: ' + err.message);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading graph:', err);
+                    document.getElementById('loading').style.display = 'none';
+                    alert('Error loading graph: ' + err.message);
+                });
+        }
+        
+        function getNodeType(label, labels = []) {
+            // First, check if we have the original database labels
+            if (labels && labels.length > 0) {
+                if (labels.includes('Employee')) return 'Employee';
+                if (labels.includes('Position')) return 'Position';
+                if (labels.includes('Department')) return 'Department';
+                if (labels.includes('Project')) return 'Project';
+                if (labels.includes('Skill')) return 'Skill';
+            }
+            
+            // Fallback to pattern matching for backward compatibility
+            const l = label.toLowerCase().trim();
+            
+            // Remove common name substrings from skill matching to prevent false positives
+            const nameSubstrings = ['john', 'smith', 'jones', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson', 'thomas', 'jackson', 'white', 'harris', 'martin', 'thompson', 'garcia', 'martinez', 'robinson', 'clark', 'rodriguez', 'lewis', 'lee', 'walker', 'hall', 'allen', 'young', 'hernandez', 'king', 'wright', 'lopez', 'hill', 'scott', 'green', 'adams', 'baker', 'nelson', 'carter', 'mitchell', 'perez', 'roberts', 'turner', 'phillips', 'campbell', 'parker', 'evans', 'edwards', 'collins', 'stewart', 'sanchez', 'morris', 'murphy', 'cook', 'rogers', 'gutierrez', 'ortiz', 'morgan', 'cooper', 'peterson', 'bailey', 'reed', 'kelly', 'howard', 'ramos', 'kim', 'cox', 'ward', 'richardson', 'watson', 'brooks', 'chavez', 'wood', 'james', 'bennett', 'gray', 'mendoza', 'ruiz', 'hughes', 'price', 'alvarez', 'castillo', 'sanders', 'patel', 'myers', 'ross', 'foster', 'jimenez', 'powell', 'jenkins', 'perry', 'russell', 'sullivan', 'bell', 'coleman', 'butler', 'henderson', 'barnes', 'gonzales', 'fisher', 'vasquez', 'simmons', 'romero', 'jordan', 'patterson', 'alexander', 'hamilton', 'graham', 'kumar', 'singh', 'sharma', 'tiwari', 'gupta', 'wang', 'zhang', 'chen', 'liu', 'yang', 'huang', 'zhao', 'wu', 'zhou', 'xu', 'sun', 'lu', 'hu', 'guo', 'lin', 'cao', 'luo', 'ming', 'wei', 'yu', 'xie', 'tang', 'deng', 'cui', 'peng', 'zou', 'liang', 'lai', 'feng', 'bao', 'shi', 'su', 'ren', 'mao'];
+            for (const namePart of nameSubstrings) {
+                if (l === namePart) return 'Employee';
+            }
+            
+            // FIRST: Check for single-word position titles (CTO, CFO, CEO, etc.)
+            const positionTitles = ['cto', 'cfo', 'ceo', 'coo', 'cio', 'cmo', 'chro', 'cpo', 'ciso'];
+            if (positionTitles.includes(l)) return 'Position';
+            
+            // Check for common position single words
+            if (l === 'auditor' || l === 'analyst' || l === 'architect') return 'Position';
+            
+            // SECOND: Check for skills (comprehensive lists)
+            const techSkills = [
+                'python', 'javascript', 'java', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'matlab', 'perl', 'bash', 'shell',
+                'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'cassandra', 'oracle', 'sqlite', 'mariadb', 'dynamodb', 'firestore', 'neptune',
+                'aws', 'azure', 'gcp', 'kubernetes', 'docker', 'terraform', 'ansible', 'jenkins', 'circleci', 'github actions', 'gitlab ci', 'ci/cd', 'devops', 'cloud', 'serverless', 'lambda', 'ecs', 'eks', 'cloudformation', 'openstack',
+                'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data engineering', 'spark', 'hadoop', 'hive', 'airflow', 'databricks',
+                'react', 'reactjs', 'vue', 'vuejs', 'angular', 'svelte', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'jquery', 'nextjs', 'nuxt', 'gatsby',
+                'node', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'spring', 'springboot', 'rails', 'laravel', 'asp.net', 'graphql', 'rest', 'api', 'microservices',
+                'blockchain', 'ethereum', 'solidity', 'iot', 'vr', 'cyber security', 'penetration testing', 'ethical hacking', 'forensics', 'cryptography',
+                'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator', 'xd', 'zeplin', 'invision'
+            ];
+            
+            const softSkills = [
+                'leadership', 'communication', 'teamwork', 'collaboration', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills', 'attention to detail', 'troubleshooting', 'research', 'planning', 'prioritization'
+            ];
+            
+            const domainSkills = [
+                'analytics', 'data analysis', 'business analysis', 'financial analysis', 'market research', 'seo', 'sem', 'ppc', 'crm', 'erp', 'branding', 'content strategy', 'copywriting', 'social media', 'email marketing', 'affiliate marketing', 'growth hacking',
+                'budgeting', 'forecasting', 'financial planning', 'accounting', 'auditing', 'tax', 'compliance', 'risk management', 'investments', 'treasury', 'controller',
+                'recruitment', 'talent acquisition', 'onboarding', 'training', 'development', 'performance management', 'compensation', 'benefits', 'employee relations', 'hr management', 'workday',
+                'ui/ux', 'ui design', 'ux design', 'visual design', 'graphic design', 'typography', 'illustration', 'icon design', 'motion design', 'interaction design', 'prototyping', 'wireframing', 'user research', 'usability testing',
+                'product management', 'product strategy', 'roadmap', 'stakeholder management', 'user stories', 'agile', 'kanban', 'lean',
+                'logistics', 'supply chain', 'procurement', 'inventory', 'manufacturing', 'quality assurance', 'qa', 'testing', 'automation',
+                'contracts', 'intellectual property', 'corporate law', 'employment law', 'regulatory',
+                'chemistry', 'biology', 'physics', 'statistics', 'experimental design'
+            ];
+            
+            const allSkills = [...techSkills, ...softSkills, ...domainSkills];
+            
+            // Check if label matches any skill pattern (including compound skills)
+            for (const skill of allSkills) {
+                if (l.includes(skill)) return 'Skill';
+            }
+            
+            // THIRD: Department check (exact match or containing department keywords)
+            const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr', 'it', 'operations', 'legal', 'design', 'product', 'research', 'customer success'];
+            if (departments.includes(l) || l === 'human resources' || l === 'customer success') return 'Department';
+            if (l.includes('department') || l.includes('dept')) return 'Department';
+            
+            // FOURTH: Position check (looking for job titles)
+            const positionKeywords = ['manager', 'director', 'engineer', 'developer', 'designer', 'analyst', 'consultant', 'specialist', 'coordinator', 'administrator', 'lead', 'senior', 'junior', 'associate', 'assistant', 'vice', 'president', 'head', 'chief', 'partner'];
+            if (positionKeywords.some(keyword => l.includes(keyword))) return 'Position';
+            
+            // FIFTH: Project check (exact match or containing project keywords)
+            if (l === 'project' || l.includes('project')) return 'Project';
+            
+            // Default: return 'unknown'
+            return 'unknown';
+        }
+        
+        function generateFilters(types) {
+            const container = document.getElementById('type-filters');
+            const t = translations[currentLang];
+            container.innerHTML = '';
+            
+            types.forEach(type => {
+                if (type === 'Employee' || type === 'Position' || type === 'Department' || type === 'Project' || type === 'Skill') {
+                    const div = document.createElement('div');
+                    div.className = 'filter-checkbox';
+                    const typeKey = 'node' + type.charAt(0) + type.slice(1).toLowerCase();
+                    div.innerHTML = `
+                        <input type="checkbox" id="filter-${type}" checked onchange="toggleFilter('${type}')">
+                        <label for="filter-${type}">${t[typeKey] || type}</label>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+            
+            // Populate dropdown filters
+            const skillSet = new Set();
+            const deptSet = new Set();
+            const employeeSet = new Set();
+            const positionSet = new Set();
+            const projectSet = new Set();
+            
+            allGraphData.nodes.forEach(node => {
+                const type = getType(node.label);
+                if (type === 'Skill') skillSet.add(node.label);
+                else if (type === 'Department') deptSet.add(node.label);
+                else if (type === 'Employee') employeeSet.add(node.label);
+                else if (type === 'Position') positionSet.add(node.label);
+                else if (type === 'Project') projectSet.add(node.label);
+            });
+            
+            const allSkills = Array.from(skillSet).sort();
+            const allDepartments = Array.from(deptSet).sort();
+            const allEmployees = Array.from(employeeSet).sort();
+            const allPositions = Array.from(positionSet).sort();
+            const allProjects = Array.from(projectSet).sort();
+            
+            // Populate department dropdown
+            const deptSelect = document.getElementById('filter-department');
+            deptSelect.innerHTML = `<option value="">${t.allDepartments}</option>`;
+            allDepartments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                deptSelect.appendChild(option);
+            });
+            
+            // Populate employee dropdown
+            const employeeSelect = document.getElementById('filter-employee');
+            employeeSelect.innerHTML = `<option value="">${t.allEmployees}</option>`;
+            allEmployees.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp;
+                option.textContent = emp;
+                employeeSelect.appendChild(option);
+            });
+            
+            // Populate position dropdown
+            const positionSelect = document.getElementById('filter-position');
+            positionSelect.innerHTML = `<option value="">${t.allPositions}</option>`;
+            allPositions.forEach(pos => {
+                const option = document.createElement('option');
+                option.value = pos;
+                option.textContent = pos;
+                positionSelect.appendChild(option);
+            });
+            
+            // Populate project dropdown
+            const projectSelect = document.getElementById('filter-project');
+            projectSelect.innerHTML = `<option value="">${t.allProjects}</option>`;
+            allProjects.forEach(proj => {
+                const option = document.createElement('option');
+                option.value = proj;
+                option.textContent = proj;
+                projectSelect.appendChild(option);
+            });
+            
+            // Populate skill dropdown
+            const skillSelect = document.getElementById('filter-skill');
+            skillSelect.innerHTML = `<option value="">${t.allSkills}</option>`;
+            allSkills.forEach(skill => {
+                const option = document.createElement('option');
+                option.value = skill;
+                option.textContent = skill;
+                skillSelect.appendChild(option);
+            });
+        }
+        
+        function toggleFilter(type) {
+            activeFilters[type] = document.getElementById('filter-' + type).checked;
+            applyFilters();
+        }
+        
+        function applyFilters() {
+            if (!graph || !allGraphData) return;
+            
+            // Get selected filter values
+            const selectedDept = document.getElementById('filter-department').value;
+            const selectedEmployee = document.getElementById('filter-employee').value;
+            const selectedPosition = document.getElementById('filter-position').value;
+            const selectedProject = document.getElementById('filter-project').value;
+            const selectedSkill = document.getElementById('filter-skill').value;
+            
+            // Determine which node is selected
+            let selectedNode = null;
+            let selectedType = '';
+            
+            if (selectedSkill) {
+                selectedNode = allGraphData.nodes.find(n => n.label === selectedSkill);
+                selectedType = 'Skill';
+            } else if (selectedDept) {
+                selectedNode = allGraphData.nodes.find(n => n.label === selectedDept);
+                selectedType = 'Department';
+            } else if (selectedEmployee) {
+                selectedNode = allGraphData.nodes.find(n => n.label === selectedEmployee);
+                selectedType = 'Employee';
+            } else if (selectedPosition) {
+                selectedNode = allGraphData.nodes.find(n => n.label === selectedPosition);
+                selectedType = 'Position';
+            } else if (selectedProject) {
+                selectedNode = allGraphData.nodes.find(n => n.label === selectedProject);
+                selectedType = 'Project';
+            }
+            
+            // If no filter selected, show all nodes normally
+            if (!selectedNode) {
+                const nodes = allGraphData.nodes.map(n => {
+                    const type = getType(n.label);
+                    const config = nodeConfig[type] || nodeConfig.Employee;
+                    return {
+                        id: String(n.id),
+                        label: n.label,
+                        nodeType: type,
+                        size: config.size,
+                        style: {
+                            fill: config.color,
+                            stroke: config.color,
+                            lineWidth: 2,
+                            opacity: 1
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#333',
+                                fontSize: 11
+                            }
+                        }
+                    };
+                });
+                
+                const edges = allGraphData.edges.map(e => {
+                    const config = edgeConfig[e.label] || edgeConfig.default;
+                    return {
+                        id: String(e.id),
+                        source: String(e.source),
+                        target: String(e.target),
+                        label: edgeLabelsEnabled ? e.label : '',
+                        originalLabel: e.label,
+                        type: 'cubic',
+                        style: {
+                            stroke: config.color,
+                            lineWidth: config.lineWidth,
+                            endArrow: {
+                                path: G6.Arrow.triangle(8, 10, 0),
+                                fill: config.color,
+                                stroke: config.color
+                            }
+                        },
+                        labelCfg: {
+                            autoRotate: true,
+                            style: {
+                                fill: '#666',
+                                fontSize: edgeLabelsEnabled ? 9 : 0,
+                                background: {
+                                    fill: '#fff',
+                                    padding: [2, 4, 2, 4],
+                                    radius: 2
+                                }
+                            }
+                        }
+                    };
+                });
+                
+                graph.changeData({ nodes, edges });
+                graph.fitView(50);
+                
+                // Clear sparkle effect
+                clearSparkleEffect();
+                return;
+            }
+            
+            // Find all nodes directly connected to the selected node
+            const connectedNodeIds = new Set([String(selectedNode.id)]);
+            
+            allGraphData.edges.forEach(edge => {
+                if (String(edge.source) === String(selectedNode.id)) {
+                    connectedNodeIds.add(String(edge.target));
+                } else if (String(edge.target) === String(selectedNode.id)) {
+                    connectedNodeIds.add(String(edge.source));
+                }
+            });
+            
+            // Build filtered graph with highlighting
+            const nodes = allGraphData.nodes.map(n => {
+                const type = getType(n.label);
+                const config = nodeConfig[type] || nodeConfig.Employee;
+                const isSelected = String(n.id) === String(selectedNode.id);
+                const isConnected = connectedNodeIds.has(String(n.id));
+                
+                if (isSelected) {
+                    // Selected node: 2x size with highlight
+                    const baseSize = config.size || 45;
+                    return {
+                        id: String(n.id),
+                        label: n.label,
+                        nodeType: type,
+                        size: baseSize * 2,
+                        style: {
+                            fill: '#667eea',
+                            stroke: '#764ba2',
+                            lineWidth: 4,
+                            opacity: 1,
+                            shadowColor: 'rgba(102, 126, 234, 0.8)',
+                            shadowBlur: 20
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#667eea',
+                                fontSize: 16,
+                                fontWeight: 'bold'
+                            }
+                        }
+                    };
+                } else if (isConnected) {
+                    // Connected nodes: normal appearance
+                    return {
+                        id: String(n.id),
+                        label: n.label,
+                        nodeType: type,
+                        size: config.size,
+                        style: {
+                            fill: config.color,
+                            stroke: config.color,
+                            lineWidth: 2,
+                            opacity: 1
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#333',
+                                fontSize: 11
+                            }
+                        }
+                    };
+                } else {
+                    // Unrelated nodes: greyed out
+                    return {
+                        id: String(n.id),
+                        label: n.label,
+                        nodeType: type,
+                        size: config.size,
+                        style: {
+                            fill: config.color,
+                            stroke: config.color,
+                            lineWidth: 1,
+                            opacity: 0.1
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#ccc',
+                                fontSize: 8
+                            }
+                        }
+                    };
+                }
+            });
+            
+            // Only show edges that connect highlighted nodes
+            const edges = allGraphData.edges
+                .filter(e => {
+                    const sourceConnected = connectedNodeIds.has(String(e.source));
+                    const targetConnected = connectedNodeIds.has(String(e.target));
+                    // Show edge if both ends are in the highlighted set
+                    return sourceConnected && targetConnected;
+                })
+                .map(e => {
+                    const config = edgeConfig[e.label] || edgeConfig.default;
+                    const isSelectedSource = String(e.source) === String(selectedNode.id);
+                    const isSelectedTarget = String(e.target) === String(selectedNode.id);
+                    const lineWidth = isSelectedSource || isSelectedTarget ? config.lineWidth * 1.5 : config.lineWidth;
+                    
+                    return {
+                        id: String(e.id),
+                        source: String(e.source),
+                        target: String(e.target),
+                        label: edgeLabelsEnabled ? e.label : '',
+                        originalLabel: e.label,
+                        type: 'cubic',
+                        style: {
+                            stroke: config.color,
+                            lineWidth: lineWidth,
+                            opacity: 0.8,
+                            endArrow: {
+                                path: G6.Arrow.triangle(8, 10, 0),
+                                fill: config.color,
+                                stroke: config.color
+                            }
+                        },
+                        labelCfg: {
+                            autoRotate: true,
+                            style: {
+                                fill: '#666',
+                                fontSize: edgeLabelsEnabled ? 9 : 0,
+                                background: {
+                                    fill: '#fff',
+                                    padding: [2, 4, 2, 4],
+                                    radius: 2
+                                }
+                            }
+                        }
+                    };
+                });
+            
+            graph.changeData({ nodes, edges });
+            
+            // Focus on selected node
+            graph.focusItem(selectedNode.id, true, {
+                easing: 'easeCubic',
+                duration: 500
+            });
+            
+            // Add sparkle effect
+            setTimeout(() => {
+                addSparkleEffectToG6(selectedNode.id);
+            }, 300);
+        }
+        
+        // Store filter selection without applying immediately
+        function onG6FilterChange(changedFilterId) {
+            const changedSelect = document.getElementById(changedFilterId);
+            const selectedValue = changedSelect.value;
+            
+            // Only reset other filters if a value is selected (not when clearing)
+            if (selectedValue) {
+                const allFilterIds = [
+                    'filter-department',
+                    'filter-employee',
+                    'filter-position',
+                    'filter-project',
+                    'filter-skill'
+                ];
+                
+                // Reset all other dropdowns
+                allFilterIds.forEach(filterId => {
+                    if (filterId !== changedFilterId) {
+                        document.getElementById(filterId).value = '';
+                    }
+                });
+            }
+        }
+        
+        // Apply filters to the graph (called when Apply button is clicked)
+        function applyG6Filters() {
+            applyFilters();
+        }
+        
+        // Clear all filters and restore full view
+        function clearG6Filters() {
+            // Clear dropdowns
+            ['filter-department', 'filter-employee', 'filter-position', 'filter-project', 'filter-skill'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            
+            // Clear sparkle effect
+            clearSparkleEffect();
+            
+            // Restore full view
+            applyFilters();
+        }
+        
+        function fitView() {
+            if (graph) {
+                graph.fitView(50);
+            }
+        }
+        
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            const t = translations[currentLang];
+            if (graph) {
+                if (physicsEnabled) {
+                    graph.updateLayout({
+                        type: 'force',
+                        preventOverlap: true,
+                        nodeSpacing: 50,
+                        linkDistance: 150,
+                        nodeStrength: -300,
+                        edgeStrength: 0.1,
+                        collideStrength: 0.8
+                    });
+                    document.querySelector('#toolbar button:nth-child(3)').textContent = t.physics;
+                } else {
+                    graph.updateLayout({
+                        type: 'circular'
+                    });
+                    document.querySelector('#toolbar button:nth-child(3)').textContent = 'Static';
+                }
+                graph.layout();
+            }
+        }
+        
+        function toggleLayout() {
+            // Toggle between gForce (network) and force layouts
+            if (!graph) return;
+            
+            const layoutType = graph.get('layout').type === 'force' ? 'gForce' : 'force';
+            const t = translations[currentLang];
+            
+            graph.updateLayout({
+                type: layoutType,
+                preventOverlap: true,
+                nodeSpacing: 50,
+                linkDistance: 150,
+                nodeStrength: -300,
+                edgeStrength: 0.1,
+                collideStrength: 0.8,
+                gForce: {
+                    gravity: 10,
+                    maxIteration: 2000,
+                    clusterGravity: 10
+                }
+            });
+            
+            // Update button text
+            const layoutBtn = document.querySelector('#toolbar button:nth-child(2)');
+            if (layoutType === 'gForce') {
+                layoutBtn.textContent = 'Layout: gForce';
+            } else {
+                layoutBtn.textContent = t.layout + ': Network';
+            }
+            
+            graph.layout();
+        }
+        
+        function zoomIn() {
+            if (graph) {
+                const zoom = graph.getZoom();
+                graph.zoomTo(zoom * 1.2, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+            }
+        }
+        
+        function zoomOut() {
+            if (graph) {
+                const zoom = graph.getZoom();
+                graph.zoomTo(zoom / 1.2, { x: window.innerWidth / 2, y: window.innerHeight / 2 });
+            }
+        }
+        
+        function toggleEdgeLabels() {
+            edgeLabelsEnabled = !edgeLabelsEnabled;
+            const btn = document.getElementById('edge-labels-btn');
+            const t = translations[currentLang];
+            
+            if (edgeLabelsEnabled) {
+                btn.innerHTML = '⚡ ' + (t.edgeLabels || 'Labels') + ' ✓';
+                btn.style.opacity = '1';
+            } else {
+                btn.innerHTML = '⚡ ' + (t.edgeLabels || 'Labels') + ' ✗';
+                btn.style.opacity = '0.6';
+            }
+            
+            if (graph) {
+                graph.getEdges().forEach(edge => {
+                    const model = edge.getModel();
+                    if (edgeLabelsEnabled) {
+                        // Restore the label if it exists
+                        if (model.originalLabel) {
+                            graph.updateItem(edge, {
+                                label: model.originalLabel,
+                                labelCfg: {
+                                    style: {
+                                        ...model.labelCfg?.style,
+                                        fontSize: 9
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        // Store original label and hide it
+                        if (!model.originalLabel && model.label) {
+                            graph.updateItem(edge, {
+                                originalLabel: model.label
+                            });
+                        }
+                        graph.updateItem(edge, {
+                            label: '',
+                            labelCfg: {
+                                style: {
+                                    fontSize: 0
+                                }
+                            }
+                        });
+                    }
+                });
+                graph.paint();
+            }
+        }
+        
+        // Sparkle effect animation for G6
+        let sparkleTimeout = null;
+        let sparkleAnimationFrame = null;
+        
+        function addSparkleEffectToG6(nodeId) {
+            // Clear any existing sparkle effect
+            clearSparkleEffect();
+            
+            if (!graph) return;
+            
+            const node = graph.findById(nodeId);
+            if (!node) return;
+            
+            const nodeModel = node.getModel();
+            const baseSize = nodeModel.size || 45;
+            
+            // Update the node with enhanced styling
+            graph.updateItem(node, {
+                style: {
+                    ...nodeModel.style,
+                    shadowColor: 'rgba(102, 126, 234, 0.9)',
+                    shadowBlur: 30,
+                    lineWidth: 5
+                }
+            });
+            
+            // Create sparkle particles
+            const particleCount = 12;
+            const particles = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (i / particleCount) * Math.PI * 2;
+                particles.push({
+                    angle: angle,
+                    distance: baseSize + 20,
+                    speed: 0.02 + Math.random() * 0.02,
+                    size: 3 + Math.random() * 4,
+                    color: ['#667eea', '#764ba2', '#fff', '#ffd700'][Math.floor(Math.random() * 4)]
+                });
+            }
+            
+            // Animation function
+            let frame = 0;
+            const animate = () => {
+                frame++;
+                
+                // Get current node position
+                const model = node.getModel();
+                const canvas = graph.get('canvas');
+                const group = canvas.addGroup();
+                
+                // Clear previous particles
+                canvas.findAll(el => el.get('name') === 'sparkle').forEach(el => el.destroy());
+                
+                particles.forEach((particle, index) => {
+                    const pulse = Math.sin(frame * 0.05 + index) * 0.3 + 1;
+                    const currentAngle = particle.angle + frame * particle.speed;
+                    const currentDistance = particle.distance * pulse;
+                    
+                    // Calculate position relative to node
+                    const x = model.x + Math.cos(currentAngle) * currentDistance;
+                    const y = model.y + Math.sin(currentAngle) * currentDistance;
+                    
+                    // Draw sparkle
+                    const sparkle = group.addShape('circle', {
+                        attrs: {
+                            x: x,
+                            y: y,
+                            r: particle.size,
+                            fill: particle.color,
+                            opacity: 0.6 + 0.4 * Math.sin(frame * 0.1 + index),
+                            name: 'sparkle'
+                        },
+                        capture: false
+                    });
+                    
+                    // Add star shape for larger particles
+                    if (particle.size > 4) {
+                        group.addShape('path', {
+                            attrs: {
+                                path: [
+                                    ['M', x, y - particle.size],
+                                    ['L', x + particle.size * 0.3, y - particle.size * 0.3],
+                                    ['L', x + particle.size, y],
+                                    ['L', x + particle.size * 0.3, y + particle.size * 0.3],
+                                    ['L', x, y + particle.size],
+                                    ['L', x - particle.size * 0.3, y + particle.size * 0.3],
+                                    ['L', x - particle.size, y],
+                                    ['L', x - particle.size * 0.3, y - particle.size * 0.3],
+                                    ['Z']
+                                ],
+                                fill: '#fff',
+                                opacity: 0.7 + 0.3 * Math.sin(frame * 0.15 + index),
+                                name: 'sparkle'
+                            },
+                            capture: false
+                        });
+                    }
+                });
+                
+                sparkleAnimationFrame = requestAnimationFrame(animate);
+            };
+            
+            animate();
+        }
+        
+        function clearSparkleEffect() {
+            if (sparkleAnimationFrame) {
+                cancelAnimationFrame(sparkleAnimationFrame);
+                sparkleAnimationFrame = null;
+            }
+            if (sparkleTimeout) {
+                clearTimeout(sparkleTimeout);
+                sparkleTimeout = null;
+            }
+            
+            // Clear sparkle shapes from canvas
+            if (graph) {
+                const canvas = graph.get('canvas');
+                if (canvas) {
+                    canvas.findAll(el => el.get('name') === 'sparkle').forEach(el => el.destroy());
+                }
+            }
+        }
+        
+        // Highlight node function (for chat clickable results)
+        function highlightNodeInGraph(nodeId, nodeLabel, nodeType) {
+            if (!graph || !allGraphData) return;
+            
+            console.log('Highlighting node:', nodeId, nodeLabel, nodeType);
+            
+            // Clear existing sparkle
+            clearSparkleEffect();
+            
+            // Find the selected node
+            const selectedNode = allGraphData.nodes.find(n => String(n.id) === String(nodeId));
+            if (!selectedNode) return;
+            
+            // Find all connected nodes
+            const connectedNodeIds = new Set([String(nodeId)]);
+            
+            allGraphData.edges.forEach(edge => {
+                if (String(edge.source) === String(nodeId)) {
+                    connectedNodeIds.add(String(edge.target));
+                } else if (String(edge.target) === String(nodeId)) {
+                    connectedNodeIds.add(String(edge.source));
+                }
+            });
+            
+            // Apply highlighting to all nodes
+            graph.getNodes().forEach(node => {
+                const model = node.getModel();
+                const type = getType(model.label);
+                const config = nodeConfig[type] || nodeConfig.Employee;
+                const isSelected = String(model.id) === String(nodeId);
+                const isConnected = connectedNodeIds.has(String(model.id));
+                
+                if (isSelected) {
+                    // Selected node: 2x size with sparkle
+                    const baseSize = config.size || 45;
+                    graph.updateItem(node, {
+                        size: baseSize * 2,
+                        style: {
+                            fill: '#667eea',
+                            stroke: '#764ba2',
+                            lineWidth: 4,
+                            opacity: 1,
+                            shadowColor: 'rgba(102, 126, 234, 0.8)',
+                            shadowBlur: 25
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#667eea',
+                                fontSize: 16,
+                                fontWeight: 'bold'
+                            }
+                        }
+                    });
+                } else if (isConnected) {
+                    // Connected nodes: normal
+                    graph.updateItem(node, {
+                        size: config.size,
+                        style: {
+                            fill: config.color,
+                            stroke: config.color,
+                            lineWidth: 2,
+                            opacity: 1
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#333',
+                                fontSize: 11
+                            }
+                        }
+                    });
+                } else {
+                    // Unrelated nodes: greyed out
+                    graph.updateItem(node, {
+                        size: config.size,
+                        style: {
+                            fill: config.color,
+                            stroke: config.color,
+                            lineWidth: 1,
+                            opacity: 0.1
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#ccc',
+                                fontSize: 8
+                            }
+                        }
+                    });
+                }
+            });
+            
+            // Hide edges to non-connected nodes
+            graph.getEdges().forEach(edge => {
+                const model = edge.getModel();
+                const sourceConnected = connectedNodeIds.has(String(model.source));
+                const targetConnected = connectedNodeIds.has(String(model.target));
+                
+                if (sourceConnected && targetConnected) {
+                    const isSelectedEdge = String(model.source) === String(nodeId) || String(model.target) === String(nodeId);
+                    graph.updateItem(edge, {
+                        style: {
+                            ...model.style,
+                            opacity: 1,
+                            lineWidth: isSelectedEdge ? 2 : 1
+                        }
+                    });
+                } else {
+                    graph.updateItem(edge, {
+                        style: {
+                            ...model.style,
+                            opacity: 0
+                        }
+                    });
+                }
+            });
+            
+            // Focus on selected node
+            graph.focusItem(nodeId, true, {
+                easing: 'easeCubic',
+                duration: 500
+            });
+            
+            // Add sparkle effect
+            setTimeout(() => {
+                addSparkleEffectToG6(nodeId);
+            }, 300);
+            
+            console.log('Highlighted node:', nodeLabel, 'with', connectedNodeIds.size - 1, 'direct relationships');
+        }
+
+        function searchNodes(query) {
+            if (!graph || !query) {
+                document.getElementById('search-count').textContent = '';
+                graph.getNodes().forEach(node => {
+                    graph.clearItemStates(node, 'selected');
+                });
+                return;
+            }
+            
+            const lowerQuery = query.toLowerCase();
+            const t = translations[currentLang];
+            let count = 0;
+            
+            graph.getNodes().forEach(node => {
+                const model = node.getModel();
+                if (model.label.toLowerCase().includes(lowerQuery)) {
+                    graph.setItemState(node, 'selected', true);
+                    count++;
+                } else {
+                    graph.clearItemStates(node, 'selected');
+                }
+            });
+            
+            document.getElementById('search-count').textContent = `${count} ${t.found}`;
+        }
+        
+        // Draggable Panel System with Collision Detection
+        class DraggablePanel {
+            constructor(panelId, handleId = null) {
+                this.panel = document.getElementById(panelId);
+                this.handle = handleId ? document.getElementById(handleId) : this.panel;
+                this.isDragging = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.initialX = 0;
+                this.initialY = 0;
+                
+                this.init();
+            }
+            
+            init() {
+                this.handle.addEventListener('mousedown', this.startDrag.bind(this));
+                document.addEventListener('mousemove', this.drag.bind(this));
+                document.addEventListener('mouseup', this.endDrag.bind(this));
+                this.panel.classList.add('draggable');
+            }
+            
+            startDrag(e) {
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || 
+                    e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT' ||
+                    e.target.tagName === 'OPTION') {
+                    return;
+                }
+                
+                this.isDragging = true;
+                this.startX = e.clientX;
+                this.startY = e.clientY;
+                
+                const rect = this.panel.getBoundingClientRect();
+                this.initialX = rect.left;
+                this.initialY = rect.top;
+                
+                this.panel.classList.add('dragging');
+                this.panel.style.zIndex = '1000';
+                
+                e.preventDefault();
+            }
+            
+            drag(e) {
+                if (!this.isDragging) return;
+                
+                const dx = e.clientX - this.startX;
+                const dy = e.clientY - this.startY;
+                
+                let newX = this.initialX + dx;
+                let newY = this.initialY + dy;
+                
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                const panelRect = this.panel.getBoundingClientRect();
+                
+                newX = Math.max(0, Math.min(newX, viewportWidth - panelRect.width));
+                newY = Math.max(0, Math.min(newY, viewportHeight - panelRect.height));
+                
+                this.panel.style.left = newX + 'px';
+                this.panel.style.top = newY + 'px';
+                this.panel.style.right = 'auto';
+                this.panel.style.bottom = 'auto';
+            }
+            
+            endDrag() {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+                this.panel.classList.remove('dragging');
+                this.panel.style.zIndex = '99';
+            }
+        }
+        
+        // Initialize draggable panels
+        function initializeDraggablePanels() {
+            new DraggablePanel('filter-panel', 'filter-header');
+            new DraggablePanel('legend');
+            new DraggablePanel('risk-panel');
+            new DraggablePanel('diff-panel');
+            new DraggablePanel('collab-panel');
+        }
+        
+        // ========== TEMPORAL DIFF FUNCTIONS ==========
+        let diffPanelVisible = false;
+        
+        function toggleDiffPanel() {
+            diffPanelVisible = !diffPanelVisible;
+            const panel = document.getElementById('diff-panel');
+            const btn = document.getElementById('diff-btn');
+            const t = translations[currentLang];
+            
+            if (diffPanelVisible) {
+                panel.style.display = 'block';
+                btn.style.opacity = '1';
+                // Set default dates (before = 3 months ago, after = today)
+                const today = new Date().toISOString().split('T')[0];
+                const threeMonthsAgo = new Date();
+                threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                document.getElementById('diff-after').value = today;
+                document.getElementById('diff-before').value = threeMonthsAgo.toISOString().split('T')[0];
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        
+        async function runDiffAnalysis() {
+            const before = document.getElementById('diff-before').value;
+            const after = document.getElementById('diff-after').value;
+            
+            if (!before || !after) {
+                alert('Please select both dates');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('diff-results');
+            resultsDiv.innerHTML = '<p style="font-size: 11px; color: #666;">Analyzing...</p>';
+            
+            try {
+                const headers = {};
+                if (apiKey) {
+                    headers['Authorization'] = 'Bearer ' + apiKey;
+                }
+                
+                const response = await fetch(`/graph-diff?before=${before}&after=${after}`, { headers });
+                if (!response.ok) throw new Error('Request failed');
+                
+                const data = await response.json();
+                
+                // Apply diff styles to graph
+                applyDiffVisualization(data);
+                
+                // Show summary with translations
+                const t = translations[currentLang];
+                const s = data.summary;
+                resultsDiv.innerHTML = `
+                    <div style="font-size: 11px;">
+                        <div style="color: #4caf50; margin: 4px 0;">🟢 +${s.new_nodes} ${t.diffNew}, +${s.new_edges} edges</div>
+                        <div style="color: #f44336; margin: 4px 0;">🔴 -${s.removed_nodes} ${t.diffRemoved}, -${s.removed_edges} edges</div>
+                        <div style="color: #666; margin-top: 8px;">${t.diffFromTo.replace('{before}', before).replace('{after}', after)}</div>
+                    </div>
+                `;
+            } catch (err) {
+                const t = translations[currentLang];
+                resultsDiv.innerHTML = `<p style="font-size: 11px; color: #f44336;">${t.diffError.replace('{error}', err.message)}</p>`;
+            }
+        }
+        
+        function applyDiffVisualization(diffData) {
+            if (!graph) return;
+            
+            // Reset all nodes first
+            graph.getNodes().forEach(node => {
+                const model = node.getModel();
+                const config = nodeConfig[model.nodeType] || nodeConfig.Employee;
+                graph.updateItem(node, {
+                    style: {
+                        fill: config.color,
+                        stroke: config.color,
+                        lineWidth: 2,
+                        shadowColor: 'transparent',
+                        shadowBlur: 0,
+                    }
+                });
+            });
+            
+            // Highlight new nodes in green
+            diffData.nodes.new.forEach(n => {
+                const node = graph.findById(String(n.id));
+                if (node) {
+                    graph.updateItem(node, {
+                        style: {
+                            fill: '#4caf50',
+                            stroke: '#2e7d32',
+                            lineWidth: 4,
+                            shadowColor: '#4caf50',
+                            shadowBlur: 10,
+                        }
+                    });
+                }
+            });
+            
+            // Highlight removed nodes in red (with glow)
+            diffData.nodes.removed.forEach(n => {
+                const node = graph.findById(String(n.id));
+                if (node) {
+                    graph.updateItem(node, {
+                        style: {
+                            fill: '#ffcdd2',
+                            stroke: '#f44336',
+                            lineWidth: 4,
+                            shadowColor: '#f44336',
+                            shadowBlur: 15,
+                        }
+                    });
+                }
+            });
+            
+            // Add diff edges
+            const existingEdges = new Set();
+            graph.getEdges().forEach(e => {
+                const m = e.getModel();
+                existingEdges.add(`${m.source}|${m.target}|${m.label}`);
+            });
+            
+            // New edges - green solid
+            diffData.edges.new.forEach(e => {
+                const key = `${e.source}|${e.target}|${e.label}`;
+                if (!existingEdges.has(key)) {
+                    graph.addItem('edge', {
+                        id: `diff_new_${e.id || Math.random()}`,
+                        source: String(e.source),
+                        target: String(e.target),
+                        label: e.label,
+                        type: 'cubic',
+                        style: {
+                            stroke: '#4caf50',
+                            lineWidth: 3,
+                            endArrow: { path: G6.Arrow.triangle(8, 10, 0), fill: '#4caf50' },
+                        }
+                    });
+                }
+            });
+            
+            // Removed edges - red dotted
+            const currentEdges = graph.getEdges();
+            diffData.edges.removed.forEach(e => {
+                const key = `${e.source}|${e.target}|${e.label}`;
+                // Add red dotted edge to show what was removed
+                graph.addItem('edge', {
+                    id: `diff_removed_${e.id || Math.random()}`,
+                    source: String(e.source),
+                    target: String(e.target),
+                    label: `${e.label} (removed)`,
+                    type: 'cubic',
+                    style: {
+                        stroke: '#f44336',
+                        lineWidth: 2,
+                        lineDash: [5, 5],
+                        endArrow: { path: G6.Arrow.triangle(6, 8, 0), fill: '#f44336' },
+                    }
+                });
+            });
+            
+            graph.paint();
+        }
+        
+        // ========== IMPLICIT TEAMS FUNCTIONS ==========
+        let collabPanelVisible = false;
+        let implicitEdges = [];
+        
+        function toggleCollabPanel() {
+            collabPanelVisible = !collabPanelVisible;
+            const panel = document.getElementById('collab-panel');
+            const toggleBtn = document.getElementById('collab-toggle');
+            const t = translations[currentLang];
+            
+            if (collabPanelVisible) {
+                panel.style.display = 'block';
+                toggleBtn.textContent = t.collabToggleHide;
+            } else {
+                panel.style.display = 'none';
+                toggleBtn.textContent = t.collabToggleShow;
+            }
+        }
+        
+        async function loadCollaborations() {
+            const minInteractions = document.getElementById('collab-min').value || 2;
+            const resultsDiv = document.getElementById('collab-results');
+            resultsDiv.innerHTML = '<p style="font-size: 11px; color: #666;">Analyzing collaboration patterns...</p>';
+            
+            try {
+                const headers = {};
+                if (apiKey) {
+                    headers['Authorization'] = 'Bearer ' + apiKey;
+                }
+                
+                const response = await fetch(`/graph-collaborations?min_interactions=${minInteractions}`, { headers });
+                if (!response.ok) throw new Error('Request failed');
+                
+                const data = await response.json();
+                
+                // Apply implicit collaboration visualization
+                applyCollaborationVisualization(data.edges);
+                
+                // Show summary with translations
+                const t = translations[currentLang];
+                const html = `
+                    <div style="font-size: 11px;">
+                        <div style="margin-bottom: 8px; color: #333;">
+                            <strong>${data.total_collaborations}</strong> ${t.collabConnections}
+                        </div>
+                        ${data.edges.slice(0, 10).map(e => `
+                            <div style="margin: 4px 0; padding: 4px; background: #f5f5f5; border-radius: 4px;">
+                                <div style="font-weight: 600;">${e.strength} ${t.collabJointProjects}</div>
+                                <div style="color: #666; font-size: 10px;">${e.data?.projects?.length || 0} ${t.collabProjects}</div>
+                            </div>
+                        `).join('')}
+                        ${data.edges.length > 10 ? `<div style="color: #999; font-size: 10px;">${t.collabAndMore.replace('{count}', data.edges.length - 10)}</div>` : ''}
+                    </div>
+                `;
+                resultsDiv.innerHTML = html;
+            } catch (err) {
+                const t = translations[currentLang];
+                resultsDiv.innerHTML = `<p style="font-size: 11px; color: #f44336;">${t.diffError.replace('{error}', err.message)}</p>`;
+            }
+        }
+        
+        function applyCollaborationVisualization(collaborationEdges) {
+            if (!graph) return;
+            
+            // Remove existing implicit edges
+            implicitEdges.forEach(edgeId => {
+                const edge = graph.findById(edgeId);
+                if (edge) graph.removeItem(edge);
+            });
+            implicitEdges = [];
+            
+            // Add new implicit edges
+            collaborationEdges.forEach(e => {
+                const edgeId = `collab_${e.id}`;
+                implicitEdges.push(edgeId);
+                
+                graph.addItem('edge', {
+                    id: edgeId,
+                    source: e.source,
+                    target: e.target,
+                    label: e.label,
+                    type: 'cubic',
+                    style: {
+                        stroke: '#9c27b0',
+                        lineWidth: Math.min(e.data?.strength || 1, 4),
+                        lineDash: [4, 4],
+                        opacity: 0.6,
+                        endArrow: false,
+                    },
+                    labelCfg: {
+                        autoRotate: true,
+                        style: {
+                            fill: '#9c27b0',
+                            fontSize: 9,
+                            background: { fill: '#fff', padding: [2, 4], radius: 2 },
+                        }
+                    }
+                });
+            });
+            
+            graph.paint();
+        }
+        
+        function clearImplicitEdges() {
+            implicitEdges.forEach(edgeId => {
+                const edge = graph.findById(edgeId);
+                if (edge) graph.removeItem(edge);
+            });
+            implicitEdges = [];
+            graph.paint();
+        }
+        
+        // Risk Analysis Functions
+        let riskAnalysisEnabled = false;
+        
+        function toggleRiskAnalysis() {
+            riskAnalysisEnabled = !riskAnalysisEnabled;
+            const riskPanel = document.getElementById('risk-panel');
+            const toggleBtn = document.getElementById('risk-toggle');
+            const t = translations[currentLang];
+            
+            if (riskAnalysisEnabled) {
+                riskPanel.style.display = 'block';
+                toggleBtn.textContent = t.riskToggleHide;
+                // Clear other overlays
+                clearDiffEdges();
+                clearImplicitEdges();
+                applyRiskAnalysis();
+            } else {
+                riskPanel.style.display = 'none';
+                toggleBtn.textContent = t.riskToggleShow;
+                resetRiskAnalysis();
+            }
+        }
+        
+        function calculateRiskScore(node) {
+            const model = node.getModel();
+            const edges = node.getEdges() || [];
+            const nodeType = model.nodeType;
+            
+            // Base risk factors
+            let riskScore = 0;
+            
+            // Factor 1: Number of connections (degree centrality)
+            const connectionCount = edges.length;
+            riskScore += Math.min(connectionCount * 5, 30);
+            
+            // Factor 2: Node type risk
+            if (nodeType === 'Employee') {
+                riskScore += 10; // Employees have inherent risk if key person
+            } else if (nodeType === 'Department') {
+                riskScore += 15; // Department failure is high impact
+            } else if (nodeType === 'Position') {
+                riskScore += 5;
+            }
+            
+            // Factor 3: Check for critical positions
+            const label = model.label?.toLowerCase() || '';
+            if (label.includes('cto') || label.includes('ceo') || label.includes('cfo') ||
+                label.includes('director') || label.includes('manager')) {
+                riskScore += 20;
+            }
+            
+            // Factor 4: Skill bottleneck (many employees have this skill)
+            if (nodeType === 'Skill') {
+                riskScore += 25; // Skills are critical dependencies
+            }
+            
+            // Factor 5: Project dependency
+            if (nodeType === 'Project') {
+                riskScore += 15;
+            }
+            
+            // Normalize to 0-100
+            return Math.min(riskScore, 100);
+        }
+        
+        function getRiskColor(score) {
+            if (score >= 70) return '#f44336'; // High - Red
+            if (score >= 40) return '#ff9800'; // Medium - Orange
+            return '#4caf50'; // Low - Green
+        }
+        
+        function applyRiskAnalysis() {
+            if (!graph || !riskAnalysisEnabled) return;
+            
+            graph.getNodes().forEach(node => {
+                const score = calculateRiskScore(node);
+                const color = getRiskColor(score);
+                
+                graph.updateItem(node, {
+                    style: {
+                        ...node.getModel().style,
+                        stroke: color,
+                        lineWidth: score >= 70 ? 4 : 2,
+                        shadowColor: color,
+                        shadowBlur: score >= 70 ? 15 : 5
+                    }
+                });
+            });
+            
+            // Show selected node risk
+            showSelectedNodeRisk();
+        }
+        
+        function resetRiskAnalysis() {
+            if (!graph) return;
+            
+            graph.getNodes().forEach(node => {
+                const model = node.getModel();
+                const config = nodeConfig[model.nodeType] || nodeConfig.Employee;
+                
+                graph.updateItem(node, {
+                    style: {
+                        fill: config.color,
+                        stroke: config.color,
+                        lineWidth: 2,
+                        shadowColor: 'transparent',
+                        shadowBlur: 0
+                    }
+                });
+            });
+            
+            // Clear diff edges and implicit edges
+            clearDiffEdges();
+            clearImplicitEdges();
+        }
+        
+        function clearDiffEdges() {
+            // Remove all diff-related edges
+            const edgesToRemove = [];
+            graph.getEdges().forEach(edge => {
+                const id = edge.getModel().id || '';
+                if (id.startsWith('diff_')) {
+                    edgesToRemove.push(edge);
+                }
+            });
+            edgesToRemove.forEach(e => graph.removeItem(e));
+            graph.paint();
+        }
+        
+        function clearImplicitEdges() {
+            // Remove all implicit collaboration edges
+            const edgesToRemove = [];
+            graph.getEdges().forEach(edge => {
+                const id = edge.getModel().id || '';
+                if (id.startsWith('collab_')) {
+                    edgesToRemove.push(edge);
+                }
+            });
+            edgesToRemove.forEach(e => graph.removeItem(e));
+            implicitEdges = [];
+            graph.paint();
+        }
+        
+        function showSelectedNodeRisk() {
+            const selectedNodes = graph.findAll('node', node => {
+                const states = graph.getItemStates(node);
+                return states.selected === true;
+            });
+            
+            const riskContent = document.getElementById('risk-content');
+            const t = translations[currentLang];
+            
+            if (selectedNodes.length === 0) {
+                riskContent.innerHTML = `<p data-i18n="riskNoSelection" style="font-size:11px;color:#666;">${t.riskNoSelection}</p>`;
+                return;
+            }
+            
+            let html = '';
+            selectedNodes.forEach(node => {
+                const model = node.getModel();
+                const score = calculateRiskScore(node);
+                const color = getRiskColor(score);
+                const edges = node.getEdges() || [];
+                const connections = edges.length;
+                
+                html += `
+                    <div class="risk-item">
+                        <span style="width:100px;overflow:hidden;text-overflow:ellipsis;">${model.label}</span>
+                        <div class="risk-bar">
+                            <div class="risk-fill ${score >= 70 ? 'risk-high' : score >= 40 ? 'risk-medium' : 'risk-low'}" style="width:${score}%"></div>
+                        </div>
+                        <span>${score}%</span>
+                    </div>
+                    <div style="font-size:10px;color:#999;margin-left:108px;margin-bottom:10px;">
+                        ${connections} connections
+                    </div>
+                `;
+            });
+            
+            riskContent.innerHTML = html || `<p data-i18n="riskNoSelection" style="font-size:11px;color:#666;">${t.riskNoSelection}</p>`;
+        }
+        
+        // Initialize on load - wait for G6 to be ready
+        if (typeof G6 !== 'undefined') {
+            initGraph();
+        } else {
+            // G6 not loaded yet, poll until it's ready
+            const checkG6 = setInterval(() => {
+                if (typeof G6 !== 'undefined') {
+                    clearInterval(checkG6);
+                    initGraph();
+                }
+            }, 100);
+            // Timeout after 10 seconds
+            setTimeout(() => clearInterval(checkG6), 10000);
+        }
+        
+        // Initialize draggable panels after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(initializeDraggablePanels, 100);
+            });
+        } else {
+            // DOM already loaded
+            setTimeout(initializeDraggablePanels, 100);
+        }
+        
+        // Chat Panel Functions
+        let chatPanelCollapsed = false;
+        let queryMode = 'natural';
+        
+        function toggleChatPanel() {
+            chatPanelCollapsed = !chatPanelCollapsed;
+            const panel = document.getElementById('chat-panel');
+            const content = document.getElementById('chat-content');
+            const toggle = document.getElementById('chat-toggle');
+            
+            if (chatPanelCollapsed) {
+                panel.classList.add('collapsed');
+                content.style.display = 'none';
+                toggle.textContent = '+';
+            } else {
+                panel.classList.remove('collapsed');
+                content.style.display = 'flex';
+                toggle.textContent = '−';
+            }
+        }
+        
+        function toggleQueryMode(mode) {
+            if (!mode) mode = queryMode;
+            queryMode = mode;
+            
+            const naturalBtn = document.getElementById('mode-natural');
+            const cypherBtn = document.getElementById('mode-cypher');
+            const t = translations[currentLang];
+            
+            if (mode === 'natural') {
+                naturalBtn.style.color = 'white';
+                cypherBtn.style.color = 'rgba(255,255,255,0.6)';
+            } else {
+                cypherBtn.style.color = 'white';
+                naturalBtn.style.color = 'rgba(255,255,255,0.6)';
+            }
+            
+            const input = document.getElementById('chat-input');
+            input.placeholder = mode === 'cypher' ? 'MATCH (n) RETURN n LIMIT 10' : t.chatInputPlaceholder;
+        }
+        
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendQuery();
+            }
+        }
+        
+        function addChatMessage(message, isUser = true, mode = null) {
+            const history = document.getElementById('chat-history');
+            const emptyState = history.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'chat-user' : 'chat-assistant'}`;
+            
+            if (isUser && mode) {
+                const modeDiv = document.createElement('div');
+                modeDiv.className = 'query-mode';
+                modeDiv.textContent = mode;
+                messageDiv.appendChild(modeDiv);
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = message;
+            messageDiv.appendChild(contentDiv);
+            
+            history.appendChild(messageDiv);
+            history.scrollTop = history.scrollHeight;
+        }
+        
+        function showLoading() {
+            document.getElementById('chat-loading').classList.add('active');
+            document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
+        }
+        
+        function hideLoading() {
+            document.getElementById('chat-loading').classList.remove('active');
+        }
+        
+        function addChatResults(results) {
+            const lastMessage = document.querySelector('.chat-assistant:last-child');
+            if (!lastMessage) return;
+            
+            const resultsDiv = document.createElement('div');
+            resultsDiv.className = 'chat-results';
+            
+            if (Array.isArray(results)) {
+                results.forEach((item, index) => {
+                    if (item.isMore) {
+                        const moreDiv = document.createElement('div');
+                        moreDiv.className = 'chat-result-item';
+                        moreDiv.style.color = '#999';
+                        moreDiv.style.fontSize = '11px';
+                        moreDiv.style.fontStyle = 'italic';
+                        moreDiv.textContent = item.label;
+                        resultsDiv.appendChild(moreDiv);
+                    } else {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'chat-result-item' + (results.length === 1 ? ' single-node' : '');
+                        itemDiv.innerHTML = '• ' + item.label + (results.length === 1 ? ' <span class="click-hint">(' + (translations[currentLang].chatClickToView || 'click to view') + ')</span>' : '');
+                        itemDiv.dataset.nodeId = item.id;
+                        itemDiv.dataset.nodeLabel = item.label;
+                        itemDiv.dataset.nodeType = item.type || 'unknown';
+                        
+                        itemDiv.addEventListener('click', function() {
+                            highlightNodeInGraphG6(this.dataset.nodeId, this.dataset.nodeLabel, this.dataset.nodeType);
+                        });
+                        
+                        resultsDiv.appendChild(itemDiv);
+                    }
+                });
+            } else {
+                resultsDiv.innerHTML = results;
+            }
+            
+            lastMessage.appendChild(resultsDiv);
+        }
+        
+        function highlightNodeInGraphG6(nodeId, nodeLabel, nodeType) {
+            if (!graph || !allGraphData) return;
+            
+            console.log('Highlighting node in G6:', nodeId, nodeLabel, nodeType);
+            
+            // Clear previous highlights
+            graph.getNodes().forEach(node => {
+                const model = node.getModel();
+                graph.updateItem(node, {
+                    size: model.originalSize || 35,
+                    style: {
+                        ...model.originalStyle,
+                        lineWidth: 1,
+                        stroke: model.originalStyle?.stroke || '#667eea',
+                        fill: model.originalStyle?.fill || '#667eea'
+                    },
+                    labelCfg: {
+                        style: {
+                            fontSize: 12,
+                            fill: '#333'
+                        }
+                    }
+                });
+            });
+            
+            // Find and highlight the target node
+            const targetNode = graph.findById(nodeId);
+            if (targetNode) {
+                const model = targetNode.getModel();
+                const originalSize = model.originalSize || 35;
+                
+                // Highlight with G6 state
+                graph.updateItem(targetNode, {
+                    size: originalSize * 1.5,
+                    style: {
+                        ...model.originalStyle,
+                        lineWidth: 4,
+                        stroke: '#667eea',
+                        fill: '#667eea',
+                        shadowColor: 'rgba(102, 126, 234, 0.5)',
+                        shadowBlur: 15
+                    },
+                    labelCfg: {
+                        style: {
+                            fontSize: 14,
+                            fill: '#667eea',
+                            fontWeight: 'bold'
+                        }
+                    }
+                });
+                
+                // Focus on the node
+                graph.focusItem(targetNode, true, {
+                    easing: 'easeCubic',
+                    duration: 500
+                });
+                
+                // Highlight connected nodes
+                const edges = targetNode.getEdges();
+                edges.forEach(edge => {
+                    const source = edge.getSource();
+                    const target = edge.getTarget();
+                    
+                    [source, target].forEach(neighbor => {
+                        if (neighbor.getID() !== nodeId) {
+                            const neighborModel = neighbor.getModel();
+                            graph.updateItem(neighbor, {
+                                style: {
+                                    ...neighborModel.originalStyle,
+                                    opacity: 0.6
+                                }
+                            });
+                        }
+                    });
+                });
+                
+                console.log('Highlighted node:', nodeLabel, 'with', edges.length, 'direct relationships');
+            } else {
+                console.log('Node not found:', nodeId);
+            }
+        }
+        
+        function sendQuery() {
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            const t = translations[currentLang];
+            
+            if (!query || !allGraphData) return;
+            
+            const modeLabel = queryMode === 'cypher' ? t.chatModeCypher : t.chatModeNatural;
+            addChatMessage(query, true, modeLabel);
+            input.value = '';
+            
+            showLoading();
+            
+            setTimeout(() => {
+                hideLoading();
+                
+                let response;
+                if (queryMode === 'natural') {
+                    response = processNaturalLanguageQueryG6(query);
+                } else {
+                    response = processCypherQueryG6(query);
+                }
+                
+                addChatMessage(response.message, false);
+                
+                if (response.results) {
+                    setTimeout(() => {
+                        addChatResults(response.results);
+                    }, 100);
+                }
+            }, 800);
+        }
+        
+        function processNaturalLanguageQueryG6(query) {
+            const lowerQuery = query.toLowerCase();
+            const t = translations[currentLang];
+            
+            // Position queries
+            if (lowerQuery.includes('who is') || lowerQuery.includes('who works as') || lowerQuery.includes('find') || lowerQuery.includes('show me')) {
+                let positionQuery = '';
+                const patterns = ['who is ', 'who works as ', 'find ', 'show me '];
+                for (const pattern of patterns) {
+                    if (lowerQuery.includes(pattern)) {
+                        positionQuery = lowerQuery.split(pattern)[1].trim();
+                        break;
+                    }
+                }
+                
+                if (positionQuery) {
+                    const allPositionNodes = allGraphData.nodes
+                        .filter(n => getNodeType(n.label, n.labels) === 'Position')
+                        .map(n => ({ id: n.id, label: n.label }));
+                    
+                    for (const position of allPositionNodes) {
+                        if (position.label.toLowerCase() === positionQuery || positionQuery.includes(position.label.toLowerCase())) {
+                            const employees = findEmployeesByPositionG6(position.label);
+                            if (employees.length > 0) {
+                                return {
+                                    message: t.chatFoundPosition.replace('{count}', employees.length).replace('{position}', position.label),
+                                    results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Skill queries
+            if (lowerQuery.includes('skilled') || lowerQuery.includes('skill') || lowerQuery.includes('knows') || lowerQuery.includes('expert')) {
+                const skillQuery = lowerQuery.split(/skilled|skill|knows|expert/)[1]?.trim() || lowerQuery;
+                const employees = findEmployeesBySkillG6(skillQuery);
+                if (employees.length > 0) {
+                    return {
+                        message: t.chatFoundSkill.replace('{skill}', skillQuery).replace('{count}', employees.length),
+                        results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
+                    };
+                }
+            }
+            
+            // Department queries
+            if (lowerQuery.includes('department') || lowerQuery.includes('dept') || lowerQuery.includes('team') || lowerQuery.includes('group')) {
+                let deptQuery = '';
+                const patterns = ['department ', 'dept ', 'team ', 'group '];
+                for (const pattern of patterns) {
+                    if (lowerQuery.includes(pattern)) {
+                        deptQuery = lowerQuery.split(pattern)[1].trim();
+                        break;
+                    }
+                }
+                if (deptQuery) {
+                    const employees = findEmployeesByDepartmentG6(deptQuery);
+                    if (employees.length > 0) {
+                        return {
+                            message: t.chatFoundInDept.replace('{dept}', deptQuery).replace('{count}', employees.length),
+                            results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
+                        };
+                    }
+                }
+            }
+            
+            return { message: t.chatNoResults, results: null };
+        }
+        
+        function processCypherQueryG6(query) {
+            const t = translations[currentLang];
+            
+            // Basic Cypher parsing for demo
+            if (query.toLowerCase().includes('employee') && query.toLowerCase().includes('return')) {
+                const employees = allGraphData.nodes
+                    .filter(n => getNodeType(n.label, n.labels) === 'Employee')
+                    .slice(0, 10)
+                    .map(n => ({ id: n.id, label: n.label, type: 'Employee' }));
+                
+                return {
+                    message: t.chatCypherSuccess.replace('{count}', employees.length),
+                    results: employees
+                };
+            }
+            
+            return { message: t.chatCypherError, results: null };
+        }
+        
+        function findEmployeesByPositionG6(position) {
+            return allGraphData.edges
+                .filter(e => e.label === 'WORKS_IN' && e.target === position)
+                .map(e => {
+                    const employee = allGraphData.nodes.find(n => n.id === e.source);
+                    return employee ? { id: employee.id, label: employee.label, type: 'Employee' } : null;
+                })
+                .filter(e => e !== null);
+        }
+        
+        function findEmployeesBySkillG6(skill) {
+            return allGraphData.edges
+                .filter(e => e.label === 'PROFICIENT_IN' && e.target.toLowerCase().includes(skill.toLowerCase()))
+                .map(e => {
+                    const employee = allGraphData.nodes.find(n => n.id === e.source);
+                    return employee ? { id: employee.id, label: employee.label, type: 'Employee' } : null;
+                })
+                .filter(e => e !== null)
+                .slice(0, 10);
+        }
+        
+        function findEmployeesByDepartmentG6(department) {
+            // Find department node
+            const deptNode = allGraphData.nodes.find(n => 
+                getNodeType(n.label, n.labels) === 'Department' && 
+                n.label.toLowerCase().includes(department.toLowerCase())
+            );
+            
+            if (!deptNode) return [];
+            
+            return allGraphData.edges
+                .filter(e => e.label === 'WORKS_IN' && e.target === deptNode.id)
+                .map(e => {
+                    const employee = allGraphData.nodes.find(n => n.id === e.source);
+                    return employee ? { id: employee.id, label: employee.label, type: 'Employee' } : null;
+                })
+                .filter(e => e !== null)
+                .slice(0, 10);
+        }
+        
+        // Initialize query mode on load
+        setTimeout(() => {
+            if (document.getElementById('mode-natural')) {
+                toggleQueryMode('natural');
+            }
+        }, 100);
+    </script>
+</body>
+</html>

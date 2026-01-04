@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import jwt
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import hashlib
 import secrets
+import os
 from config import OPENAI_API_KEY, ANTHROPIC_API_KEY
 
 security = HTTPBearer(auto_error=False)
@@ -67,7 +68,7 @@ auth_manager = AuthManager()
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = security,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ):
     auth_manager.verify_api_key(credentials)
     return {"authenticated": True, "api_key_valid": True}

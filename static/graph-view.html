@@ -23,7 +23,7 @@
         #toolbar button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; }
         #toolbar button:hover { transform: translateY(-1px); }
         #toolbar input { padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; width: 200px; }
-        #graph-container { height: calc(100vh - 120px); background: #fafafa; }
+        #graph-container { height: calc(100vh - 120px); min-height: 400px; background: #fafafa; border: 1px dashed #ccc; position: relative; }
         #legend { position: fixed; top: 140px; right: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 100; min-width: 180px; }
         #legend h4 { margin-bottom: 10px; color: #333; font-size: 14px; }
         .legend-item { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; }
@@ -35,30 +35,30 @@
         #loading-text { font-size: 18px; color: #333; animation: pulse 1.5s ease-in-out infinite; }
         
         /* Filter Panel Styles */
-        #filter-panel { position: fixed; left: 20px; top: 140px; width: 320px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 99; max-height: calc(100vh - 180px); overflow-y: auto; transition: all 0.3s ease; }
+        #filter-panel { position: fixed; left: 20px; top: 140px; width: 360px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 99; max-height: calc(100vh - 180px); overflow-y: auto; transition: all 0.3s ease; }
         #filter-panel:hover { box-shadow: 0 6px 25px rgba(0,0,0,0.2); }
-        #filter-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 12px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none; }
-        #filter-header h3 { margin: 0; font-size: 14px; font-weight: 600; }
-        #filter-content { padding: 12px; }
-        .filter-section { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
+        #filter-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: move; user-select: none; }
+        #filter-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+        #filter-content { padding: 15px; }
+        .filter-section { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
         .filter-section:last-child { margin-bottom: 0; border-bottom: none; }
-        .filter-label { font-weight: 600; color: #333; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .filter-checkboxes { display: flex; flex-direction: column; gap: 4px; }
-        .filter-checkbox { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 4px; transition: background-color 0.2s; cursor: pointer; }
+        .filter-label { font-weight: 600; color: #333; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-checkboxes { display: flex; flex-direction: column; gap: 6px; }
+        .filter-checkbox { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; transition: background-color 0.2s; cursor: pointer; }
         .filter-checkbox:hover { background-color: #f5f5f5; }
         .filter-checkbox input[type="checkbox"] { margin: 0; cursor: pointer; }
-        .filter-checkbox label { margin: 0; cursor: pointer; font-size: 12px; color: #555; flex: 1; }
-        .filter-select { width: 100%; padding: 6px 8px; border: 2px solid #ddd; border-radius: 4px; font-size: 12px; background: white; cursor: pointer; transition: border-color 0.2s; }
+        .filter-checkbox label { margin: 0; cursor: pointer; font-size: 14px; color: #555; flex: 1; }
+        .filter-select { width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white; cursor: pointer; transition: border-color 0.2s; }
         .filter-select:focus { outline: none; border-color: #667eea; }
-        .filter-input { width: 100%; padding: 6px 8px; border: 2px solid #ddd; border-radius: 4px; font-size: 12px; transition: border-color 0.2s; }
+        .filter-input { width: 100%; padding: 10px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
         .filter-input:focus { outline: none; border-color: #667eea; }
-        .filter-actions { display: flex; gap: 6px; margin-top: 10px; }
-        .filter-btn { flex: 1; padding: 6px 8px; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .filter-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .filter-btn { flex: 1; padding: 10px 12px; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .filter-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .filter-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4); }
         .filter-btn-secondary { background: #f0f0f0; color: #666; }
         .filter-btn-secondary:hover { background: #e0e0e0; }
-        #filter-results { background: #f8f9fa; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 11px; color: #666; text-align: center; }
+        #filter-results { background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 13px; color: #666; text-align: center; }
         #filter-results.active { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea; font-weight: 600; }
         
         /* Adjust legend position to avoid overlap */
@@ -101,6 +101,10 @@
         .chat-loading { display: none; text-align: center; padding: 10px; color: #667eea; font-style: italic; }
         .chat-loading.active { display: block; }
         .chat-results { margin-top: 8px; padding: 8px; background: rgba(102, 126, 234, 0.1); border-radius: 4px; border-left: 3px solid #667eea; }
+        .chat-results .chat-result-item { padding: 4px 6px; margin: 2px 0; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .chat-results .chat-result-item:hover { background: rgba(102, 126, 234, 0.2); }
+        .chat-results .chat-result-item.single-node { font-weight: 600; color: #667eea; }
+        .chat-results .chat-result-item .click-hint { font-size: 9px; color: #999; font-weight: normal; margin-left: 6px; }
         #chat-input-container { padding: 12px; border-top: 1px solid #eee; }
         #chat-input-wrapper { display: flex; gap: 8px; align-items: flex-end; }
         #chat-input { flex: 1; padding: 8px 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 12px; resize: none; min-height: 34px; max-height: 80px; font-family: inherit; transition: border-color 0.2s; }
@@ -109,11 +113,72 @@
         #chat-send:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4); }
         #chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
         .empty-state { text-align: center; color: #999; padding: 20px; font-style: italic; }
+        
+        /* Sparkle animation for selected nodes */
+        @keyframes sparkle-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7), 0 0 10px 5px rgba(102, 126, 234, 0.3);
+            }
+            25% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.5), 0 0 20px 10px rgba(102, 126, 234, 0.2);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(102, 126, 234, 0.3), 0 0 30px 15px rgba(102, 126, 234, 0.1);
+            }
+            75% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.5), 0 0 20px 10px rgba(102, 126, 234, 0.2);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7), 0 0 10px 5px rgba(102, 126, 234, 0.3);
+            }
+        }
+        
+        @keyframes sparkle-glow {
+            0%, 100% {
+                border-color: #667eea;
+                filter: brightness(1);
+            }
+            50% {
+                border-color: #764ba2;
+                filter: brightness(1.3);
+            }
+        }
+        
+        @keyframes sparkle-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Sparkle effect wrapper */
+        .sparkle-selected {
+            animation: sparkle-pulse 2s ease-in-out infinite, sparkle-glow 1s ease-in-out infinite;
+        }
+        
+        /* Particle-like sparkle decorations */
+        .sparkle-decoration {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #fff 0%, #667eea 100%);
+            border-radius: 50%;
+            animation: sparkle-float 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes sparkle-float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translateY(-10px) scale(1.2);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="header">
-        <h1><span id="title">HR Knowledge Graph</span></h1>
+        <h1><span id="title" data-i18n="title">HR Knowledge Graph</span></h1>
         <div id="header-right">
             <div id="stats">
                 <div class="stat"><div class="stat-number" id="s-employees">-</div><div class="stat-label" data-i18n="employees">Employees</div></div>
@@ -122,12 +187,19 @@
                 <div class="stat"><div class="stat-number" id="s-projects">-</div><div class="stat-label" data-i18n="projects">Projects</div></div>
                 <div class="stat"><div class="stat-number" id="s-edges">-</div><div class="stat-label" data-i18n="relations">Relations</div></div>
             </div>
+            <!-- API Key Input -->
+            <div style="display:flex;align-items:center;gap:8px;margin-left:15px;">
+                <input type="password" id="api-key" placeholder="API key" 
+                       style="padding:6px 10px;border:2px solid #ddd;border-radius:6px;font-size:12px;width:100px;">
+                <button onclick="saveApiKey()" style="background:#667eea;color:white;padding:6px 12px;border:none;border-radius:6px;font-size:12px;cursor:pointer;">OK</button>
+            </div>
             <div id="lang-selector">
                 <button onclick="setLanguage('en')" class="active">EN</button>
                 <button onclick="setLanguage('fr')">FR</button>
                 <button onclick="setLanguage('it')">IT</button>
                 <button onclick="setLanguage('de')">DE</button>
             </div>
+            <a href="/" style="color: #667eea; font-size: 13px;" data-i18n="dashboard">Dashboard</a>
         </div>
     </div>
     
@@ -136,6 +208,7 @@
         <button id="physics-btn" onclick="togglePhysics()" data-i18n="physics">Physics</button>
         <button onclick="zoomIn()" data-i18n="zoomIn">Zoom +</button>
         <button onclick="zoomOut()" data-i18n="zoomOut">Zoom -</button>
+        <button id="edge-labels-btn" onclick="toggleEdgeLabels()" data-i18n="edgeLabels">Labels</button>
         <input type="text" id="search" placeholder="Search..." data-i18n-placeholder="searchPlaceholder" oninput="searchNodes(this.value)">
         <span id="search-count" style="color:#666;font-size:13px;"></span>
     </div>
@@ -177,7 +250,7 @@
             <!-- Skill Filter -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterSkills">Skills</div>
-                <select id="filter-skill-select" class="filter-select" onchange="applyFilters()">
+                <select id="filter-skill-select" class="filter-select" onchange="onFilterDropdownChange('filter-skill-select')">
                     <option value="" data-i18n="filterAllSkills">All Skills</option>
                 </select>
             </div>
@@ -185,7 +258,7 @@
             <!-- Department Filter -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterDepartments">Departments</div>
-                <select id="filter-department-select" class="filter-select" onchange="applyFilters()">
+                <select id="filter-department-select" class="filter-select" onchange="onFilterDropdownChange('filter-department-select')">
                     <option value="" data-i18n="filterAllDepartments">All Departments</option>
                 </select>
             </div>
@@ -193,7 +266,7 @@
             <!-- Employee Name Search -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterEmployeeName">Employee Name</div>
-                <select id="filter-employee-select" class="filter-select" onchange="applyFilters()">
+                <select id="filter-employee-select" class="filter-select" onchange="onFilterDropdownChange('filter-employee-select')">
                     <option value="" data-i18n="filterAllEmployees">All Employees</option>
                 </select>
             </div>
@@ -201,7 +274,7 @@
             <!-- Position Filter -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterPositions">Positions</div>
-                <select id="filter-position-select" class="filter-select" onchange="applyFilters()">
+                <select id="filter-position-select" class="filter-select" onchange="onFilterDropdownChange('filter-position-select')">
                     <option value="" data-i18n="filterAllPositions">All Positions</option>
                 </select>
             </div>
@@ -209,14 +282,14 @@
             <!-- Project Filter -->
             <div class="filter-section">
                 <div class="filter-label" data-i18n="filterProjects">Projects</div>
-                <select id="filter-project-select" class="filter-select" onchange="applyFilters()">
+                <select id="filter-project-select" class="filter-select" onchange="onFilterDropdownChange('filter-project-select')">
                     <option value="" data-i18n="filterAllProjects">All Projects</option>
                 </select>
             </div>
             
             <!-- Filter Actions -->
             <div class="filter-actions">
-                <button class="filter-btn filter-btn-primary" onclick="applyFilters()" data-i18n="filterApply">Apply</button>
+                <button class="filter-btn filter-btn-primary" onclick="applyVisFilters()" data-i18n="filterApply">Apply</button>
                 <button class="filter-btn filter-btn-secondary" onclick="clearAllFilters()" data-i18n="filterClear">Clear</button>
             </div>
             
@@ -293,6 +366,7 @@
                 'physics': 'Physics',
                 'zoomIn': 'Zoom +',
                 'zoomOut': 'Zoom -',
+                'edgeLabels': 'Labels',
                 'searchPlaceholder': 'Search...',
                 // Legend - Node Types
                 'nodeTypes': 'Node Types',
@@ -304,14 +378,14 @@
                 // Legend - Relationships
                 'relTypes': 'Relationships',
                 'relProficient': 'Proficient In',
-                'relWorksIn': 'Works In',
+                'relWorksIn': 'Works as',
                 'relBelongsTo': 'Belongs To',
                 'relReportsTo': 'Reports To',
                 'relWorksOn': 'Works On',
                 'relCollaborates': 'Collaborates With',
                 // Edge label translations
                 'PROFICIENT_IN': 'Proficient In',
-                'WORKS_IN': 'Works In',
+                'WORKS_IN': 'Works as',
                 'BELONGS_TO': 'Belongs To',
                 'REPORTS_TO': 'Reports To',
                 'WORKS_ON': 'Works On',
@@ -345,6 +419,7 @@
                 'chatInputPlaceholder': 'Type your query here...',
                 'chatSend': 'Send',
                 'chatLoading': 'Thinking...',
+                'chatClickToView': 'click to view',
                 // Chat responses
                 'chatFoundSkilled': 'Found {count} employees skilled in {skill}:',
                 'chatFoundInDept': 'Found {count} employees in {dept}:',
@@ -353,9 +428,10 @@
                 'chatCypherSuccess': 'Cypher query executed successfully. Found {count} results:',
                 'chatCypherPosition': 'Cypher query executed. Found {count} results:',
                 'chatCypherNodes': 'Cypher query executed successfully. Found {count} {type} nodes:',
-                'chatHelp': "I understand you're asking about the HR knowledge graph. Try queries like:\n• 'Who is skilled in Python?'\n• 'Show me all employees in Engineering'\n• 'Who works in Marketing department?'\n• 'Who is our CFO?'\n• 'Who is the CTO?'",
+                'chatHelp': "I understand you're asking about the HR knowledge graph. Try queries like:\n• 'Who is skilled in Python?'\n• 'Show me all employees in Engineering'\n• 'Who works as Marketing Manager?'\n• 'Who is our CFO?'\n• 'Who is the CTO?'",
                 'chatCypherHelp': "Cypher query executed. For this demo, try:\n• MATCH (e:Employee)-[:PROFICIENT_IN]->(s:Skill) WHERE s.label = 'Python' RETURN e\n• MATCH (e:Employee)-[:WORKS_IN]->(d:Department) WHERE d.label = 'Engineering' RETURN e",
                 'chatMore': '... and {count} more',
+                'dashboard': 'Dashboard',
             },
             'fr': {
                 'title': 'Graphe de Connaissances RH',
@@ -368,6 +444,7 @@
                 'physics': 'Physique',
                 'zoomIn': 'Zoom +',
                 'zoomOut': 'Zoom -',
+                'edgeLabels': 'Labels',
                 'searchPlaceholder': 'Rechercher...',
                 'nodeTypes': 'Types de nœuds',
                 'nodeEmployee': 'Employé',
@@ -377,13 +454,13 @@
                 'nodeSkill': 'Compétence',
                 'relTypes': 'Relations',
                 'relProficient': 'Expert en',
-                'relWorksIn': 'Travaille dans',
+                'relWorksIn': 'Travaille comme',
                 'relBelongsTo': 'Appartient à',
                 'relReportsTo': 'Rapporte à',
                 'relWorksOn': 'Travaille sur',
                 'relCollaborates': 'Collabore avec',
                 'PROFICIENT_IN': 'Expert en',
-                'WORKS_IN': 'Travaille dans',
+                'WORKS_IN': 'Travaille comme',
                 'BELONGS_TO': 'Appartient à',
                 'REPORTS_TO': 'Rapporte à',
                 'WORKS_ON': 'Travaille sur',
@@ -415,15 +492,18 @@
                 'chatInputPlaceholder': 'Tapez votre requête ici...',
                 'chatSend': 'Envoyer',
                 'chatLoading': 'Réflexion...',
+                'chatClickToView': 'cliquer pour voir',
                 // Chat responses
                 'chatFoundSkilled': 'Trouvé {count} employés compétents en {skill}:',
                 'chatFoundInDept': 'Trouvé {count} employés dans {dept}:',
+                'chatFoundPosition': 'Trouvé {count} employés dans la position {position}:',
                 'chatFoundEmployees': 'Trouvé {count} employés dans le système:',
                 'chatCypherSuccess': 'Requête Cypher exécutée avec succès. Trouvé {count} résultats:',
                 'chatCypherNodes': 'Requête Cypher exécutée avec succès. Trouvé {count} nœuds {type}:',
-                'chatHelp': "Je comprends que vous posez des questions sur le graphe de connaissances RH. Essayez des requêtes comme:\n• 'Qui est compétent en Python?'\n• 'Montrez tous les employés de l\\'Engineering'\n• 'Qui travaille dans le département Marketing?'\n• 'Qui est notre DAF?'\n• 'Qui est le DSI?'",
+                'chatHelp': "Je comprends que vous posez des questions sur le graphe de connaissances RH. Essayez des requêtes comme:\n• 'Qui est compétent en Python?'\n• 'Montrez tous les employés de l\\'Engineering'\n• 'Qui travaille comme Responsable Marketing?'\n• 'Qui est notre DAF?'\n• 'Qui est le DSI?'",
                 'chatCypherHelp': "Requête Cypher exécutée. Pour cette démo, essayez:\n• MATCH (e:Employee)-[:PROFICIENT_IN]->(s:Skill) WHERE s.label = 'Python' RETURN e\n• MATCH (e:Employee)-[:WORKS_IN]->(d:Department) WHERE d.label = 'Engineering' RETURN e",
                 'chatMore': '... et {count} de plus',
+                'dashboard': 'Tableau de Bord',
             },
             'it': {
                 'title': 'Grafo della Conoscenza HR',
@@ -436,6 +516,7 @@
                 'physics': 'Fisica',
                 'zoomIn': 'Zoom +',
                 'zoomOut': 'Zoom -',
+                'edgeLabels': 'Etichette',
                 'searchPlaceholder': 'Cerca...',
                 'nodeTypes': 'Tipi di nodi',
                 'nodeEmployee': 'Dipendente',
@@ -445,13 +526,13 @@
                 'nodeSkill': 'Competenza',
                 'relTypes': 'Relazioni',
                 'relProficient': 'Esperto in',
-                'relWorksIn': 'Lavora in',
+                'relWorksIn': 'Lavora come',
                 'relBelongsTo': 'Appartiene a',
                 'relReportsTo': 'Riporta a',
                 'relWorksOn': 'Lavora su',
                 'relCollaborates': 'Collabora con',
                 'PROFICIENT_IN': 'Esperto in',
-                'WORKS_IN': 'Lavora in',
+                'WORKS_IN': 'Lavora come',
                 'BELONGS_TO': 'Appartiene a',
                 'REPORTS_TO': 'Riporta a',
                 'WORKS_ON': 'Lavora su',
@@ -483,6 +564,7 @@
                 'chatInputPlaceholder': 'Digita la tua query qui...',
                 'chatSend': 'Invia',
                 'chatLoading': 'Pensando...',
+                'chatClickToView': 'clicca per vedere',
                 // Chat responses
                 'chatFoundSkilled': 'Trovati {count} dipendenti esperti in {skill}:',
                 'chatFoundInDept': 'Trovati {count} dipendenti in {dept}:',
@@ -491,9 +573,10 @@
                 'chatCypherSuccess': 'Query Cypher eseguita con successo. Trovati {count} risultati:',
                 'chatCypherPosition': 'Query Cypher eseguita. Trovati {count} risultati:',
                 'chatCypherNodes': 'Query Cypher eseguita con successo. Trovati {count} nodi {type}:',
-                'chatHelp': "Capisco che stai chiedendo informazioni sul grafo della conoscenza HR. Prova query come:\n• 'Chi è esperto in Python?'\n• 'Mostrami tutti i dipendenti di Engineering'\n• 'Chi lavora nel reparto Marketing?'\n• 'Chi è il nostro CFO?'\n• 'Chi è il CTO?'",
+                'chatHelp': "Capisco che stai chiedendo informazioni sul grafo della conoscenza HR. Prova query come:\n• 'Chi è esperto in Python?'\n• 'Mostrami tutti i dipendenti di Engineering'\n• 'Chi lavora come Responsabile Marketing?'\n• 'Chi è il nostro CFO?'\n• 'Chi è il CTO?'",
                 'chatCypherHelp': "Query Cypher eseguita. Per questa demo, prova:\n• MATCH (e:Employee)-[:PROFICIENT_IN]->(s:Skill) WHERE s.label = 'Python' RETURN e\n• MATCH (e:Employee)-[:WORKS_IN]->(d:Department) WHERE d.label = 'Engineering' RETURN e",
                 'chatMore': '... e altri {count}',
+                'dashboard': 'Dashboard',
             },
             'de': {
                 'title': 'HR-Wissensgraph',
@@ -506,6 +589,7 @@
                 'physics': 'Physik',
                 'zoomIn': 'Zoom +',
                 'zoomOut': 'Zoom -',
+                'edgeLabels': 'Labels',
                 'searchPlaceholder': 'Suchen...',
                 'nodeTypes': 'Knotentypen',
                 'nodeEmployee': 'Mitarbeiter',
@@ -515,13 +599,13 @@
                 'nodeSkill': 'Fähigkeit',
                 'relTypes': 'Beziehungen',
                 'relProficient': 'Experte in',
-                'relWorksIn': 'Arbeitet in',
+                'relWorksIn': 'Arbeitet als',
                 'relBelongsTo': 'Gehört zu',
                 'relReportsTo': 'Berichtet an',
                 'relWorksOn': 'Arbeitet an',
                 'relCollaborates': 'Arbeitet zusammen mit',
                 'PROFICIENT_IN': 'Experte in',
-                'WORKS_IN': 'Arbeitet in',
+                'WORKS_IN': 'Arbeitet als',
                 'BELONGS_TO': 'Gehört zu',
                 'REPORTS_TO': 'Berichtet an',
                 'WORKS_ON': 'Arbeitet an',
@@ -553,6 +637,7 @@
                 'chatInputPlaceholder': 'Geben Sie Ihre Abfrage hier ein...',
                 'chatSend': 'Senden',
                 'chatLoading': 'Denke nach...',
+                'chatClickToView': 'klicken zum Anzeigen',
                 // Chat responses
                 'chatFoundSkilled': '{count} Mitarbeiter mit {skill}-Kenntnissen gefunden:',
                 'chatFoundInDept': '{count} Mitarbeiter in {dept} gefunden:',
@@ -561,19 +646,21 @@
                 'chatCypherSuccess': 'Cypher-Abfrage erfolgreich ausgeführt. {count} Ergebnisse gefunden:',
                 'chatCypherPosition': 'Cypher-Abfrage ausgeführt. {count} Ergebnisse gefunden:',
                 'chatCypherNodes': 'Cypher-Abfrage erfolgreich ausgeführt. {count} {type}-Knoten gefunden:',
-                'chatHelp': "Ich verstehe, dass Sie nach dem HR-Wissensgraphen fragen. Versuchen Sie Abfragen wie:\n• 'Wer ist in Python erfahren?'\n• 'Zeigen Sie mir alle Mitarbeiter in Engineering'\n• 'Wer arbeitet in der Marketing-Abteilung?'\n• 'Wer ist unser CFO?'\n• 'Wer ist der CTO?'",
+                'chatHelp': "Ich verstehe, dass Sie nach dem HR-Wissensgraphen fragen. Versuchen Sie Abfragen wie:\n• 'Wer ist in Python erfahren?'\n• 'Zeigen Sie mir alle Mitarbeiter in Engineering'\n• 'Wer arbeitet als Marketing-Manager?'\n• 'Wer ist unser CFO?'\n• 'Wer ist der CTO?'",
                 'chatCypherHelp': "Cypher-Abfrage ausgeführt. Für diese Demo versuchen Sie:\n• MATCH (e:Employee)-[:PROFICIENT_IN]->(s:Skill) WHERE s.label = 'Python' RETURN e\n• MATCH (e:Employee)-[:WORKS_IN]->(d:Department) WHERE d.label = 'Engineering' RETURN e",
                 'chatMore': '... und {count} mehr',
+                'dashboard': 'Dashboard',
             }
         };
 
-        // Node configuration - all nodes as circles (ellipse)
+        // Node configuration - all nodes as circles (ellipse) with fallback
         const nodeConfig = {
-            'Employee': { color: { background: '#42a5f5', border: '#1e88e5' }, size: 25, shape: 'ellipse' },
-            'Position': { color: { background: '#ff9800', border: '#f57c00' }, size: 22, shape: 'ellipse' },
-            'Department': { color: { background: '#4caf50', border: '#388e3c' }, size: 30, shape: 'ellipse' },
-            'Project': { color: { background: '#9c27b0', border: '#7b1fa2' }, size: 25, shape: 'ellipse' },
-            'Skill': { color: { background: '#f44336', border: '#d32f2f' }, size: 18, shape: 'ellipse' }
+            'Employee': { color: { background: '#42a5f5', border: '#1e88e5' }, size: 25, shape: 'circle' },
+            'Position': { color: { background: '#ff9800', border: '#f57c00' }, size: 22, shape: 'circle' },
+            'Department': { color: { background: '#4caf50', border: '#388e3c' }, size: 30, shape: 'circle' },
+            'Project': { color: { background: '#9c27b0', border: '#7b1fa2' }, size: 25, shape: 'circle' },
+            'Skill': { color: { background: '#f44336', border: '#d32f2f' }, size: 18, shape: 'circle' },
+            'default': { color: { background: '#90a4ae', border: '#607d8b' }, size: 20, shape: 'circle' }
         };
         
         // Edge configuration for different relationship types
@@ -588,10 +675,29 @@
             'default': { color: '#ccc', width: 1, arrow: 'to' }
         };
 
+        // API Key management
+        let apiKey = localStorage.getItem('hr_api_key') || '';
+
+        function saveApiKey() {
+            const keyInput = document.getElementById('api-key');
+            if (keyInput.value) {
+                apiKey = keyInput.value;
+                localStorage.setItem('hr_api_key', apiKey);
+                // Re-initialize graph with new key
+                initGraph();
+            }
+        }
+
+        // Load saved API key on page load
+        if (apiKey) {
+            document.getElementById('api-key').value = apiKey;
+        }
+
         let currentLang = 'en';
         let network = null;
         let graphData = null;
         let physicsEnabled = true;
+        let edgeLabelsEnabled = true;
         let filterPanelCollapsed = false;
         let allSkills = [];
         let allDepartments = [];
@@ -610,46 +716,120 @@
             }
             
             // Fallback to pattern matching for backward compatibility
-            const l = label.toLowerCase();
+            const l = label.toLowerCase().trim();
             
-            // FIRST: Check for skills (including compound skills) - BEFORE name check
-            const techSkills = ['python', 'javascript', 'java', 'react', 'node', 'kubernetes', 'docker', 'aws', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'kafka', 'spark', 'hadoop', 'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data analysis', 'data engineering', 'data visualization', 'big data', 'cloud computing', 'cyber security', 'web development', 'mobile development', 'frontend', 'backend', 'fullstack', 'devops', 'cloud architecture', 'microservices', 'agile', 'scrum', 'ci/cd', 'test automation', 'quality assurance', 'ux design', 'ui design', 'product management', 'business analysis', 'technical writing', 'project management'];
-            const softSkills = ['leadership', 'communication', 'teamwork', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'collaboration', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills'];
-            const frameworkSkills = ['spring', 'django', 'flask', 'fastapi', 'express', 'angular', 'vue', 'svelte', 'bootstrap', 'tailwind', 'graphql', 'rest', 'api', 'microservices', 'serverless', 'blockchain', 'devops', 'ci/cd', 'jenkins', 'git', 'github', 'gitlab', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator'];
+            // Remove common name substrings from skill matching to prevent false positives
+            const nameSubstrings = ['john', 'smith', 'jones', 'williams', 'brown', 'davis', 'miller', 'wilson', 'moore', 'taylor', 'anderson', 'thomas', 'jackson', 'white', 'harris', 'martin', 'thompson', 'garcia', 'martinez', 'robinson', 'clark', 'rodriguez', 'lewis', 'lee', 'walker', 'hall', 'allen', 'young', 'hernandez', 'king', 'wright', 'lopez', 'hill', 'scott', 'green', 'adams', 'baker', 'nelson', 'carter', 'mitchell', 'perez', 'roberts', 'turner', 'phillips', 'campbell', 'parker', 'evans', 'edwards', 'collins', 'stewart', 'sanchez', 'morris', 'murphy', 'cook', 'rogers', 'gutierrez', 'ortiz', 'morgan', 'cooper', 'peterson', 'bailey', 'reed', 'kelly', 'howard', 'ramos', 'kim', 'cox', 'ward', 'richardson', 'watson', 'brooks', 'chavez', 'wood', 'james', 'bennett', 'gray', 'mendoza', 'ruiz', 'hughes', 'price', 'alvarez', 'castillo', 'sanders', 'patel', 'myers', 'ross', 'foster', 'jimenez', 'powell', 'jenkins', 'perry', 'russell', 'sullivan', 'bell', 'coleman', 'butler', 'henderson', 'barnes', 'gonzales', 'fisher', 'vasquez', 'simmons', 'romero', 'jordan', 'patterson', 'alexander', 'hamilton', 'graham', 'kumar', 'singh', 'sharma', 'tiwari', 'gupta', 'wang', 'zhang', 'chen', 'liu', 'yang', 'huang', 'zhao', 'wu', 'zhou', 'xu', 'sun', 'lu', 'hu', 'guo', 'lin', 'cao', 'luo', 'ming', 'wei', 'yu', 'xie', 'tang', 'deng', 'cui', 'peng', 'zou', 'liang', 'lai', 'feng', 'bao', 'shi', 'su', 'ren', 'mao'];
+            for (const namePart of nameSubstrings) {
+                if (l === namePart) return 'Employee';
+            }
             
-            const allSkills = [...techSkills, ...softSkills, ...frameworkSkills];
+            // FIRST: Check for single-word position titles (CTO, CFO, CEO, etc.)
+            const positionTitles = ['cto', 'cfo', 'ceo', 'coo', 'cio', 'cmo', 'chro', 'cpo', 'ciso'];
+            if (positionTitles.includes(l)) return 'Position';
+            
+            // Check for common position single words
+            if (l === 'auditor' || l === 'analyst' || l === 'architect') return 'Position';
+            
+            // SECOND: Check for skills (comprehensive lists)
+            const techSkills = [
+                // Programming languages (removed single-char 'r')
+                'python', 'javascript', 'java', 'go', 'golang', 'rust', 'typescript', 'csharp', 'cpp', 'c++', 'ruby', 'php', 'swift', 'kotlin', 'scala', 'matlab', 'perl', 'bash', 'shell',
+                // Databases
+                'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'cassandra', 'oracle', 'sqlite', 'mariadb', 'dynamodb', 'firestore', 'neptune',
+                // Cloud & DevOps
+                'aws', 'azure', 'gcp', 'kubernetes', 'docker', 'terraform', 'ansible', 'jenkins', 'circleci', 'github actions', 'gitlab ci', 'ci/cd', 'devops', 'cloud', 'serverless', 'lambda', 'ecs', 'eks', 'cloudformation', 'openstack',
+                // ML/AI
+                'tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'opencv', 'nlp', 'machine learning', 'deep learning', 'computer vision', 'neural network', 'ai', 'ml', 'dl', 'data science', 'data engineering', 'spark', 'hadoop', 'hive', 'airflow', 'databricks',
+                // Frontend
+                'react', 'reactjs', 'vue', 'vuejs', 'angular', 'svelte', 'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'jquery', 'nextjs', 'nuxt', 'gatsby',
+                // Backend
+                'node', 'nodejs', 'express', 'fastapi', 'django', 'flask', 'spring', 'springboot', 'rails', 'laravel', 'asp.net', 'graphql', 'rest', 'api', 'microservices',
+                // Other tech
+                'blockchain', 'ethereum', 'solidity', 'iot', 'vr', 'cyber security', 'penetration testing', 'ethical hacking', 'forensics', 'cryptography',
+                // Tools
+                'git', 'github', 'gitlab', 'bitbucket', 'jira', 'confluence', 'figma', 'sketch', 'adobe', 'photoshop', 'illustrator', 'xd', 'zeplin', 'invision'
+            ];
+            
+            const softSkills = [
+                'leadership', 'communication', 'teamwork', 'collaboration', 'problem solving', 'analytical', 'management', 'project management', 'agile', 'scrum', 'negotiation', 'presentation', 'time management', 'critical thinking', 'creativity', 'adaptability', 'mentoring', 'coaching', 'strategic thinking', 'decision making', 'conflict resolution', 'customer service', 'public speaking', 'written communication', 'interpersonal skills', 'organizational skills', 'attention to detail', 'troubleshooting', 'research', 'planning', 'prioritization'
+            ];
+            
+            const domainSkills = [
+                // Business (removed partial matches like 'hris' which matches 'christopher')
+                'analytics', 'data analysis', 'business analysis', 'financial analysis', 'market research', 'seo', 'sem', 'ppc', 'crm', 'erp', 'branding', 'content strategy', 'copywriting', 'social media', 'email marketing', 'affiliate marketing', 'growth hacking',
+                // Finance
+                'budgeting', 'forecasting', 'financial planning', 'accounting', 'auditing', 'tax', 'compliance', 'risk management', 'investments', 'treasury', 'controller',
+                // HR (use full 'hr management' instead of 'hris' to avoid partial matches)
+                'recruitment', 'talent acquisition', 'onboarding', 'training', 'development', 'performance management', 'compensation', 'benefits', 'employee relations', 'hr management', 'workday',
+                // Design
+                'ui/ux', 'ui design', 'ux design', 'visual design', 'graphic design', 'typography', 'illustration', 'icon design', 'motion design', 'interaction design', 'prototyping', 'wireframing', 'user research', 'usability testing',
+                // Product
+                'product management', 'product strategy', 'roadmap', 'stakeholder management', 'user stories', 'agile', 'kanban', 'lean',
+                // Operations
+                'logistics', 'supply chain', 'procurement', 'inventory', 'manufacturing', 'quality assurance', 'qa', 'testing', 'automation',
+                // Legal
+                'contracts', 'intellectual property', 'corporate law', 'employment law', 'regulatory',
+                // Science
+                'chemistry', 'biology', 'physics', 'statistics', 'experimental design'
+            ];
+            
+            const allSkills = [...techSkills, ...softSkills, ...domainSkills];
             
             // Check if label matches any skill pattern (including compound skills)
             for (const skill of allSkills) {
                 if (l.includes(skill)) return 'Skill';
             }
             
-            // Department check
-            const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance'];
-            if (departments.includes(l) || l === 'human resources') return 'Department';
+            // THIRD: Department check (exact match or containing department keywords)
+            const departments = ['engineering', 'human resources', 'sales', 'marketing', 'finance', 'hr', 'it', 'operations', 'legal', 'design', 'product', 'research', 'customer success'];
+            if (departments.includes(l) || l === 'human resources' || l === 'customer success') return 'Department';
+            if (l.includes('department') || l.includes('dept')) return 'Department';
             
-            // Project check
+            // FOURTH: Project check
             if (l.includes('project') || l.includes('campaign')) return 'Project';
             
-            // Position check
-            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || l.includes('director') || l.includes('cto') || l.includes('cfo') || l.includes('ceo') || l.includes('analyst') || l.includes('developer') || l.includes('architect') || l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || l.includes('advisor') || l.includes('lead') || l.includes('head')) return 'Position';
+            // FIFTH: Position check (multi-word positions)
+            if (l.includes('position') || l.includes('engineer') || l.includes('manager') || 
+                l.includes('director') || 
+                l.includes('analyst') || l.includes('developer') || l.includes('architect') || 
+                l.includes('consultant') || l.includes('specialist') || l.includes('coordinator') || 
+                l.includes('supervisor') || l.includes('administrator') || l.includes('assistant') || 
+                l.includes('advisor') || l.includes('lead') || l.includes('head') ||
+                l.includes('officer') || l.includes('president') || l.includes('vice') ||
+                l.includes('senior') || l.includes('junior') || l.includes('associate') || l.includes('intern') || l.includes('rep') || l.includes('fellow')) return 'Position';
             
-            // Default to Employee for names (typically 2-4 words, typical human name pattern)
+            // SIXTH: Employee name check (2-4 words that look like human names)
             const words = l.split(' ').filter(w => w.length > 0);
             if (words.length >= 2 && words.length <= 4) {
                 // Check if it looks like a human name (not a skill/position title)
                 const isLikelyName = words.every(word => {
                     if (word.length < 2) return false;
-                    const skillKeywords = ['python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 'department', 'team', 'group', 'science', 'analysis', 'engineering', 'visualization', 'computing', 'security', 'development', 'testing', 'quality', 'design', 'management'];
+                    const skillKeywords = [
+                        'python', 'javascript', 'java', 'react', 'node', 'manager', 'engineer', 'developer', 
+                        'director', 'analyst', 'consultant', 'specialist', 'coordinator', 'supervisor', 
+                        'administrator', 'architect', 'lead', 'head', 'chief', 'officer', 'president', 
+                        'vice', 'senior', 'junior', 'associate', 'intern', 'fellow', 'project', 'campaign', 
+                        'department', 'team', 'group', 'science', 'analysis', 'engineering', 
+                        'visualization', 'computing', 'security', 'development', 'testing', 'quality', 
+                        'design', 'management', 'marketing', 'sales', 'finance', 'recruitment',
+                        'product', 'analytics', 'strategy', 'operations', 'research'
+                    ];
                     return !skillKeywords.some(keyword => word.includes(keyword));
                 });
                 if (isLikelyName) return 'Employee';
             }
             
-            // If single word and doesn't match anything, it's likely a skill
-            if (words.length === 1) return 'Skill';
+            // SEVENTH: Single word fallback - check if it's a common skill
+            if (words.length === 1) {
+                // Single word that's not in skill lists but could be a skill
+                const commonSingleWordSkills = ['seo', 'crm', 'erp', 'bi', 'ux', 'qa', 'pa', 'ba', 'dm', 'pm'];
+                if (commonSingleWordSkills.includes(l)) return 'Skill';
+                // Default to Skill for unknown single words (more likely to be a skill than a person name)
+                return 'Skill';
+            }
             
-            // Default fallback
+            // Default fallback - if unsure, check if it's employee-like
             return 'Employee';
         }
 
@@ -685,43 +865,78 @@
                 network = null;
             }
             
-             // Reinitialize graph with new language
-             initGraph();
-             
-             // Update filter panel language
-             setTimeout(() => {
-                 populateFilterOptions();
-                 clearAllFilters();
-             }, 500);
+            // Reinitialize graph with new language
+            initGraph();
+            
+            // Update filter panel language
+            setTimeout(() => {
+                populateFilterOptions();
+                clearAllFilters();
+            }, 500);
         }
 
         function initGraph() {
-            console.log('Initializing graph...');
+            console.log('initGraph() called, network exists:', network !== null);
+            console.log('vis-network available:', typeof vis !== 'undefined');
+            console.log('vis.DataSet available:', typeof vis !== 'undefined' && typeof vis.DataSet !== 'undefined');
             
             // Destroy existing network if any
             if (network) {
+                console.log('Destroying existing network...');
                 network.destroy();
                 network = null;
             }
             
             const t = translations[currentLang];
             
-            fetch('/graph')
+            const headers = {};
+            if (apiKey) {
+                headers['Authorization'] = 'Bearer ' + apiKey;
+            }
+            
+            console.log('Fetching /graph...');
+            fetch('/graph', { headers })
                 .then(r => {
                     console.log('Fetch response:', r.status);
+                    if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'Server error: ' + r.status);
                     return r.json();
                 })
                 .then(data => {
                     console.log('Graph data received:', data.nodes?.length, 'nodes');
+                    console.log('Raw data:', data);
                     graphData = data;
-                    document.getElementById('loading').style.display = 'none';
+                    window.graphData = data;  // Ensure it's available globally
                     
-                    // Process nodes
+                    // Check if graph has data
+                    if (!data.nodes || data.nodes.length === 0) {
+                        console.log('No data in graph - showing empty state');
+                        document.getElementById('loading').innerHTML = 
+                            '<div style="color:#666;font-size:16px;padding:20px;text-align:center;">' +
+                            '📊 No graph data available.<br><br>' +
+                            '<button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">🔄 Refresh</button>' +
+                            '</div>';
+                        return;
+                    }
+                    
+                    console.log('Processing', data.nodes.length, 'nodes and', data.edges.length, 'edges...');
+                    
+                    // Process nodes with fallback for unknown types
                     const nodes = data.nodes.map(n => {
                         const type = getNodeType(n.label, n.labels);
-                        const config = nodeConfig[type];
-                        return { id: n.id, label: n.label, color: config.color, size: config.size, shape: config.shape, type: type, font: { size: 12, color: '#333' } };
+                        const config = nodeConfig[type] || nodeConfig['Employee']; // Fallback to Employee
+                        return { 
+                            id: String(n.id),  // Ensure ID is string
+                            label: n.label, 
+                            color: config.color, 
+                            size: config.size, 
+                            shape: config.shape, 
+                            type: type, 
+                            font: { size: 12, color: '#333' } 
+                        };
                     });
+                    
+                    console.log('Processed nodes:', nodes.length);
+                    console.log('Sample processed node:', nodes[0]);
                     
                     // Process edges with translated labels and colors
                     const edges = data.edges.map((e, i) => {
@@ -737,95 +952,219 @@
                         }
                         return {
                             id: 'e' + i,
-                            from: e.source,
-                            to: e.target,
+                            from: String(e.source),  // Ensure source is string
+                            to: String(e.target),  // Ensure target is string
                             label: translatedLabel,
                             color: { color: config.color, highlight: config.color },
-                            font: { size: 10, color: config.color, align: 'middle' },
+                            font: { 
+                                size: edgeLabelsEnabled ? 10 : 0, 
+                                color: edgeLabelsEnabled ? config.color : 'transparent',
+                                align: 'middle' 
+                            },
                             width: config.width,
                             arrows: arrowConfig,
                             smooth: { type: 'continuous', roundness: 0.5 }
                         };
                     });
                     
-                     // Update stats
-                     const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
-                     nodes.forEach(n => stats[n.type]++);
-                     document.getElementById('s-employees').textContent = stats.Employee;
-                     document.getElementById('s-departments').textContent = stats.Department;
-                     document.getElementById('s-positions').textContent = stats.Position;
-                     document.getElementById('s-projects').textContent = stats.Project;
-                     document.getElementById('s-edges').textContent = edges.length;
-                     
-                     // Initialize filter panel
-                     populateFilterOptions();
-                     clearAllFilters();
+                    console.log('Processed edges:', edges.length);
+                    console.log('Sample processed edge:', edges[0]);
+                    
+                    // Update stats
+                    const stats = { Employee: 0, Department: 0, Position: 0, Project: 0, Skill: 0 };
+                    nodes.forEach(n => stats[n.type]++);
+                    document.getElementById('s-employees').textContent = stats.Employee;
+                    document.getElementById('s-departments').textContent = stats.Department;
+                    document.getElementById('s-positions').textContent = stats.Position;
+                    document.getElementById('s-projects').textContent = stats.Project;
+                    document.getElementById('s-edges').textContent = edges.length;
                     
                     // Create network
                     const container = document.getElementById('graph-container');
-                    const visData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-                    const options = {
-                        nodes: { borderWidth: 2, borderWidthSelected: 4, shadow: true },
-                        edges: { width: 1, arrows: { to: { enabled: true, scaleFactor: 0.8 } } },
-                        physics: { enabled: true, solver: 'forceAtlas2', forceAtlas2: { gravitationalConstant: -50, centralGravity: 0.01, springLength: 150, springConstant: 0.08, damping: 0.4 } },
-                        interaction: { hover: true, navigationButtons: true, keyboard: true, zoomView: true }
-                    };
+                    console.log('Container found:', !!container);
+                    console.log('Container dimensions:', container?.offsetWidth, 'x', container?.offsetHeight);
                     
-                    network = new vis.Network(container, visData, options);
-                    console.log('Graph initialized successfully in ' + currentLang.toUpperCase() + ' language');
+                    if (!container) {
+                        console.error('Graph container not found!');
+                        document.getElementById('loading').innerHTML = 
+                            '<div style="color:#c62828;">❌ Error: Graph container not found</div>';
+                        return;
+                    }
                     
-                    // Add zoom event listener to show/hide edge labels
-                    network.on('zoom', function (params) {
-                        const scale = params.scale;
-                        const edgeIds = network.body.data.edges.getIds();
-                        const newOptions = {};
+                    // Ensure container has proper dimensions
+                    if (container.offsetWidth === 0 || container.offsetHeight === 0) {
+                        const headerHeight = document.getElementById('header')?.offsetHeight || 70;
+                        const toolbarHeight = document.getElementById('toolbar')?.offsetHeight || 50;
+                        container.style.height = Math.max(window.innerHeight - headerHeight - toolbarHeight, 400) + 'px';
+                        container.style.width = '100%';
+                        console.log('Fixed container dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+                    }
+                    
+                    try {
+                        console.log('Creating DataSet with nodes:', nodes.length);
+                        console.log('Creating DataSet with edges:', edges.length);
                         
-                        // Show labels only when zoomed in (scale > 1.5)
-                        const showLabels = scale > 1.5;
+                        const nodeDataSet = new vis.DataSet(nodes);
+                        const edgeDataSet = new vis.DataSet(edges);
                         
-                        edgeIds.forEach(edgeId => {
-                            newOptions[edgeId] = {
-                                font: { 
-                                    size: showLabels ? 10 : 0, 
-                                    color: showLabels ? edgeConfig['default'].color : 'transparent',
-                                    strokeWidth: showLabels ? 0 : 0
+                        console.log('DataSet created - nodes:', nodeDataSet.length, 'edges:', edgeDataSet.length);
+                        
+                        const visData = { nodes: nodeDataSet, edges: edgeDataSet };
+                        
+                        const options = {
+                            nodes: { 
+                                borderWidth: 2, 
+                                borderWidthSelected: 4, 
+                                shadow: true 
+                            },
+                            edges: { 
+                                width: 1, 
+                                arrows: { 
+                                    to: { 
+                                        enabled: true, 
+                                        scaleFactor: 0.8 
+                                    } 
+                                } 
+                            },
+                            physics: {
+                                enabled: false,  // Disable physics initially for faster rendering
+                                barnesHut: {
+                                    gravitationalConstant: -3000,
+                                    centralGravity: 0.1,
+                                    springLength: 200,
+                                    springConstant: 0.04,
+                                    damping: 0.09,
+                                    avoidOverlap: 0.5
                                 }
-                            };
-                        });
+                            },
+                            interaction: { 
+                                hover: true, 
+                                navigationButtons: true, 
+                                keyboard: true, 
+                                zoomView: true 
+                            }
+                        };
                         
-                        network.body.data.edges.update(newOptions);
-                    });
+                        console.log('Creating vis.Network...');
+                        network = new vis.Network(container, visData, options);
+                        console.log('✅ vis.Network created successfully!');
+                        
+                        // NOW hide the loading indicator - only after network is created
+                        document.getElementById('loading').style.display = 'none';
+                        console.log('Loading indicator hidden');
+                        
+                        console.log('Graph initialized successfully with', nodes.length, 'nodes and', edges.length, 'edges');
+                        
+                        // Enable physics after initial render
+                        setTimeout(() => {
+                            if (network) {
+                                network.setOptions({ physics: { enabled: true } });
+                                console.log('Physics enabled');
+                            }
+                        }, 1000);
+                        
+                        // Add zoom event listener
+                        network.on('zoom', function (params) {
+                            const scale = params.scale;
+                            const edgeIds = network.body.data.edges.getIds();
+                            const newOptions = {};
+                            const showLabels = scale > 1.5;
+                            edgeIds.forEach(edgeId => {
+                                newOptions[edgeId] = {
+                                    font: { 
+                                        size: showLabels ? 10 : 0, 
+                                        color: showLabels ? edgeConfig['default'].color : 'transparent',
+                                        strokeWidth: showLabels ? 0 : 0
+                                    }
+                                };
+                            });
+                            network.body.data.edges.update(newOptions);
+                        });
+                    } catch (err) {
+                        console.error('Error creating network:', err);
+                        document.getElementById('loading').innerHTML = 
+                            '<div style="color:#c62828;text-align:center;">' +
+                            '❌ Error creating graph: ' + err.message + '<br><br>' +
+                            '<button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">Retry</button>' +
+                            '</div>';
+                    }
                 })
                 .catch(err => {
                     console.error('Graph load error:', err);
-                    document.getElementById('loading').innerHTML = '<div style="color:#c62828;">❌ ' + t.loading + ': ' + err.message + '</div><button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">' + t.fitView + '</button>';
+                    const loadingEl = document.getElementById('loading');
+                    if (loadingEl) {
+                        loadingEl.innerHTML = 
+                            '<div style="color:#c62828;text-align:center;">' +
+                            '❌ Error loading graph: ' + err.message + '<br><br>' +
+                            '<button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">Retry</button>' +
+                            '</div>';
+                    }
                 });
         }
 
-        // 10 second timeout to prevent infinite loading
-        setTimeout(() => {
-            const loadingEl = document.getElementById('loading');
-            if (loadingEl && loadingEl.style.display !== 'none') {
-                console.log('Graph load timeout');
-                if (network) {
-                    loadingEl.style.display = 'none';
-                } else {
-                    // Show error with current language
-                    const t = translations[currentLang];
-                    loadingEl.innerHTML = '<div style="color:#f57c00;">⏳ ' + t.loading + '...</div><button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">' + t.fitView + '</button>';
-                }
-            }
-        }, 10000);
+        // Timeout disabled for debugging
+        // setTimeout(() => {
+        //     const loadingEl = document.getElementById('loading');
+        //     if (loadingEl && loadingEl.style.display !== 'none') {
+        //         console.log('Graph load timeout');
+        //         if (network) {
+        //             loadingEl.style.display = 'none';
+        //         } else {
+        //             // Show error with current language
+        //             const t = translations[currentLang];
+        //             loadingEl.innerHTML = '<div style="color:#f57c00;">⏳ ' + t.loading + '...</div><button onclick="initGraph()" style="margin-top:15px;padding:10px 20px;background:#667eea;color:white;border:none;border-radius:6px;cursor:pointer;">' + t.fitView + '</button>';
+        //         }
+        //     }
+        // }, 10000);
 
         function fitView() { if (network) network.fit({ animation: true }); }
         function togglePhysics() {
             if (!network) return;
             physicsEnabled = !physicsEnabled;
-            network.setOptions({ physics: { enabled: physicsEnabled } });
+            if (physicsEnabled) {
+                network.setOptions({ 
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -3000,
+                            centralGravity: 0.1,
+                            springLength: 200,
+                            springConstant: 0.04,
+                            damping: 0.09,
+                            avoidOverlap: 0.5
+                        }
+                    }
+                });
+            } else {
+                network.setOptions({ physics: { enabled: false } });
+            }
             // Update button text/icon to reflect state
             const physicsBtn = document.getElementById('physics-btn');
             physicsBtn.innerHTML = physicsEnabled ? '⚡ Physics ✓' : '⚡ Physics ✗';
             console.log('Physics:', physicsEnabled ? 'ON' : 'OFF');
+        }
+        function toggleEdgeLabels() {
+            if (!network) return;
+            edgeLabelsEnabled = !edgeLabelsEnabled;
+            
+            // Update all edge labels visibility - use array format for Vis-Network DataSet
+            const edgeIds = network.body.data.edges.getIds();
+            const updates = edgeIds.map(edgeId => ({
+                id: edgeId,
+                font: { 
+                    size: edgeLabelsEnabled ? 10 : 0,
+                    color: edgeLabelsEnabled ? '#666' : 'transparent',
+                    strokeWidth: edgeLabelsEnabled ? 0 : 0
+                }
+            }));
+            network.body.data.edges.update(updates);
+            
+            // Update button text/icon to reflect state
+            const edgeLabelsBtn = document.getElementById('edge-labels-btn');
+            const t = translations[currentLang];
+            edgeLabelsBtn.innerHTML = '⚡ ' + (t.edgeLabels || 'Labels') + (edgeLabelsEnabled ? ' ✓' : ' ✗');
+            edgeLabelsBtn.style.opacity = edgeLabelsEnabled ? '1' : '0.6';
+            console.log('Edge Labels:', edgeLabelsEnabled ? 'ON' : 'OFF');
         }
         function zoomIn() { if (network) { const scale = network.getScale(); network.moveTo({ scale: scale * 1.2 }); } }
         function zoomOut() { if (network) { const scale = network.getScale(); network.moveTo({ scale: scale / 1.2 }); } }
@@ -940,15 +1279,7 @@
             
             const t = translations[currentLang];
             
-            // Get filter values
-            const enabledTypes = {
-                'Employee': document.getElementById('filter-employee').checked,
-                'Department': document.getElementById('filter-department').checked,
-                'Position': document.getElementById('filter-position').checked,
-                'Project': document.getElementById('filter-project').checked,
-                'Skill': document.getElementById('filter-skill').checked
-            };
-            
+            // Get dropdown filter values
             const selectedSkill = document.getElementById('filter-skill-select').value;
             const selectedDepartment = document.getElementById('filter-department-select').value;
             const selectedEmployee = document.getElementById('filter-employee-select').value;
@@ -963,171 +1294,30 @@
                 });
             }
             
-            // Filter logic
-            const filteredNodeIds = new Set();
-            const relatedNodeIds = new Set();
+            // Determine which node is selected
+            let selectedNode = null;
+            let selectedType = '';
             
-            graphData.nodes.forEach(node => {
-                const type = getNodeType(node.label, node.labels);
-                
-                // Check node type filter
-                if (!enabledTypes[type]) return;
-                
-                // Check skill filter
-                if (selectedSkill && type !== 'Skill') {
-                    // Check if this node is connected to the selected skill
-                    const hasSkill = graphData.edges.some(edge => 
-                        (edge.source === node.id || edge.target === node.id) &&
-                        graphData.nodes.some(n => 
-                            (n.id === edge.source || n.id === edge.target) && 
-                            n.label === selectedSkill && 
-                            getNodeType(n.label, n.labels) === 'Skill'
-                        )
-                    );
-                    if (!hasSkill) return;
-                }
-                
-                // Check department filter
-                if (selectedDepartment && type !== 'Department') {
-                    // Check if this node is connected to the selected department
-                    const inDepartment = graphData.edges.some(edge => 
-                        (edge.source === node.id || edge.target === node.id) &&
-                        graphData.nodes.some(n => 
-                            (n.id === edge.source || n.id === edge.target) && 
-                            n.label === selectedDepartment && 
-                            getNodeType(n.label, n.labels) === 'Department'
-                        )
-                    );
-                    if (!inDepartment) return;
-                }
-                
-                // Check employee filter (only for employee nodes)
-                if (selectedEmployee && type === 'Employee') {
-                    if (node.label !== selectedEmployee) return;
-                }
-                
-                // Check position filter (only for position nodes)
-                if (selectedPosition && type === 'Position') {
-                    if (node.label !== selectedPosition) return;
-                }
-                
-                // Check project filter (only for project nodes)
-                if (selectedProject && type === 'Project') {
-                    if (node.label !== selectedProject) return;
-                }
-                
-                // Node passes all filters
-                filteredNodeIds.add(node.id);
-                
-                // Add related nodes (1-hop neighbors)
-                graphData.edges.forEach(edge => {
-                    if (edge.source === node.id) relatedNodeIds.add(edge.target);
-                    if (edge.target === node.id) relatedNodeIds.add(edge.source);
-                });
-            });
-            
-            // Special case: skill filter should highlight the skill node itself
             if (selectedSkill) {
-                const skillNode = graphData.nodes.find(n => n.label === selectedSkill && getNodeType(n.label, n.labels) === 'Skill');
-                if (skillNode) {
-                    filteredNodeIds.add(skillNode.id);
-                }
+                selectedNode = graphData.nodes.find(n => n.label === selectedSkill && getNodeType(n.label, n.labels) === 'Skill');
+                selectedType = 'Skill';
+            } else if (selectedDepartment) {
+                selectedNode = graphData.nodes.find(n => n.label === selectedDepartment && getNodeType(n.label, n.labels) === 'Department');
+                selectedType = 'Department';
+            } else if (selectedEmployee) {
+                selectedNode = graphData.nodes.find(n => n.label === selectedEmployee && getNodeType(n.label, n.labels) === 'Employee');
+                selectedType = 'Employee';
+            } else if (selectedPosition) {
+                selectedNode = graphData.nodes.find(n => n.label === selectedPosition && getNodeType(n.label, n.labels) === 'Position');
+                selectedType = 'Position';
+            } else if (selectedProject) {
+                selectedNode = graphData.nodes.find(n => n.label === selectedProject && getNodeType(n.label, n.labels) === 'Project');
+                selectedType = 'Project';
             }
             
-            // Special case: department filter should highlight the department node itself
-            if (selectedDepartment) {
-                const deptNode = graphData.nodes.find(n => n.label === selectedDepartment && getNodeType(n.label, n.labels) === 'Department');
-                if (deptNode) {
-                    filteredNodeIds.add(deptNode.id);
-                }
-            }
-            
-            // Special case: employee filter should highlight the employee node itself
-            if (selectedEmployee) {
-                const employeeNode = graphData.nodes.find(n => n.label === selectedEmployee && getNodeType(n.label, n.labels) === 'Employee');
-                if (employeeNode) {
-                    filteredNodeIds.add(employeeNode.id);
-                }
-            }
-            
-            // Special case: position filter should highlight the position node itself
-            if (selectedPosition) {
-                const positionNode = graphData.nodes.find(n => n.label === selectedPosition && getNodeType(n.label, n.labels) === 'Position');
-                if (positionNode) {
-                    filteredNodeIds.add(positionNode.id);
-                }
-            }
-            
-            // Special case: project filter should highlight the project node itself
-            if (selectedProject) {
-                const projectNode = graphData.nodes.find(n => n.label === selectedProject && getNodeType(n.label, n.labels) === 'Project');
-                if (projectNode) {
-                    filteredNodeIds.add(projectNode.id);
-                }
-            }
-            
-            // Combine filtered and related nodes
-            const allHighlightedNodeIds = new Set([...filteredNodeIds, ...relatedNodeIds]);
-            
-            // Apply visual updates
-            const nodeUpdates = [];
-            network.body.data.nodes.forEach(node => {
-                if (allHighlightedNodeIds.has(node.id)) {
-                    // Highlight filtered nodes
-                    const isDirectMatch = filteredNodeIds.has(node.id);
-                    nodeUpdates.push({
-                        id: node.id,
-                        color: isDirectMatch ? originalNodeColors.get(node.id) : { background: '#f0f0f0', border: '#ddd' },
-                        size: isDirectMatch ? originalNodeSizes.get(node.id) : originalNodeSizes.get(node.id) * 0.8,
-                        opacity: isDirectMatch ? 1 : 0.4,
-                        font: { size: isDirectMatch ? 12 : 10, color: isDirectMatch ? '#333' : '#999' }
-                    });
-                } else {
-                    // Dim hidden nodes
-                    nodeUpdates.push({
-                        id: node.id,
-                        opacity: 0.1,
-                        font: { size: 8, color: '#ccc' }
-                    });
-                }
-            });
-            
-            network.body.data.nodes.update(nodeUpdates);
-            
-            // Update filter results
-            const resultsDiv = document.getElementById('filter-results');
-            const hasActiveFilters = Object.values(enabledTypes).some(v => !v) || selectedSkill || selectedDepartment || employeeNameSearch;
-            
-            if (hasActiveFilters) {
-                resultsDiv.classList.add('active');
-                resultsDiv.innerHTML = t.filterResults.replace('{count}', filteredNodeIds.size);
-            } else {
-                resultsDiv.classList.remove('active');
-                resultsDiv.innerHTML = `<span data-i18n="filterNoFilters">${t.filterNoFilters}</span>`;
-            }
-            
-            // Focus on filtered nodes if any
-            if (filteredNodeIds.size > 0) {
-                const firstNodeId = Array.from(filteredNodeIds)[0];
-                network.focus(firstNodeId, { animation: true, scale: 0.8 });
-            }
-        }
-
-        function clearAllFilters() {
-            // Reset checkboxes
-            ['filter-employee', 'filter-department', 'filter-position', 'filter-project', 'filter-skill'].forEach(id => {
-                document.getElementById(id).checked = true;
-            });
-            
-            // Reset dropdowns
-            document.getElementById('filter-skill-select').value = '';
-            document.getElementById('filter-department-select').value = '';
-            
-            // Reset search input
-            document.getElementById('filter-employee-input').value = '';
-            
-            // Restore original node appearance
-            if (network && originalNodeColors.size > 0) {
+            // If no filter selected, show all nodes normally
+            if (!selectedNode) {
+                // Restore original appearance for all nodes
                 const nodeUpdates = [];
                 network.body.data.nodes.forEach(node => {
                     nodeUpdates.push({
@@ -1139,12 +1329,295 @@
                     });
                 });
                 network.body.data.nodes.update(nodeUpdates);
+                
+                // Update filter results
+                const resultsDiv = document.getElementById('filter-results');
+                resultsDiv.classList.remove('active');
+                resultsDiv.innerHTML = `<span data-i18n="filterNoFilters">${t.filterNoFilters}</span>`;
+                
+                // Fit view to show all nodes
+                network.fit({ animation: true });
+                return;
             }
             
-            // Reset filter results
+            // Find all nodes directly connected to the selected node
+            const connectedNodeIds = new Set([selectedNode.id]);
+            
+            graphData.edges.forEach(edge => {
+                if (String(edge.source) === String(selectedNode.id)) {
+                    connectedNodeIds.add(String(edge.target));
+                } else if (String(edge.target) === String(selectedNode.id)) {
+                    connectedNodeIds.add(String(edge.source));
+                }
+            });
+            
+            // Apply visual updates: highlight selected node and connected nodes, grey out others
+            const nodeUpdates = [];
+            network.body.data.nodes.forEach(node => {
+                const isSelected = String(node.id) === String(selectedNode.id);
+                const isConnected = connectedNodeIds.has(String(node.id));
+                
+                if (isSelected) {
+                    // Highlight the selected node with sparkle effect - 2x normal size
+                    nodeUpdates.push({
+                        id: node.id,
+                        color: { 
+                            background: '#667eea', 
+                            border: '#667eea',
+                            highlight: { background: '#764ba2', border: '#764ba2' }
+                        },
+                        size: originalNodeSizes.get(node.id) * 2,
+                        opacity: 1,
+                        font: { 
+                            size: 16, 
+                            color: '#667eea', 
+                            bold: true,
+                            face: 'Arial',
+                            background: 'rgba(255,255,255,0.9)',
+                            strokeWidth: 3,
+                            strokeColor: '#ffffff'
+                        },
+                        borderWidth: 4,
+                        shapeProperties: {
+                            borderDashed: true
+                        },
+                        shadow: {
+                            enabled: true,
+                            color: 'rgba(102, 126, 234, 0.8)',
+                            size: 20,
+                            x: 0,
+                            y: 0
+                        },
+                        labelCfg: {
+                            position: 'top',
+                            offset: 15,
+                            style: {
+                                fill: '#667eea',
+                                fontSize: 16,
+                                fontWeight: 'bold',
+                                background: 'rgba(255,255,255,0.9)',
+                                padding: [4, 8, 4, 8],
+                                borderRadius: 4,
+                                borderColor: '#667eea',
+                                borderWidth: 1
+                            }
+                        }
+                    });
+                } else if (isConnected) {
+                    // Show connected nodes at normal size
+                    nodeUpdates.push({
+                        id: node.id,
+                        color: originalNodeColors.get(node.id),
+                        size: originalNodeSizes.get(node.id),
+                        opacity: 1,
+                        font: { size: 12, color: '#333' }
+                    });
+                } else {
+                    // Grey out unrelated nodes
+                    nodeUpdates.push({
+                        id: node.id,
+                        opacity: 0.1,
+                        font: { size: 8, color: '#ccc' }
+                    });
+                }
+            });
+            
+            network.body.data.nodes.update(nodeUpdates);
+            
+            // Add sparkle effect to selected node via canvas manipulation
+            setTimeout(() => {
+                const canvas = network.canvas.frame.canvas;
+                const ctx = canvas.getContext('2d');
+                addSparkleEffect(network, selectedNode.id, ctx);
+            }, 100);
+            
+            // Update filter results
             const resultsDiv = document.getElementById('filter-results');
-            resultsDiv.classList.remove('active');
-            resultsDiv.innerHTML = `<span data-i18n="filterNoFilters">${translations[currentLang].filterNoFilters}</span>`;
+            resultsDiv.classList.add('active');
+            resultsDiv.innerHTML = `<span>${selectedType}: ${selectedNode.label} → ${connectedNodeIds.size - 1} direct connection${connectedNodeIds.size - 1 !== 1 ? 's' : ''}</span>`;
+            
+            // Focus on the selected node
+            network.focus(selectedNode.id, { animation: true, scale: 1.2 });
+        }
+
+        // Sparkle effect animation
+        let sparkleInterval = null;
+        let sparkleParticles = [];
+        
+        function addSparkleEffect(network, nodeId, ctx) {
+            // Clear any existing sparkle animation
+            if (sparkleInterval) {
+                clearInterval(sparkleInterval);
+            }
+            sparkleParticles = [];
+            
+            // Get node position
+            const node = network.body.data.nodes.get(nodeId);
+            if (!node) return;
+            
+            const nodePosition = network.canvasToDOM(network.getPositions(nodeId)[nodeId]);
+            
+            // Generate sparkle particles
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 30 + Math.random() * 20;
+                sparkleParticles.push({
+                    angle: angle,
+                    distance: distance,
+                    speed: 0.5 + Math.random() * 0.5,
+                    size: 2 + Math.random() * 3,
+                    opacity: 1,
+                    color: ['#667eea', '#764ba2', '#fff', '#ffd700'][Math.floor(Math.random() * 4)]
+                });
+            }
+            
+            // Animation function
+            let animationFrame = 0;
+            const animate = () => {
+                animationFrame++;
+                const pos = network.canvasToDOM(network.getPositions(nodeId)[nodeId]);
+                
+                // Redraw the graph to clear previous particles
+                network.redraw();
+                
+                // Draw sparkle particles
+                sparkleParticles.forEach((particle, index) => {
+                    const pulse = Math.sin(animationFrame * 0.1 + index) * 0.3 + 1;
+                    const currentDistance = particle.distance * pulse;
+                    const x = pos.x + Math.cos(particle.angle + animationFrame * 0.02) * currentDistance;
+                    const y = pos.y + Math.sin(particle.angle + animationFrame * 0.02) * currentDistance;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.globalAlpha = particle.opacity * (0.5 + 0.5 * Math.sin(animationFrame * 0.15 + index));
+                    ctx.fill();
+                    
+                    // Add star shape for larger particles
+                    if (particle.size > 3) {
+                        drawStar(ctx, x, y, 4, particle.size, particle.size / 2);
+                    }
+                });
+                
+                ctx.globalAlpha = 1;
+                
+                sparkleInterval = requestAnimationFrame(animate);
+            };
+            
+            animate();
+        }
+        
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            const step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+        }
+        
+        function clearSparkleEffect() {
+            if (sparkleInterval) {
+                cancelAnimationFrame(sparkleInterval);
+                sparkleInterval = null;
+            }
+            sparkleParticles = [];
+        }
+
+        function clearAllFilters() {
+            console.log('clearAllFilters called, network exists:', !!network);
+            if (!network || !network.body || !network.body.data) {
+                console.log('Network not ready, skipping clearAllFilters');
+                return;
+            }
+            
+            // Reset checkboxes
+            ['filter-employee', 'filter-department', 'filter-position', 'filter-project', 'filter-skill'].forEach(id => {
+                document.getElementById(id).checked = true;
+            });
+            
+            // Reset dropdowns
+            const dropdownIds = [
+                'filter-skill-select',
+                'filter-department-select',
+                'filter-employee-select',
+                'filter-position-select',
+                'filter-project-select'
+            ];
+            dropdownIds.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            
+              // Restore original node appearance
+              if (network && network.body && network.body.data && network.body.data.nodes && originalNodeColors.size > 0) {
+                  const nodeUpdates = [];
+                  network.body.data.nodes.forEach(node => {
+                      nodeUpdates.push({
+                          id: node.id,
+                          color: originalNodeColors.get(node.id),
+                          size: originalNodeSizes.get(node.id),
+                          opacity: 1,
+                          font: { size: 12, color: '#333' }
+                      });
+                  });
+                  network.body.data.nodes.update(nodeUpdates);
+              }
+            
+            // Clear sparkle effect
+            clearSparkleEffect();
+            
+            // Reset filter results
+             const resultsDiv = document.getElementById('filter-results');
+             resultsDiv.classList.remove('active');
+             resultsDiv.innerHTML = `<span data-i18n="filterNoFilters">${translations[currentLang].filterNoFilters}</span>`;
+             
+             // Apply filters to restore full view
+             applyFilters();
+        }
+        
+        // Mutual exclusion for dropdown filters - when one is selected, reset others
+        function onFilterDropdownChange(changedFilterId) {
+            const changedSelect = document.getElementById(changedFilterId);
+            const selectedValue = changedSelect.value;
+            
+            // Only reset other filters if a value is selected (not when clearing)
+            if (selectedValue) {
+                const allFilterIds = [
+                    'filter-skill-select',
+                    'filter-department-select', 
+                    'filter-employee-select',
+                    'filter-position-select',
+                    'filter-project-select'
+                ];
+                
+                // Reset all other dropdowns
+                allFilterIds.forEach(filterId => {
+                    if (filterId !== changedFilterId) {
+                        document.getElementById(filterId).value = '';
+                    }
+                });
+            }
+        }
+
+        // Apply filters when Apply button is clicked
+        function applyVisFilters() {
+            applyFilters();
         }
 
         // Chat Panel Functions
@@ -1224,7 +1697,7 @@
             if (isUser && mode) {
                 const modeDiv = document.createElement('div');
                 modeDiv.className = 'query-mode';
-                modeDiv.textContent = mode === 'cypher' ? 'Cypher Query' : 'Natural Language';
+                modeDiv.textContent = mode;
                 messageDiv.appendChild(modeDiv);
             }
             
@@ -1252,8 +1725,164 @@
 
             const resultsDiv = document.createElement('div');
             resultsDiv.className = 'chat-results';
-            resultsDiv.innerHTML = results;
+            
+            if (Array.isArray(results)) {
+                // New structured format with clickable nodes
+                results.forEach((item, index) => {
+                    if (item.isMore) {
+                        // "Show more" indicator
+                        const moreDiv = document.createElement('div');
+                        moreDiv.className = 'chat-result-item';
+                        moreDiv.style.color = '#999';
+                        moreDiv.style.fontSize = '11px';
+                        moreDiv.style.fontStyle = 'italic';
+                        moreDiv.textContent = item.label;
+                        resultsDiv.appendChild(moreDiv);
+                    } else {
+                        // Clickable node item
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'chat-result-item' + (results.length === 1 ? ' single-node' : '');
+                        itemDiv.innerHTML = '• ' + item.label + (results.length === 1 ? ' <span class="click-hint">(' + (translations[currentLang].chatClickToView || 'click to view') + ')</span>' : '');
+                        itemDiv.dataset.nodeId = item.id;
+                        itemDiv.dataset.nodeLabel = item.label;
+                        itemDiv.dataset.nodeType = item.type || 'unknown';
+                        
+                        itemDiv.addEventListener('click', function() {
+                            highlightNodeInGraph(this.dataset.nodeId, this.dataset.nodeLabel, this.dataset.nodeType);
+                        });
+                        
+                        resultsDiv.appendChild(itemDiv);
+                    }
+                });
+            } else {
+                // Legacy HTML string format (fallback)
+                resultsDiv.innerHTML = results;
+            }
+            
             lastMessage.appendChild(resultsDiv);
+        }
+        
+        // Function to highlight a node in the graph and show its direct relationships
+        function highlightNodeInGraph(nodeId, nodeLabel, nodeType) {
+            if (!network || !graphData) return;
+            
+            console.log('Highlighting node:', nodeId, nodeLabel, nodeType);
+            
+            // Clear any existing sparkle effect
+            clearSparkleEffect();
+            
+            // Find the node in vis.js format
+            const nodeIds = network.body.data.nodes.getIds();
+            
+            // First, reset all nodes to original appearance
+            const updates = [];
+            nodeIds.forEach(id => {
+                const originalColor = originalNodeColors.get(id);
+                const originalSize = originalNodeSizes.get(id);
+                updates.push({
+                    id: id,
+                    color: originalColor,
+                    size: originalSize,
+                    opacity: 1,
+                    font: { size: 12, color: '#333' }
+                });
+            });
+            network.body.data.nodes.update(updates);
+            
+            // Highlight the selected node - 2x size with sparkle effect
+            network.body.data.nodes.update({
+                id: nodeId,
+                color: { 
+                    background: '#667eea', 
+                    border: '#667eea',
+                    highlight: { background: '#764ba2', border: '#764ba2' }
+                },
+                size: originalNodeSizes.get(nodeId) * 2,
+                opacity: 1,
+                font: { 
+                    size: 16, 
+                    color: '#667eea', 
+                    bold: true,
+                    face: 'Arial',
+                    background: 'rgba(255,255,255,0.9)',
+                    strokeWidth: 3,
+                    strokeColor: '#ffffff'
+                },
+                borderWidth: 4,
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(102, 126, 234, 0.8)',
+                    size: 20,
+                    x: 0,
+                    y: 0
+                },
+                labelCfg: {
+                    position: 'top',
+                    offset: 15,
+                    style: {
+                        fill: '#667eea',
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        background: 'rgba(255,255,255,0.9)',
+                        padding: [4, 8, 4, 8],
+                        borderRadius: 4,
+                        borderColor: '#667eea',
+                        borderWidth: 1
+                    }
+                }
+            });
+            
+            // Find and highlight connected nodes and edges
+            const connectedNodeIds = new Set();
+            const connectedEdgeIds = [];
+            
+            graphData.edges.forEach(edge => {
+                if (String(edge.source) === String(nodeId)) {
+                    connectedNodeIds.add(String(edge.target));
+                    connectedEdgeIds.push('e' + edge.id);
+                } else if (String(edge.target) === String(nodeId)) {
+                    connectedNodeIds.add(String(edge.source));
+                    connectedEdgeIds.push('e' + edge.id);
+                }
+            });
+            
+            // Dim all non-connected nodes
+            const dimUpdates = [];
+            nodeIds.forEach(id => {
+                if (String(id) !== String(nodeId) && !connectedNodeIds.has(String(id))) {
+                    dimUpdates.push({
+                        id: id,
+                        opacity: 0.1,
+                        font: { size: 8, color: '#ccc' }
+                    });
+                }
+            });
+            network.body.data.nodes.update(dimUpdates);
+            
+            // Highlight connected nodes at normal size
+            connectedNodeIds.forEach(connectedId => {
+                network.body.data.nodes.update({
+                    id: connectedId,
+                    opacity: 1,
+                    font: { size: 12, color: '#333' }
+                });
+            });
+            
+            // Add sparkle effect to selected node
+            setTimeout(() => {
+                const canvas = network.canvas.frame.canvas;
+                const ctx = canvas.getContext('2d');
+                addSparkleEffect(network, nodeId, ctx);
+            }, 100);
+            
+            // Focus on the selected node
+            network.focus(nodeId, {
+                animation: true,
+                scale: 1.2,
+                offset: { x: 0, y: 0 }
+            });
+            
+            console.log('Highlighted node:', nodeLabel, 'with', connectedNodeIds.size, 'direct relationships');
         }
 
         function sendQuery() {
@@ -1329,11 +1958,11 @@
                             if (employees.length > 0) {
                                 return {
                                     message: t.chatFoundPosition.replace('{count}', employees.length).replace('{position}', position),
-                                    results: employees.map(emp => `• ${emp}`).join('<br>')
+                                    results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                                 };
                             }
                         }
-                }
+                    }
                 }
                 }
                 
@@ -1341,7 +1970,7 @@
                 const positionPatterns = [
                     'director', 'manager', 'engineer', 'developer', 'analyst', 
                     'coordinator', 'specialist', 'consultant', 'architect',
-                    'supervisor', 'administrator', 'assistant', 'advisor',
+                    'supervisor', 'administrator', 'assistant', 'advisor', 'rep',
                     'cto', 'cfo', 'ceo', 'lead', 'head'
                 ];
                 
@@ -1375,7 +2004,7 @@
                             if (employees.length > 0) {
                                 return {
                                     message: t.chatFoundPosition.replace('{count}', employees.length).replace('{position}', position),
-                                    results: employees.map(emp => `• ${emp}`).join('<br>')
+                                    results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                                 };
                             }
                         }
@@ -1391,7 +2020,7 @@
                     if (employees.length > 0) {
                         return {
                             message: t.chatFoundSkilled.replace('{count}', employees.length).replace('{skill}', skill),
-                            results: employees.map(emp => `• ${emp}`).join('<br>')
+                            results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                         };
                     }
                 }
@@ -1406,7 +2035,7 @@
                     if (employees.length > 0) {
                         return {
                             message: t.chatFoundInDept.replace('{count}', employees.length).replace('{dept}', dept),
-                            results: employees.map(emp => `• ${emp}`).join('<br>')
+                            results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                         };
                     }
                 }
@@ -1418,8 +2047,9 @@
                     const employees = findAllEmployees();
                     return {
                         message: t.chatFoundEmployees.replace('{count}', employees.length),
-                        results: employees.slice(0, 10).map(emp => `• ${emp}`).join('<br>') + 
-                                (employees.length > 10 ? `<br>${t.chatMore.replace('{count}', employees.length - 10)}` : '')
+                        results: employees.slice(0, 10).map(emp => ({ id: emp.id, label: emp.label, type: emp.type })).concat(
+                            employees.length > 10 ? [{ label: t.chatMore.replace('{count}', employees.length - 10), isMore: true }] : []
+                        )
                     };
                 }
             }
@@ -1440,7 +2070,7 @@
                 if (employees.length > 0) {
                     return {
                         message: t.chatCypherSuccess.replace('{count}', employees.length),
-                        results: employees.map(emp => `• ${emp}`).join('<br>')
+                        results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                     };
                 }
             }
@@ -1451,7 +2081,7 @@
                 if (employees.length > 0) {
                     return {
                         message: t.chatCypherSuccess.replace('{count}', employees.length),
-                        results: employees.map(emp => `• ${emp}`).join('<br>')
+                        results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                     };
                 }
             }
@@ -1472,7 +2102,7 @@
                             if (employees.length > 0) {
                                 return {
                                     message: t.chatCypherPosition.replace('{count}', employees.length),
-                                    results: employees.map(emp => `• ${emp}`).join('<br>')
+                                    results: employees.map(emp => ({ id: emp.id, label: emp.label, type: emp.type }))
                                 };
                             }
                         }
@@ -1487,8 +2117,9 @@
                     const nodes = findNodesByType(nodeType);
                     return {
                         message: t.chatCypherNodes.replace('{count}', nodes.length).replace('{type}', nodeType.toLowerCase()),
-                        results: nodes.slice(0, 10).map(node => `• ${node}`).join('<br>') + 
-                                (nodes.length > 10 ? `<br>${t.chatMore.replace('{count}', nodes.length - 10)}` : '')
+                        results: nodes.slice(0, 10).map(node => ({ id: node.id, label: node.label, type: node.type })).concat(
+                            nodes.length > 10 ? [{ label: t.chatMore.replace('{count}', nodes.length - 10), isMore: true }] : []
+                        )
                     };
                 }
             }
@@ -1512,7 +2143,7 @@
                     const employeeId = edge.source === skillNode.id ? edge.target : edge.source;
                     const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label) === 'Employee');
                     if (employee) {
-                        employees.push(employee.label);
+                        employees.push({ id: employee.id, label: employee.label, type: 'Employee' });
                     }
                 }
             });
@@ -1533,7 +2164,7 @@
                     const employeeId = edge.source === deptNode.id ? edge.target : edge.source;
                     const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label, n.labels) === 'Employee');
                     if (employee) {
-                        employees.push(employee.label);
+                        employees.push({ id: employee.id, label: employee.label, type: 'Employee' });
                     }
                 }
             });
@@ -1554,7 +2185,7 @@
                     const employeeId = edge.source === positionNode.id ? edge.target : edge.source;
                     const employee = graphData.nodes.find(n => n.id === employeeId && getNodeType(n.label, n.labels) === 'Employee');
                     if (employee) {
-                        employees.push(employee.label);
+                        employees.push({ id: employee.id, label: employee.label, type: 'Employee' });
                     }
                 }
             });
@@ -1566,16 +2197,16 @@
             if (!graphData || !graphData.nodes) return [];
             return graphData.nodes
                 .filter(n => getNodeType(n.label, n.labels) === 'Employee')
-                .map(n => n.label)
-                .sort();
+                .map(n => ({ id: n.id, label: n.label, type: 'Employee' }))
+                .sort((a, b) => a.label.localeCompare(b.label));
         }
 
         function findNodesByType(nodeType) {
             if (!graphData || !graphData.nodes) return [];
             return graphData.nodes
                 .filter(n => getNodeType(n.label, n.labels) === nodeType)
-                .map(n => n.label)
-                .sort();
+                .map(n => ({ id: n.id, label: n.label, type: nodeType }))
+                .sort((a, b) => a.label.localeCompare(b.label));
         }
 
         function extractNodeTypeFromQuery(query) {
@@ -1776,12 +2407,101 @@
         });
 
         // Initialize with saved language or default to English
-        const savedLang = localStorage.getItem('hr_graph_lang') || 'en';
-        setLanguage(savedLang);
-        initGraph();
+        const savedLang = localStorage.getItem('language') || localStorage.getItem('hr_graph_lang') || 'en';
         
-        // Initialize query mode toggle
-        toggleQueryMode('natural');
+        // Wait for vis-network to be available
+        function waitForVisNetwork(callback, retries = 100) {
+            if (typeof vis !== 'undefined' && vis.DataSet) {
+                console.log('vis-network loaded, initializing...');
+                callback();
+            } else if (retries > 0) {
+                console.log('Waiting for vis-network... (' + retries + ' retries left)');
+                setTimeout(() => waitForVisNetwork(callback, retries - 1), 100);
+            } else {
+                console.error('vis-network not loaded after 10 seconds');
+                // Try to load vis-network dynamically
+                console.log('Attempting to load vis-network dynamically...');
+                const script = document.createElement('script');
+                script.src = 'https://unpkg.com/vis-network@9.1.2/standalone/umd/vis-network.min.js';
+                script.onload = function() {
+                    console.log('vis-network loaded dynamically');
+                    callback();
+                };
+                script.onerror = function() {
+                    alert('Failed to load vis-network library. Please refresh the page.');
+                };
+                document.head.appendChild(script);
+            }
+        }
+        
+        // Main initialization function
+        function initializeApp() {
+            console.log('Initializing app with language:', savedLang);
+            
+            // Ensure graph container has proper dimensions
+            const container = document.getElementById('graph-container');
+            if (container) {
+                const headerHeight = document.getElementById('header')?.offsetHeight || 70;
+                const toolbarHeight = document.getElementById('toolbar')?.offsetHeight || 50;
+                const calculatedHeight = window.innerHeight - headerHeight - toolbarHeight;
+                container.style.height = Math.max(calculatedHeight, 400) + 'px';
+                console.log('Graph container height set to:', container.style.height);
+            }
+            
+            // Set language and initialize graph
+            currentLang = savedLang;
+            const t = translations[currentLang];
+            
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.textContent = t[key];
+            });
+            
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (t[key]) el.placeholder = t[key];
+            });
+            
+            document.querySelectorAll('#lang-selector button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === currentLang.toUpperCase()) btn.classList.add('active');
+            });
+            
+            // Initialize graph
+            console.log('Calling initGraph...');
+            initGraph();
+            
+            // Initialize filter panel after a short delay
+            setTimeout(() => {
+                populateFilterOptions();
+                clearAllFilters();
+            }, 500);
+            
+            // Initialize query mode toggle
+            toggleQueryMode('natural');
+            
+            // Initialize edge labels button state
+            const edgeLabelsBtn = document.getElementById('edge-labels-btn');
+            if (edgeLabelsBtn) {
+                edgeLabelsBtn.innerHTML = '⚡ ' + (t.edgeLabels || 'Labels') + ' ✓';
+                edgeLabelsBtn.style.opacity = '1';
+            }
+        }
+        
+        waitForVisNetwork(initializeApp);
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const container = document.getElementById('graph-container');
+            if (container && network) {
+                const headerHeight = document.getElementById('header')?.offsetHeight || 70;
+                const toolbarHeight = document.getElementById('toolbar')?.offsetHeight || 50;
+                const calculatedHeight = window.innerHeight - headerHeight - toolbarHeight;
+                container.style.height = Math.max(calculatedHeight, 400) + 'px';
+                network.fit({ animation: false });
+            }
+        });
     </script>
 </body>
 </html>

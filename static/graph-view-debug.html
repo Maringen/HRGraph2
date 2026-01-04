@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Graph Debug</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #graph-container { height: 600px; border: 1px solid #ccc; }
+        #debug { background: #f5f5f5; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>HR Graph Debug</h1>
+    <div id="graph-container"></div>
+    <div id="debug"></div>
+    
+    <script>
+        let network = null;
+        let graphData = null;
+        
+        async function loadGraph() {
+            try {
+                console.log('Fetching graph data...');
+                const response = await fetch('/graph');
+                console.log('Fetch response status:', response.status);
+                console.log('Fetch response ok:', response.ok);
+                
+                const data = await response.json();
+                console.log('JSON parsed successfully');
+                
+                console.log('Data received:', data.nodes?.length, 'nodes');
+                console.log('Raw data keys:', Object.keys(data));
+                console.log('Raw nodes sample:', data.nodes ? data.nodes.slice(0, 3) : 'undefined');
+                console.log('Raw edges sample:', data.edges ? data.edges.slice(0, 3) : 'undefined');
+                graphData = data;
+                
+                // Process nodes - just pass through directly
+                console.log('Using raw nodes:', data.nodes.length);
+                const nodes = data.nodes;
+                
+                // Process edges - just pass through directly  
+                console.log('Using raw edges:', data.edges.length);
+                const edges = data.edges;
+                
+                // Process edges
+                const edges = data.edges.map(e => ({
+                    id: String(e.id),  // Ensure ID is string
+                    from: String(e.source),  // Ensure source is string
+                    to: String(e.target),  // Ensure target is string
+                    label: e.label
+                }));
+                
+                console.log('Processed nodes:', nodes.length);
+                console.log('Processed edges:', edges.length);
+                
+                // Create vis network
+                const container = document.getElementById('graph-container');
+                const visData = {
+                    nodes: new vis.DataSet(nodes),
+                    edges: new vis.DataSet(edges)
+                };
+                
+                const options = {
+                    physics: { enabled: false }
+                };
+                
+                network = new vis.Network(container, visData, options);
+                
+                console.log('Network created');
+                console.log('Network nodes:', network.body.data.nodes.length);
+                console.log('Network edges:', network.body.data.edges.length);
+                
+                // Update debug info
+                document.getElementById('debug').innerHTML = `
+                    <p><strong>Status:</strong> ${network ? 'Created' : 'Failed'}</p>
+                    <p><strong>Nodes:</strong> ${network ? network.body.data.nodes.length : 0}</p>
+                    <p><strong>Edges:</strong> ${network ? network.body.data.edges.length : 0}</p>
+                    <p><strong>Positions:</strong> ${network ? Object.keys(network.getPositions()).length : 0}</p>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('debug').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadGraph);
+    </script>
+</body>
+</html>
