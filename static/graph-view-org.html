@@ -1,1602 +1,178 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Knowledge Graph - Organization Chart</title>
-    
-    <!-- AntV G6 Library -->
-    <script src="https://unpkg.com/@antv/g6@4.8.24/dist/g6.min.js"></script>
-    
+    <title>Org Chart</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: #f5f5f5;
-            overflow: hidden;
-        }
-        
-        #header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        
-        #header h1 {
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        #header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        #stats {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .stat {
-            text-align: center;
-        }
-        
-        .stat-number {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        
-        .stat-label {
-            font-size: 11px;
-            opacity: 0.9;
-        }
-        
-        #lang-selector {
-            display: flex;
-            gap: 5px;
-        }
-        
-        #lang-selector button {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        #lang-selector button.active {
-            background: white;
-            color: #667eea;
-        }
-        
-        #toolbar {
-            background: white;
-            padding: 10px 20px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        #toolbar button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        
-        #toolbar button:hover {
-            transform: translateY(-1px);
-        }
-        
-        #toolbar button.secondary {
-            background: #f0f0f0;
-            color: #666;
-        }
-        
-        #toolbar button.secondary:hover {
-            background: #e0e0e0;
-        }
-        
-        #toolbar input {
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            width: 200px;
-        }
-        
-        #graph-container {
-            height: calc(100vh - 120px);
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            position: relative;
-        }
-        
-        #legend {
-            position: fixed;
-            top: 140px;
-            right: 20px;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            z-index: 100;
-            min-width: 180px;
-        }
-        
-        #legend h4 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 14px;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 6px 0;
-            font-size: 12px;
-        }
-        
-        .legend-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-        }
-        
-        .legend-icon {
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            text-align: center;
-            z-index: 1000;
-        }
-        
-        #loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        #loading-text {
-            font-size: 18px;
-            color: #333;
-        }
-        
-        .loading-hidden {
-            display: none !important;
-        }
-        
-        #search-panel {
-            position: fixed;
-            left: 20px;
-            top: 140px;
-            width: 280px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 99;
-        }
-        
-        #search-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 10px 12px;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        #search-header h3 {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        #search-content {
-            padding: 12px;
-        }
-        
-        #search-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        
-        #search-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        #search-results {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .search-result-item {
-            padding: 8px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-bottom: 4px;
-        }
-        
-        .search-result-item:hover {
-            background-color: #f0f0f0;
-        }
-        
-        .search-result-item .name {
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-        }
-        
-        .search-result-item .position {
-            font-size: 11px;
-            color: #666;
-        }
-        
-        #breadcrumbs {
-            position: fixed;
-            top: 120px;
-            left: 20px;
-            background: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 98;
-            display: flex;
-            gap: 8px;
-            font-size: 12px;
-        }
-        
-        #breadcrumbs a {
-            color: #667eea;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        
-        #breadcrumbs a:hover {
-            text-decoration: underline;
-        }
-        
-        #breadcrumbs span {
-            color: #999;
-        }
-        
-        #zoom-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            z-index: 100;
-        }
-        
-        #zoom-controls button {
-            background: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        #zoom-controls button:hover {
-            background: #f5f5f5;
-        }
-        
-        #org-info-panel {
-            position: fixed;
-            right: 20px;
-            top: 140px;
-            width: 300px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 99;
-            display: none;
-        }
-        
-        #org-info-panel.show {
-            display: block;
-        }
-        
-        #org-info-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        #org-info-header h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-        
-        #org-info-header .title {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-        
-        #org-info-content {
-            padding: 15px;
-        }
-        
-        #org-info-content .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        #org-info-content .info-label {
-            color: #666;
-            font-size: 12px;
-        }
-        
-        #org-info-content .info-value {
-            font-weight: 600;
-            color: #333;
-            font-size: 12px;
-        }
-        
-        #org-info-content .section-title {
-            font-weight: 600;
-            color: #667eea;
-            margin: 15px 0 10px;
-            font-size: 13px;
-        }
-        
-        #direct-reports {
-            margin-top: 10px;
-        }
-        
-        .report-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .report-item:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .report-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 12px;
-        }
-        
-        .report-info .name {
-            font-weight: 600;
-            font-size: 12px;
-            color: #333;
-        }
-        
-        .report-info .position {
-            font-size: 10px;
-            color: #666;
-        }
-        
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        /* Custom G6 styles */
-        .g6-tooltip {
-            border: 1px solid #e2e2e2;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #545454;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 10px 8px;
-            box-shadow: rgb(174, 174, 174) 0px 0px 10px;
-        }
-        
-        /* Org chart specific styles */
-        .org-node {
-            cursor: pointer;
-        }
-        
-        .org-node:hover {
-            filter: brightness(1.1);
-        }
-        
-        /* Stats cards in toolbar */
-        .stats-mini {
-            display: flex;
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 5px 10px;
-            border-radius: 6px;
-        }
-        
-        .stats-mini-item {
-            text-align: center;
-            padding: 0 10px;
-            border-right: 1px solid #ddd;
-        }
-        
-        .stats-mini-item:last-child {
-            border-right: none;
-        }
-        
-        .stats-mini-number {
-            font-size: 14px;
-            font-weight: 700;
-            color: #667eea;
-        }
-        
-        .stats-mini-label {
-            font-size: 10px;
-            color: #666;
-        }
+        * { margin: 0; padding: 0; }
+        html, body, #root { width: 100%; height: 100%; }
+        body { font-family: sans-serif; background: #f0f0f0; }
     </style>
 </head>
 <body>
-    <div id="header">
-        <h1><span data-i18n="orgChartTitle">Organization Chart</span></h1>
-        <div id="header-right">
-            <div class="stats-mini">
-                <div class="stats-mini-item">
-                    <div class="stats-mini-number" id="s-dept-count">-</div>
-                    <div class="stats-mini-label" data-i18n="departments">Depts</div>
-                </div>
-                <div class="stats-mini-item">
-                    <div class="stats-mini-number" id="s-emp-count">-</div>
-                    <div class="stats-mini-label" data-i18n="employees">Emps</div>
-                </div>
-                <div class="stats-mini-item">
-                    <div class="stats-mini-number" id="s-levels">-</div>
-                    <div class="stats-mini-label" data-i18n="levels">Levels</div>
-                </div>
-            </div>
-            <!-- API Key Input -->
-            <div style="display:flex;align-items:center;gap:8px;margin-left:15px;">
-                <input type="password" id="api-key" placeholder="API key" 
-                       style="padding:6px 10px;border:2px solid #ddd;border-radius:6px;font-size:12px;width:100px;">
-                <button onclick="saveApiKey()" style="background:#667eea;color:white;padding:6px 12px;border:none;border-radius:6px;font-size:12px;cursor:pointer;">OK</button>
-            </div>
-            <div id="lang-selector">
-                <button onclick="setLanguage('en')" class="active">EN</button>
-                <button onclick="setLanguage('fr')">FR</button>
-                <button onclick="setLanguage('it')">IT</button>
-                <button onclick="setLanguage('de')">DE</button>
-            </div>
-            <a href="/" style="color: white; font-size: 13px;" data-i18n="dashboard">Dashboard</a>
-        </div>
-    </div>
-    
-    <div id="toolbar">
-        <button onclick="zoomIn()" data-i18n="zoomIn">Zoom +</button>
-        <button onclick="zoomOut()" data-i18n="zoomOut">Zoom -</button>
-        <button onclick="fitView()" data-i18n="fitView">Fit</button>
-        <button onclick="resetView()" data-i18n="resetView">Reset</button>
-        <button class="secondary" onclick="expandAll()" data-i18n="expandAll">Expand All</button>
-        <button class="secondary" onclick="collapseAll()" data-i18n="collapseAll">Collapse All</button>
-        <button class="secondary" onclick="toggleLayout()" data-i18n="switchLayout">Switch Layout</button>
-        <span style="flex:1"></span>
-        <button class="secondary" onclick="exportOrgChart()" data-i18n="export">Export</button>
-        <a href="/graph-view.html" style="color: #667eea; font-size: 13px; margin-left: 10px;" data-i18n="graphView">Graph View</a>
-        <a href="/graph-view-g6.html" style="color: #667eea; font-size: 13px; margin-left: 10px;" data-i18n="networkView">Network View</a>
-    </div>
-    
-    <!-- Breadcrumbs -->
-    <div id="breadcrumbs" style="display:none;">
-        <a onclick="goToRoot()" data-i18n="home">Home</a>
-        <span>/</span>
-        <span id="breadcrumb-path"></span>
-    </div>
-    
-    <!-- Search Panel -->
-    <div id="search-panel">
-        <div id="search-header">
-            <h3 data-i18n="searchOrg">Search Organization</h3>
-        </div>
-        <div id="search-content">
-            <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Search employees..." oninput="searchNodes(this.value)">
-            <div id="search-results"></div>
-        </div>
-    </div>
-    
-    <!-- Legend -->
-    <div id="legend">
-        <h4 data-i18n="orgLevels">Organization Levels</h4>
-        <div class="legend-item">
-            <div class="legend-icon">👔</div>
-            <span data-i18n="executive">Executive</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-icon">👨‍💼</div>
-            <span data-i18n="director">Director</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-icon">👩‍💻</div>
-            <span data-i18n="manager">Manager</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-icon">👷</div>
-            <span data-i18n="employee">Employee</span>
-        </div>
-        <h4 style="margin-top:15px" data-i18n="departments">Departments</h4>
-        <div class="legend-item">
-            <div class="legend-color" style="background:#667eea"></div>
-            <span>Engineering</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background:#4caf50"></div>
-            <span>HR</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background:#ff9800"></div>
-            <span>Sales</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background:#e91e63"></div>
-            <span>Marketing</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background:#00bcd4"></div>
-            <span>Finance</span>
-        </div>
-    </div>
-    
-    <!-- Graph Container -->
-    <div id="graph-container"></div>
-    
-    <!-- Zoom Controls -->
-    <div id="zoom-controls">
-        <button onclick="zoomIn()" title="Zoom In">+</button>
-        <button onclick="zoomOut()" title="Zoom Out">−</button>
-        <button onclick="fitView()" title="Fit View">⊡</button>
-        <button onclick="resetView()" title="Reset">↺</button>
-    </div>
-    
-    <!-- Org Info Panel -->
-    <div id="org-info-panel">
-        <button class="close-btn" onclick="closeOrgInfo()">×</button>
-        <div id="org-info-header">
-            <h3 id="org-name">John Smith</h3>
-            <div class="title" id="org-title">CTO</div>
-        </div>
-        <div id="org-info-content">
-            <div class="info-row">
-                <span class="info-label" data-i18n="department">Department</span>
-                <span class="info-value" id="org-dept">Engineering</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label" data-i18n="reportsTo">Reports To</span>
-                <span class="info-value" id="org-manager">-</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label" data-i18n="directReports">Direct Reports</span>
-                <span class="info-value" id="org-report-count">0</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label" data-i18n="teamSize">Team Size</span>
-                <span class="info-value" id="org-team-size">0</span>
-            </div>
-            
-            <div class="section-title" data-i18n="directReports">Direct Reports</div>
-            <div id="direct-reports"></div>
-            
-            <div class="section-title" data-i18n="skills">Skills</div>
-            <div id="org-skills"></div>
-        </div>
-    </div>
-    
-    <!-- Loading overlay -->
-    <div id="loading">
-        <div id="loading-spinner"></div>
-        <div id="loading-text" data-i18n="loading">Loading...</div>
-    </div>
-
-    <script>
-        // API Key management
-        let apiKey = localStorage.getItem('hr_api_key') || '';
+    <div id="root"></div>
+    <script type="text/babel">
+        var e = React.createElement;
+        var useState = React.useState;
+        var useEffect = React.useEffect;
+        var useMemo = React.useMemo;
+        var RF = ReactFlow;
         
-        function saveApiKey() {
-            const keyInput = document.getElementById('api-key');
-            if (keyInput.value) {
-                apiKey = keyInput.value;
-                localStorage.setItem('hr_api_key', apiKey);
-                loadGraph();
-            }
-        }
-        
-        if (apiKey) {
-            document.getElementById('api-key').value = apiKey;
-        }
-        
-        let currentLang = 'en';
-        let graph = null;
-        let graphData = null;
-        let currentLayout = 'dendrogram'; // 'dendrogram' or 'compactBox'
-        let orgTreeData = null;
-        
-        // i18n translations
-        const translations = {
-            'en': {
-                'orgChartTitle': 'Organization Chart',
-                'departments': 'Depts',
-                'employees': 'Employees',
-                'levels': 'Levels',
-                'zoomIn': 'Zoom +',
-                'zoomOut': 'Zoom -',
-                'fitView': 'Fit',
-                'resetView': 'Reset',
-                'expandAll': 'Expand All',
-                'collapseAll': 'Collapse All',
-                'switchLayout': 'Switch Layout',
-                'export': 'Export',
-                'graphView': 'Graph View',
-                'networkView': 'Network View',
-                'searchOrg': 'Search Organization',
-                'searchPlaceholder': 'Search employees...',
-                'orgLevels': 'Organization Levels',
-                'executive': 'Executive',
-                'director': 'Director',
-                'manager': 'Manager',
-                'employee': 'Employee',
-                'home': 'Home',
-                'department': 'Department',
-                'reportsTo': 'Reports To',
-                'directReports': 'Direct Reports',
-                'teamSize': 'Team Size',
-                'skills': 'Skills',
-                'loading': 'Loading...',
-                'noResults': 'No results found',
-                'foundResults': 'Found {count} results',
-                'clickToView': 'Click to view',
-                'totalEmployees': 'Total Employees',
-                'totalDepartments': 'Total Departments',
-                'organizationDepth': 'Org Depth'
-            },
-            'fr': {
-                'orgChartTitle': 'Organigramme',
-                'departments': 'Dépts',
-                'employees': 'Employés',
-                'levels': 'Niveaux',
-                'zoomIn': 'Zoom +',
-                'zoomOut': 'Zoom -',
-                'fitView': 'Ajuster',
-                'resetView': 'Réinitialiser',
-                'expandAll': 'Tout déplier',
-                'collapseAll': 'Tout plier',
-                'switchLayout': 'Changer disposition',
-                'export': 'Exporter',
-                'graphView': 'Vue Graphe',
-                'networkView': 'Vue Réseau',
-                'searchOrg': 'Rechercher',
-                'searchPlaceholder': 'Rechercher...',
-                'orgLevels': 'Niveaux',
-                'executive': 'Direction',
-                'director': 'Directeur',
-                'manager': 'Responsable',
-                'employee': 'Employé',
-                'home': 'Accueil',
-                'department': 'Département',
-                'reportsTo': 'Rapporte à',
-                'directReports': 'Rapports directs',
-                'teamSize': 'Taille équipe',
-                'skills': 'Compétences',
-                'loading': 'Chargement...',
-                'noResults': 'Aucun résultat',
-                'foundResults': '{count} résultats',
-                'clickToView': 'Cliquez pour voir',
-                'totalEmployees': 'Total employés',
-                'totalDepartments': 'Total départements',
-                'organizationDepth': 'Profondeur'
-            },
-            'it': {
-                'orgChartTitle': 'Organigramma',
-                'departments': 'Dip.',
-                'employees': 'Dipendenti',
-                'levels': 'Livelli',
-                'zoomIn': 'Zoom +',
-                'zoomOut': 'Zoom -',
-                'fitView': 'Adatta',
-                'resetView': 'Reimposta',
-                'expandAll': 'Espandi tutto',
-                'collapseAll': 'Comprimi tutto',
-                'switchLayout': 'Cambia layout',
-                'export': 'Esporta',
-                'graphView': 'Vista Grafico',
-                'networkView': 'Vista Rete',
-                'searchOrg': 'Cerca',
-                'searchPlaceholder': 'Cerca...',
-                'orgLevels': 'Livelli',
-                'executive': 'Dirigenza',
-                'director': 'Direttore',
-                'manager': 'Manager',
-                'employee': 'Dipendente',
-                'home': 'Home',
-                'department': 'Dipartimento',
-                'reportsTo': 'Riporta a',
-                'directReports': 'Riporti diretti',
-                'teamSize': 'Dimensione team',
-                'skills': 'Competenze',
-                'loading': 'Caricamento...',
-                'noResults': 'Nessun risultato',
-                'foundResults': '{count} risultati',
-                'clickToView': 'Clicca per vedere',
-                'totalEmployees': 'Totale dipendenti',
-                'totalDepartments': 'Totale dipartimenti',
-                'organizationDepth': 'Profondità'
-            },
-            'de': {
-                'orgChartTitle': 'Organigramm',
-                'departments': 'Abteilungen',
-                'employees': 'Mitarbeiter',
-                'levels': 'Ebenen',
-                'zoomIn': 'Zoom +',
-                'zoomOut': 'Zoom -',
-                'fitView': 'Anpassen',
-                'resetView': 'Zurücksetzen',
-                'expandAll': 'Alle erweitern',
-                'collapseAll': 'Alle minimieren',
-                'switchLayout': 'Layout ändern',
-                'export': 'Exportieren',
-                'graphView': 'Grafikansicht',
-                'networkView': 'Netzwerkansicht',
-                'searchOrg': 'Suchen',
-                'searchPlaceholder': 'Suchen...',
-                'orgLevels': 'Ebenen',
-                'executive': 'Geschäftsführung',
-                'director': 'Direktor',
-                'manager': 'Manager',
-                'employee': 'Mitarbeiter',
-                'home': 'Startseite',
-                'department': 'Abteilung',
-                'reportsTo': 'Berichtet an',
-                'directReports': 'Direkte Berichte',
-                'teamSize': 'Teamgröße',
-                'skills': 'Fähigkeiten',
-                'loading': 'Laden...',
-                'noResults': 'Keine Ergebnisse',
-                'foundResults': '{count} Ergebnisse',
-                'clickToView': 'Klicken zum Anzeigen',
-                'totalEmployees': 'Mitarbeiter gesamt',
-                'totalDepartments': 'Abteilungen gesamt',
-                'organizationDepth': 'Tiefe'
-            }
-        };
-        
-        // Set language
-        function setLanguage(lang) {
-            currentLang = lang;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
-            });
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                const key = el.getAttribute('data-i18n-placeholder');
-                if (translations[lang][key]) {
-                    el.placeholder = translations[lang][key];
-                }
-            });
-            document.querySelectorAll('#lang-selector button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-        }
-        
-        // Zoom controls
-        function zoomIn() {
-            if (graph) {
-                graph.zoomIn();
-            }
-        }
-        
-        function zoomOut() {
-            if (graph) {
-                graph.zoomOut();
-            }
-        }
-        
-        function fitView() {
-            if (graph) {
-                graph.fitView();
-            }
-        }
-        
-        function resetView() {
-            if (graph) {
-                graph.fitView();
-                graph.focusRoot();
-            }
-        }
-        
-        function expandAll() {
-            if (graph) {
-                graph.getNodes().forEach(node => {
-                    graph.expandNode(node);
-                });
-            }
-        }
-        
-        function collapseAll() {
-            if (graph) {
-                graph.getNodes().forEach(node => {
-                    graph.collapseNode(node);
-                });
-            }
-        }
-        
-        function toggleLayout() {
-            currentLayout = currentLayout === 'dendrogram' ? 'compactBox' : 'dendrogram';
-            if (orgTreeData) {
-                renderGraph();
-            }
-        }
-        
-        function exportOrgChart() {
-            if (graph) {
-                const canvas = graph.get('canvas');
-                const dataURL = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = 'org-chart.png';
-                link.href = dataURL;
-                link.click();
-            }
-        }
-        
-        function closeOrgInfo() {
-            document.getElementById('org-info-panel').classList.remove('show');
-        }
-        
-        // Search functionality
-        function searchNodes(query) {
-            const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '';
-            
-            if (!query.trim() || !graphData) {
-                return;
-            }
-            
-            const queryLower = query.toLowerCase();
-            const results = graphData.nodes.filter(node => {
-                if (node.nodeType !== 'Employee') return false;
-                const name = node.label?.toLowerCase() || '';
-                const position = getPositionLabel(node.id);
-                return name.includes(queryLower) || position?.toLowerCase().includes(queryLower);
-            });
-            
-            if (results.length === 0) {
-                resultsContainer.innerHTML = `<div style="padding:10px;color:#999;font-size:12px;text-align:center">${translations[currentLang].noResults}</div>`;
-                return;
-            }
-            
-            const count = results.length;
-            resultsContainer.innerHTML = `<div style="padding:5px 10px;font-size:11px;color:#666;border-bottom:1px solid #eee">${translations[currentLang].foundResults.replace('{count}', count)}</div>`;
-            
-            results.slice(0, 20).forEach(node => {
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                const position = getPositionLabel(node.id);
-                const dept = getDepartmentLabel(node.id);
-                
-                item.innerHTML = `
-                    <div class="name">${node.label}</div>
-                    <div class="position">${position || 'N/A'} - ${dept || 'N/A'}</div>
-                `;
-                item.onclick = () => focusOnNode(node.id);
-                resultsContainer.appendChild(item);
-            });
-            
-            if (results.length > 20) {
-                const more = document.createElement('div');
-                more.style.padding = '10px';
-                more.style.textAlign = 'center';
-                more.style.fontSize = '11px';
-                more.style.color = '#999';
-                more.textContent = `... and ${results.length - 20} more`;
-                resultsContainer.appendChild(more);
-            }
-        }
-        
-        function getPositionLabel(employeeId) {
-            if (!graphData) return null;
-            const edge = graphData.edges.find(e => 
-                e.source === employeeId && e.label === 'WORKS_IN'
-            );
-            if (edge) {
-                const position = graphData.nodes.find(n => n.id === edge.target);
-                return position?.label;
-            }
-            return null;
-        }
-        
-        function getDepartmentLabel(employeeId) {
-            if (!graphData) return null;
-            const edge = graphData.edges.find(e => 
-                e.source === employeeId && e.label === 'BELONGS_TO'
-            );
-            if (edge) {
-                const dept = graphData.nodes.find(n => n.id === edge.target);
-                return dept?.label;
-            }
-            return null;
-        }
-        
-        function getManagerId(employeeId) {
-            if (!graphData) return null;
-            const edge = graphData.edges.find(e => 
-                e.target === employeeId && e.label === 'REPORTS_TO'
-            );
-            return edge?.source;
-        }
-        
-        function focusOnNode(nodeId) {
-            if (!graph) return;
-            
-            const node = graph.findById(nodeId);
-            if (node) {
-                graph.focusItem(node, true, {
-                    duration: 500,
-                    easing: 'easeCubic'
-                });
-                graph.setItemState(node, 'selected', true);
-                
-                // Show org info
-                showOrgInfo(nodeId);
-                
-                // Update breadcrumbs
-                updateBreadcrumbs(nodeId);
-            }
-        }
-        
-        function showOrgInfo(nodeId) {
-            const node = graphData.nodes.find(n => n.id === nodeId);
-            if (!node || node.nodeType !== 'Employee') return;
-            
-            const panel = document.getElementById('org-info-panel');
-            document.getElementById('org-name').textContent = node.label;
-            document.getElementById('org-title').textContent = getPositionLabel(nodeId) || 'N/A';
-            document.getElementById('org-dept').textContent = getDepartmentLabel(nodeId) || 'N/A';
-            
-            const managerId = getManagerId(nodeId);
-            if (managerId) {
-                const manager = graphData.nodes.find(n => n.id === managerId);
-                document.getElementById('org-manager').textContent = manager?.label || 'N/A';
-            } else {
-                document.getElementById('org-manager').textContent = '-';
-            }
-            
-            // Find direct reports
-            const directReports = graphData.edges.filter(e => 
-                e.target === nodeId && e.label === 'REPORTS_TO'
-            ).map(e => {
-                const emp = graphData.nodes.find(n => n.id === e.source);
-                const position = getPositionLabel(e.source);
-                return { ...emp, position };
-            });
-            
-            document.getElementById('org-report-count').textContent = directReports.length;
-            
-            // Calculate team size (including nested reports)
-            const teamSize = countTeamSize(nodeId);
-            document.getElementById('org-team-size').textContent = teamSize;
-            
-            // Show direct reports
-            const reportsContainer = document.getElementById('direct-reports');
-            reportsContainer.innerHTML = '';
-            
-            if (directReports.length === 0) {
-                reportsContainer.innerHTML = '<div style="padding:10px;color:#999;font-size:12px;text-align:center">No direct reports</div>';
-            } else {
-                directReports.forEach(report => {
-                    const reportItem = document.createElement('div');
-                    reportItem.className = 'report-item';
-                    reportItem.onclick = () => focusOnNode(report.id);
-                    
-                    const initials = report.label.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                    const dept = getDepartmentLabel(report.id);
-                    const color = getDeptColor(dept);
-                    
-                    reportItem.innerHTML = `
-                        <div class="report-avatar" style="background:${color}">${initials}</div>
-                        <div class="report-info">
-                            <div class="name">${report.label}</div>
-                            <div class="position">${report.position || 'N/A'}</div>
-                        </div>
-                    `;
-                    reportsContainer.appendChild(reportItem);
-                });
-            }
-            
-            // Show skills
-            const skills = graphData.edges.filter(e => 
-                e.source === nodeId && e.label === 'PROFICIENT_IN'
-            ).map(e => {
-                const skill = graphData.nodes.find(n => n.id === e.target);
-                return skill?.label;
-            }).filter(Boolean);
-            
-            const skillsContainer = document.getElementById('org-skills');
-            if (skills.length === 0) {
-                skillsContainer.innerHTML = '<div style="padding:5px;color:#999;font-size:12px">No skills listed</div>';
-            } else {
-                skillsContainer.innerHTML = skills.slice(0, 10).map(skill => 
-                    `<span style="display:inline-block;background:#f0f0f0;padding:3px 8px;border-radius:12px;font-size:11px;margin:2px">${skill}</span>`
-                ).join('');
-            }
-            
-            panel.classList.add('show');
-        }
-        
-        function countTeamSize(managerId) {
-            if (!graphData) return 0;
-            
-            const directReports = graphData.edges.filter(e => 
-                e.target === managerId && e.label === 'REPORTS_TO'
-            );
-            
-            let count = directReports.length;
-            directReports.forEach(report => {
-                count += countTeamSize(report.source);
-            });
-            
-            return count;
-        }
-        
-        function updateBreadcrumbs(nodeId) {
-            const breadcrumbs = document.getElementById('breadcrumbs');
-            const pathSpan = document.getElementById('breadcrumb-path');
-            
-            const path = [];
-            let currentId = nodeId;
-            
-            while (currentId) {
-                const node = graphData.nodes.find(n => n.id === currentId);
-                if (node) {
-                    path.unshift(node.label);
-                    currentId = getManagerId(currentId);
-                } else {
-                    break;
-                }
-            }
-            
-            if (path.length > 1) {
-                breadcrumbs.style.display = 'flex';
-                pathSpan.textContent = path.join(' > ');
-            } else {
-                breadcrumbs.style.display = 'none';
-            }
-        }
-        
-        function goToRoot() {
-            // Find the top-level executive (no manager)
-            const topLevel = graphData.nodes.filter(n => 
-                n.nodeType === 'Employee' && !getManagerId(n.id)
-            );
-            
-            if (topLevel.length > 0) {
-                focusOnNode(topLevel[0].id);
-            }
-        }
-        
-        function getDeptColor(deptName) {
-            const colors = {
-                'Engineering': '#667eea',
-                'Human Resources': '#4caf50',
-                'HR': '#4caf50',
-                'Sales': '#ff9800',
-                'Marketing': '#e91e63',
-                'Finance': '#00bcd4'
-            };
-            return colors[deptName] || '#667eea';
-        }
-        
-        // Build organization tree from graph data
-        function buildOrgTree() {
-            if (!graphData) return null;
-            
-            // Create a map of all nodes
-            const nodeMap = {};
-            graphData.nodes.forEach(node => {
-                nodeMap[node.id] = {
-                    ...node,
-                    children: [],
-                    expanded: true
-                };
-            });
-            
-            // Build tree structure
-            graphData.edges.forEach(edge => {
-                if (edge.label === 'REPORTS_TO') {
-                    const manager = nodeMap[edge.target];
-                    const employee = nodeMap[edge.source];
-                    if (manager && employee) {
-                        manager.children.push(employee);
-                    }
-                }
-            });
-            
-            // Find root nodes (employees with no manager)
-            const roots = Object.values(nodeMap).filter(node => {
-                if (node.nodeType !== 'Employee') return false;
-                const hasManager = graphData.edges.some(e => 
-                    e.source === node.id && e.label === 'REPORTS_TO'
-                );
-                return !hasManager;
-            });
-            
-            if (roots.length === 0) {
-                // Fallback: find the CTO or highest position
-                const cto = graphData.nodes.find(n => 
-                    n.nodeType === 'Position' && n.label?.toLowerCase().includes('cto')
-                );
-                if (cto) {
-                    const ctoHolder = graphData.edges.find(e => 
-                        e.target === cto.id && e.label === 'WORKS_IN'
-                    )?.source;
-                    if (ctoHolder) {
-                        const ctoNode = nodeMap[ctoHolder];
-                        if (ctoNode) return [ctoNode];
-                    }
-                }
-            }
-            
-            return roots.length > 0 ? roots[0] : null;
-        }
-        
-        // Transform tree data for G6
-        function transformTreeData(node, depth = 0) {
-            if (!node) return null;
-            
-            const label = node.label || 'Unknown';
-            const nodeType = node.nodeType || 'Employee';
-            const position = getPositionLabel(node.id);
-            const dept = getDepartmentLabel(node.id);
-            
-            // Determine icon and color based on position level
-            let color, icon;
-            const positionLower = (position || '').toLowerCase();
-            
-            if (positionLower.includes('cto') || positionLower.includes('cfo') || positionLower.includes('ceo') || positionLower.includes('director')) {
-                color = '#667eea';
-                icon = '👔';
-            } else if (positionLower.includes('manager') || positionLower.includes('head')) {
-                color = '#4caf50';
-                icon = '👨‍💼';
-            } else {
-                color = getDeptColor(dept) || '#667eea';
-                icon = '👷';
-            }
-            
-            const result = {
-                id: String(node.id),
-                label: label,
-                type: 'org-node',
-                nodeType: nodeType,
-                position: position,
-                department: dept,
-                depth: depth,
-                children: node.expanded !== false ? (node.children || []).map(child => transformTreeData(child, depth + 1)).filter(Boolean) : [],
+        function NodeComp(props) {
+            var data = props.data || {};
+            return e('div', {
                 style: {
-                    fill: color,
-                    stroke: color,
-                    lineWidth: 2,
-                    radius: 8
-                },
-                labelCfg: {
-                    style: {
-                        fill: '#333',
-                        fontSize: 12,
-                        fontWeight: 500
-                    },
-                    position: 'bottom',
-                    offset: 5
-                },
-                collapsed: !node.expanded
-            };
-            
-            // Add avatar/label info
-            const initials = label.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            result.avatar = initials;
-            result.avatarColor = color;
-            
-            return result;
+                    padding: '10px 15px',
+                    background: 'white',
+                    borderRadius: '8px',
+                    border: '2px solid #667eea',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                    minWidth: '130px',
+                    textAlign: 'center'
+                }
+            }, [
+                e('div', {style: {fontWeight: 'bold', fontSize: '13px', marginBottom: '4px'}}, data.label),
+                e('div', {style: {fontSize: '11px', color: '#666'}}, data.position || ''),
+                e('div', {style: {fontSize: '10px', color: '#999'}}, data.department || '')
+            ]);
         }
         
-        // Initialize G6 graph
-        function renderGraph() {
-            const container = document.getElementById('graph-container');
-            container.innerHTML = '';
+        function App() {
+            var nodesState = useState([]);
+            var edgesState = useState([]);
+            var loading = useState(true);
+            var nodes = nodesState[0];
+            var edges = edgesState[0];
+            var setNodes = nodesState[1];
+            var setEdges = edgesState[1];
+            var setLoading = loading[1];
             
-            const width = container.offsetWidth;
-            const height = container.offsetHeight;
+            var nodeTypes = useMemo(function() {
+                return { customNode: NodeComp };
+            }, []);
             
-            orgTreeData = buildOrgTree();
-            
-            if (!orgTreeData) {
-                alert('Could not build organization tree. Please check the data.');
-                return;
-            }
-            
-            const treeData = transformTreeData(orgTreeData);
-            
-            // Register custom org node
-            G6.registerNode('org-node', {
-                draw(cfg, group) {
-                    const width = 120;
-                    const height = 60;
+            useEffect(function() {
+                fetch('/graph-g6').then(function(r) { return r.json(); }).then(function(data) {
+                    var map = {};
                     
-                    // Background
-                    const rect = group.addShape('rect', {
-                        attrs: {
-                            x: -width / 2,
-                            y: -height / 2,
-                            width,
-                            height,
-                            fill: cfg.style?.fill || '#667eea',
-                            stroke: cfg.style?.stroke || '#667eea',
-                            lineWidth: 2,
-                            radius: 8,
-                            cursor: 'pointer'
-                        },
-                        name: 'rect-shape'
+                    // Build employee map
+                    data.nodes.filter(function(n) { return n.nodeType === 'Employee'; }).forEach(function(n) {
+                        map[n.id] = { 
+                            id: String(n.id), 
+                            label: n.label || '?', 
+                            position: '', 
+                            department: '', 
+                            children: []
+                        };
                     });
                     
-                    // Avatar circle
-                    group.addShape('circle', {
-                        attrs: {
-                            x: -width / 2 + 25,
-                            y: 0,
-                            r: 18,
-                            fill: cfg.avatarColor || '#667eea',
-                        },
-                        name: 'avatar-bg'
+                    // Build tree
+                    data.edges.forEach(function(ed) {
+                        var s = String(ed.source), t = String(ed.target);
+                        if (ed.label === 'REPORTS_TO' && map[s] && map[t]) {
+                            map[t].children.push(s);
+                            map[s].managerId = t;
+                        }
+                        if (ed.label === 'WORKS_IN' && map[s]) {
+                            var p = data.nodes.find(function(x) { return String(x.id) === t; });
+                            if (p) map[s].position = p.label || '';
+                        }
+                        if (ed.label === 'BELONGS_TO' && map[s]) {
+                            var d = data.nodes.find(function(x) { return String(x.id) === t; });
+                            if (d) map[s].department = d.label || '';
+                        }
                     });
                     
-                    // Avatar text
-                    group.addShape('text', {
-                        attrs: {
-                            x: -width / 2 + 25,
-                            y: 4,
-                            text: cfg.avatar || '??',
-                            fill: '#fff',
-                            fontSize: 11,
-                            fontWeight: 600,
-                            textAlign: 'center',
-                            textBaseline: 'middle'
-                        },
-                        name: 'avatar-text'
-                    });
+                    // Get roots
+                    var roots = Object.values(map).filter(function(n) { return !n.managerId; });
+                    console.log('Found ' + roots.length + ' root nodes');
                     
-                    // Name
-                    group.addShape('text', {
-                        attrs: {
-                            x: -width / 2 + 50,
-                            y: -8,
-                            text: cfg.label || 'Unknown',
-                            fill: '#333',
-                            fontSize: 12,
-                            fontWeight: 600,
-                            textAlign: 'left',
-                            textBaseline: 'middle'
-                        },
-                        name: 'name-text'
-                    });
+                    // Traverse and collect nodes
+                    var allNodes = [];
+                    var allEdges = [];
+                    var visited = {};
+                    var level = 0;
                     
-                    // Position
-                    group.addShape('text', {
-                        attrs: {
-                            x: -width / 2 + 50,
-                            y: 10,
-                            text: cfg.position || '',
-                            fill: '#666',
-                            fontSize: 10,
-                            textAlign: 'left',
-                            textBaseline: 'middle'
-                        },
-                        name: 'position-text'
-                    });
-                    
-                    // Collapse/expand indicator
-                    if (cfg.children && cfg.children.length > 0) {
-                        const indicatorY = height / 2 - 5;
-                        group.addShape('path', {
-                            attrs: {
-                                path: cfg.collapsed ? [
-                                    ['M', -5, indicatorY - 3],
-                                    ['L', 5, indicatorY - 3],
-                                    ['L', 0, indicatorY + 3]
-                                ] : [
-                                    ['M', -5, indicatorY],
-                                    ['L', 5, indicatorY],
-                                    ['L', 0, indicatorY + 6]
-                                ],
-                                fill: '#fff',
-                                stroke: '#666',
-                                lineWidth: 1
-                            },
-                            name: 'collapse-indicator'
+                    function traverse(id, currentLevel) {
+                        if (visited[id]) return;
+                        visited[id] = true;
+                        
+                        var node = map[id];
+                        if (!node) return;
+                        
+                        allNodes.push({
+                            id: id,
+                            type: 'customNode',
+                            position: { x: 0, y: currentLevel * 120 },
+                            data: {
+                                label: node.label,
+                                position: node.position,
+                                department: node.department
+                            }
+                        });
+                        
+                        node.children.forEach(function(childId) {
+                            allEdges.push({
+                                id: childId + '-' + id,
+                                source: childId,
+                                target: id,
+                                type: 'smoothstep'
+                            });
+                            traverse(childId, currentLevel + 1);
                         });
                     }
                     
-                    return rect;
-                },
-                setState(name, value, item) {
-                    const group = item.getContainer();
-                    const rect = group.find(e => e.get('name') === 'rect-shape');
+                    roots.forEach(function(r) { traverse(r.id, 0); });
+                    console.log('Total nodes: ' + allNodes.length);
                     
-                    if (name === 'hover') {
-                        if (value) {
-                            rect.attr('lineWidth', 3);
-                            rect.attr('shadowColor', 'rgba(0,0,0,0.3)');
-                            rect.attr('shadowBlur', 10);
-                        } else {
-                            rect.attr('lineWidth', 2);
-                            rect.attr('shadowColor', null);
-                            rect.attr('shadowBlur', 0);
-                        }
-                    }
+                    // Group by level
+                    var levels = {};
+                    allNodes.forEach(function(n) {
+                        var y = n.position.y;
+                        if (!levels[y]) levels[y] = [];
+                        levels[y].push(n);
+                    });
                     
-                    if (name === 'selected') {
-                        if (value) {
-                            rect.attr('stroke', '#667eea');
-                            rect.attr('lineWidth', 4);
-                        } else {
-                            rect.attr('stroke', rect.attr('fill'));
-                            rect.attr('lineWidth', 2);
-                        }
-                    }
-                },
-                getAnchorPoints() {
-                    return [
-                        [0.5, 0],
-                        [0.5, 1]
-                    ];
-                }
-            }, 'single-node');
+                    console.log('Levels found:', Object.keys(levels).map(function(y) { 
+                        return 'y=' + y + ' (' + levels[y].length + ' nodes)'; 
+                    }).join(', '));
+                    
+                    // Position nodes in each level
+                    Object.keys(levels).forEach(function(y) {
+                        var levelNodes = levels[y];
+                        var totalWidth = levelNodes.length * 160;
+                        var startX = -totalWidth / 2 + 80;
+                        
+                        levelNodes.forEach(function(n, i) {
+                            n.position.x = startX + i * 160;
+                            console.log('Node ' + n.data.label + ' at x=' + n.position.x + ', y=' + n.position.y);
+                        });
+                    });
+                    
+                    setNodes([].concat(allNodes));
+                    setEdges([].concat(allEdges));
+                    setLoading(false);
+                });
+            }, []);
             
-            // Create tree graph
-            graph = new G6.TreeGraph({
-                container: 'graph-container',
-                width,
-                height,
-                fitView: true,
-                fitViewPadding: 50,
-                modes: {
-                    default: [
-                        {
-                            type: 'drag-canvas',
-                            enableDelegate: false
-                        },
-                        'zoom-canvas',
-                        {
-                            type: 'click-select',
-                            trigger: 'click'
-                        }
-                    ]
-                },
-                defaultNode: {
-                    type: 'org-node',
-                    size: [120, 60]
-                },
-                defaultEdge: {
-                    type: 'cubic-vertical',
-                    style: {
-                        stroke: '#ccc',
-                        lineWidth: 2
-                    }
-                },
-                layout: {
-                    type: currentLayout === 'dendrogram' ? 'dendrogram' : 'compactBox',
-                    direction: 'TB',
-                    getId: function getId(d) {
-                        return d.id;
-                    },
-                    getHeight: function getHeight() {
-                        return 80;
-                    },
-                    getWidth: function getWidth() {
-                        return 140;
-                    },
-                    getVGap: function getVGap() {
-                        return 40;
-                    },
-                    getHGap: function getHGap() {
-                        return 60;
-                    }
-                },
-                animate: true
-            });
+            if (loading[0]) {
+                return e('div', {style: {display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}, 'Loading...');
+            }
             
-            // Handle node click
-            graph.on('node:click', (event) => {
-                const { item } = event;
-                const model = item.getModel();
-                
-                // Toggle expand/collapse
-                if (model.children && model.children.length > 0) {
-                    if (model.collapsed) {
-                        graph.expandChild(item);
-                        model.collapsed = false;
-                    } else {
-                        graph.collapseChild(item);
-                        model.collapsed = true;
-                    }
-                }
-                
-                // Show org info
-                showOrgInfo(model.id);
-                updateBreadcrumbs(model.id);
-            });
-            
-            // Handle hover
-            graph.on('node:mouseenter', (event) => {
-                graph.setItemState(event.item, 'hover', true);
-                graph.setItemState(event.item, 'selected', true);
-            });
-            
-            graph.on('node:mouseleave', (event) => {
-                graph.setItemState(event.item, 'hover', false);
-                // Don't deselect on mouse leave
-            });
-            
-            // Tooltip
-            const tooltip = new G6.Tooltip({
-                getContent(e) {
-                    const model = e.item.getModel();
-                    return `
-                        <div class="g6-tooltip">
-                            <strong>${model.label}</strong><br/>
-                            ${model.position || ''}<br/>
-                            ${model.department || ''}
-                        </div>
-                    `;
-                },
-                itemTypes: ['node']
-            });
-            
-            graph.addPlugin(tooltip);
-            
-            // Load data
-            graph.data(treeData);
-            graph.render();
-            graph.fitView();
-            
-            // Update stats
-            updateStats();
-        }
-        
-        function updateStats() {
-            if (!graphData) return;
-            
-            const employees = graphData.nodes.filter(n => n.nodeType === 'Employee').length;
-            const departments = graphData.nodes.filter(n => n.nodeType === 'Department').length;
-            
-            // Calculate org depth
-            let maxDepth = 0;
-            const calculateDepth = (nodeId, depth) => {
-                maxDepth = Math.max(maxDepth, depth);
-                const reports = graphData.edges.filter(e => 
-                    e.target === nodeId && e.label === 'REPORTS_TO'
-                );
-                reports.forEach(r => calculateDepth(r.source, depth + 1));
-            };
-            
-            const roots = graphData.nodes.filter(n => 
-                n.nodeType === 'Employee' && !graphData.edges.some(e => 
-                    e.source === n.id && e.label === 'REPORTS_TO'
+            return e('div', {style: {width: '100%', height: '100%'}},
+                e(RF.ReactFlow, {nodes: nodes, edges: edges, nodeTypes: nodeTypes, fitView: true},
+                    e(RF.Background, {variant: 'dots', gap: 12, size: 1}),
+                    e(RF.Controls, null),
+                    e(RF.MiniMap, {nodeColor: '#667eea'})
                 )
             );
-            roots.forEach(root => calculateDepth(root.id, 1));
-            
-            document.getElementById('s-emp-count').textContent = employees;
-            document.getElementById('s-dept-count').textContent = departments;
-            document.getElementById('s-levels').textContent = maxDepth;
         }
         
-        // Load graph data
-        async function loadGraph() {
-            document.getElementById('loading').classList.remove('loading-hidden');
-            
-            try {
-                const response = await fetch('/graph-g6', {
-                    headers: {
-                        'Authorization': `Bearer ${apiKey}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to load graph data');
-                }
-                
-                graphData = await response.json();
-                renderGraph();
-                
-            } catch (error) {
-                console.error('Error loading graph:', error);
-                alert('Failed to load organization chart. Please check your API key and try again.');
-            } finally {
-                document.getElementById('loading').classList.add('loading-hidden');
-            }
-        }
-        
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            if (graph) {
-                const container = document.getElementById('graph-container');
-                graph.changeSize(container.offsetWidth, container.offsetHeight);
-                graph.fitView();
-            }
-        });
-        
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadGraph();
-        });
+        ReactDOM.createRoot(document.getElementById('root')).render(e(App));
     </script>
 </body>
 </html>
