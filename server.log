@@ -1,0 +1,69 @@
+INFO:     Started server process [2305834]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Retrying after application error (attempt 1/2): Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Retrying after application error (attempt 2/2): Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Max retries (2) exceeded. Last error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Retrying after application error (attempt 1/2): Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Retrying after application error (attempt 2/2): Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+OpenAI Authentication Error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}. Please verify your API key is correct.
+Max retries (2) exceeded. Last error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+==================================================
+🔒 HR Temporal Knowledge Graph
+==================================================
+🛡️  Security Features:
+   ✅ Rate Limiting
+   ✅ CORS Protection
+   ✅ Trusted Hosts
+==================================================
+🌐 Server: http://localhost:5000
+📖 Health: http://localhost:5000/health
+==================================================
+✓ FalkorDB connection successful
+✓ Graphiti initialized successfully
+Error processing file sample_employee.md: Error adding episode: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+Error processing file test_document.md: Error adding episode: Error code: 401 - {'error': {'message': 'Incorrect API key provided: your_ope************here. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+INFO:     127.0.0.1:37368 - "POST /ingest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55542 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55382 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47662 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:47662 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47662 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47662 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47662 - "GET /static/graph-view-cytoscape.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:47662 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47676 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:47676 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59092 - "GET /static/graph-view.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:59092 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56624 - "GET /static/graph-view.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:56624 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53112 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53112 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53124 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53124 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:53124 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57960 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57960 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48252 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48252 - "GET /reactflow HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48252 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43908 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:43908 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41806 - "GET /static/graph-view-reactflow.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41806 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47808 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:47808 - "GET /graph-g6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47814 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47814 - "GET /graph HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39200 - "GET /static/graph-view-org.html HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39216 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:39216 - "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:39222 - "GET /static/graph-view-org.html HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:39222 - "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 Not Found

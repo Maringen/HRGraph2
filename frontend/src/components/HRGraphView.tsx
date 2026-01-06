@@ -50,7 +50,7 @@ interface GraphData {
 }
 
 const HRGraphView: React.FC<HRGraphViewProps> = ({
-  apiUrl = '/graph-g6',
+  apiUrl = '/graph',
   apiKey = '',
   height = 600,
   onNodeClick,
