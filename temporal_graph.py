@@ -1,5 +1,11 @@
-from graphiti_core import Graphiti
-from graphiti_core.driver.falkordb_driver import FalkorDriver
+try:
+    from graphiti_core import Graphiti
+    from graphiti_core.driver.falkordb_driver import FalkorDriver
+    GRAPHITI_AVAILABLE = True
+except ImportError:
+    GRAPHITI_AVAILABLE = False
+    print("Warning: graphiti_core not found. Semantic search will be disabled.")
+
 from falkordb import FalkorDB
 from config import FALKORDB_HOST, FALKORDB_PORT, FALKORDB_DB, GRAPHITI_DB_URL
 from models import Employee, Project
@@ -36,22 +42,34 @@ class HRTemporalGraph:
         except Exception as e:
             print(f"Warning: Could not connect to FalkorDB: {e}")
 
-        # Try to connect to Graphiti (Bolt protocol - may fail with FalkorDB)
-        try:
-            self.graph = Graphiti(uri=GRAPHITI_DB_URL)
-            print("✓ Graphiti connection successful")
-        except Exception as e:
-            print(f"Warning: Could not initialize Graphiti (Bolt protocol): {e}")
-            print("  Graph visualization will use FalkorDB directly")
+        # Initialize Graphiti if available
+        self.graph = None
+        if GRAPHITI_AVAILABLE:
+            try:
+                driver = FalkorDriver(host=FALKORDB_HOST, port=FALKORDB_PORT)
+                self.graph = Graphiti(
+                    graph_driver=driver
+                )
+                print("✓ Graphiti initialized successfully")
+            except Exception as e:
+                print(f"Warning: Could not initialize Graphiti: {e}")
+                self.graph = None
+        else:
+            print("Using FalkorDB for graph data (Graphiti disabled)")
 
         if not self.graph_db and not self.graph:
             print("ERROR: No database connection available")
 
-    async def add_episode(self, content: str, reference_time: datetime):
+    async def add_episode(self, content: str, reference_time: datetime, name: str = "Ingested Document", source_description: str = "File ingestion"):
         try:
             if not self.graph:
                 raise ConnectionError("Graph not initialized - database unavailable")
-            await self.graph.add_episode(content, reference_time)
+            await self.graph.add_episode(
+                name=name,
+                episode_body=content,
+                source_description=source_description,
+                reference_time=reference_time
+            )
         except ConnectionError:
             raise
         except ValueError as e:
@@ -59,14 +77,73 @@ class HRTemporalGraph:
         except Exception as e:
             raise ConnectionError(f"Error adding episode: {e}")
 
+    def _fallback_search(self, query: str) -> str:
+        if not self.graph_db:
+             return "Graph not initialized - database unavailable"
+
+        # Check if it looks like a Cypher query
+        query_upper = query.strip().upper()
+        is_cypher = query_upper.startswith("MATCH") or query_upper.startswith("LOOKUP") or query_upper.startswith("CALL")
+
+        if is_cypher:
+            # Execute Cypher query directly
+            try:
+                result = self.graph_db.query(query)
+                if hasattr(result, "result_set"):
+                    return f"Cypher Results ({len(result.result_set)} records): {str(result.result_set)}"
+                return f"Cypher Results: {str(result)}"
+            except Exception as e:
+                return f"Cypher query error: {str(e)}"
+        else:
+            # Basic keyword search fallback
+            # Search for nodes with name or label containing the query terms
+            # Sanitize inputs to prevent injection in this basic fallback
+            sanitized_query = re.sub(r"[^a-zA-Z0-9\s\-_]", "", query)
+
+            if not sanitized_query:
+                return "Please enter a valid search term."
+
+            # Search across common property names
+            cypher_query = (
+                f"MATCH (n) "
+                f"WHERE n.name CONTAINS '{sanitized_query}' "
+                f"OR n.label CONTAINS '{sanitized_query}' "
+                f"OR n.title CONTAINS '{sanitized_query}' "
+                f"RETURN n.name, n.label, n.title, labels(n) LIMIT 10"
+            )
+
+            try:
+                result = self.graph_db.query(cypher_query)
+                if hasattr(result, "result_set") and result.result_set:
+                    # Format results nicely
+                    formatted = []
+                    for r in result.result_set:
+                        # r is [name, label, title, labels]
+                        display_name = r[0] or r[1] or r[2] or (r[3][0] if r[3] else "Node")
+                        node_type = r[3][0] if r[3] else "Node"
+                        formatted.append(f"{display_name} ({node_type})")
+
+                    return f"Found {len(formatted)} matches for '{query}':\n" + "\n".join(formatted)
+                else:
+                    return (
+                        f"No direct matches found for '{query}'.\n"
+                        f"Since semantic search is currently unavailable, try a Cypher query like:\n"
+                        f"MATCH (n:Employee) WHERE n.name CONTAINS '{sanitized_query}' RETURN n"
+                    )
+            except Exception as e:
+                return f"Search failed: {str(e)}"
+
     async def query_hybrid(self, query: str) -> str:
-        try:
-            if not self.graph:
-                return "Graph not initialized - database unavailable"
-            results = await self.graph.search(query=query)
-            return str(results)
-        except Exception as e:
-            raise RuntimeError(f"Error in hybrid search: {e}")
+        # Try Semantic Search (Graphiti) first if available
+        if self.graph:
+            try:
+                results = await self.graph.search(query=query)
+                return str(results)
+            except Exception as e:
+                print(f"Warning: Semantic search failed, falling back to keyword search: {e}")
+                # Continue to fallback
+
+        return self._fallback_search(query)
 
     async def get_employee_history(self, employee_name: str) -> str:
         try:
