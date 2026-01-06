@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Flow Test</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body, #root {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #root {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .test-node {
+            min-width: 150px;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 2px solid #667eea;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo, useRef } = React;
+        const { ReactFlow: ReactFlowComponent, Background, Controls, MiniMap } = window.ReactFlow;
+
+        // Simple test node component
+        const TestNode = ({ data }) => {
+            return (
+                <div className="test-node">
+                    <h3 style={{ color: '#667eea', marginBottom: '5px' }}>{data.label}</h3>
+                    <p style={{ color: '#666', fontSize: '14px' }}>{data.description}</p>
+                </div>
+            );
+        };
+        
+        function TestApp() {
+            const [loading, setLoading] = useState(true);
+            
+            // Test nodes and edges
+            const nodes = useMemo(() => [
+                {
+                    id: '1',
+                    type: 'testNode',
+                    position: { x: 250, y: 50 },
+                    data: { label: 'CEO', description: 'Chief Executive Officer' }
+                },
+                {
+                    id: '2',
+                    type: 'testNode',
+                    position: { x: 100, y: 200 },
+                    data: { label: 'CTO', description: 'Chief Technology Officer' }
+                },
+                {
+                    id: '3',
+                    type: 'testNode',
+                    position: { x: 400, y: 200 },
+                    data: { label: 'CFO', description: 'Chief Financial Officer' }
+                }
+            ], []);
+            
+            const edges = useMemo(() => [
+                { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
+                { id: 'e1-3', source: '1', target: '3', type: 'smoothstep' }
+            ], []);
+            
+            const nodeTypes = useMemo(() => ({
+                testNode: TestNode
+            }), []);
+            
+            useEffect(() => {
+                // Simulate loading
+                setTimeout(() => setLoading(false), 1000);
+            }, []);
+            
+            if (loading) {
+                return (
+                    <div className="loading">
+                        <div className="spinner"></div>
+                        <span style={{ color: '#666' }}>Loading React Flow...</span>
+                    </div>
+                );
+            }
+            
+            return (
+                <ReactFlowComponent
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    fitView
+                    style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}
+                >
+                    <Background variant="dots" gap={12} size={1} />
+                    <Controls />
+                    <MiniMap />
+                </ReactFlowComponent>
+            );
+        }
+        
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TestApp />);
+        
+        console.log('✓ React Flow test app initialized');
+    </script>
+</body>
+</html>

@@ -26,23 +26,15 @@
     <button id="lang-de" onclick="setLanguage('de')" style="background:white;color:#667eea;padding:8px 16px;border-radius:8px;border:none;font-weight:bold;margin:0 5px;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,0.1);">DE</button>
 </div>
 <div style="text-align:center;margin-bottom:20px;">
-    <a href="/static/graph-view.html" data-i18n="openGraph" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🎨 Vis-Network View</a>
-    <a href="/static/graph-view-g6.html" style="background:white;color:#9c27b0;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">⚡ AntV G6 View</a>
+    <a href="/static/graph-view-sigma.html" data-i18n="openGraph" style="background:white;color:#667eea;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🎨 Network View</a>
+    <a href="/static/graph-view.html" style="background:white;color:#333;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">📊 Original View</a>
+    <a href="/static/graph-view-org.html" style="background:white;color:#06b6d4;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🌳 Org Chart</a>
+    <a href="/reactflow" style="background:white;color:#ef4444;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🔄 ReactFlow View</a>
+    <a href="/static/graph-view-cytoscape.html" style="background:white;color:#e91e63;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);margin-right:10px;">🕸️ Cytoscape View</a>
     <a href="http://localhost:3001" target="_blank" style="background:white;color:#ff9800;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 4px 6px rgba(0,0,0,0.1);">🗄️ FalkorDB Browser</a>
 </div>
 
-<!-- API Key Input -->
-<div style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-    <h2 style="margin:0 0 15px 0;color:#333;">🔐 API Key</h2>
-    <div style="display:flex;gap:10px;">
-        <input type="password" id="api-key" placeholder="Enter API key..." 
-               style="flex:1;padding:12px;font-size:16px;border:2px solid #ddd;border-radius:6px;">
-        <button onclick="saveApiKey()" style="background:#667eea;color:white;padding:12px 24px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Save</button>
-    </div>
-    <p style="color:#666;font-size:12px;margin-top:10px;">Enter the API key to access the knowledge graph. Check server console for the generated key.</p>
-</div>
 
-<!-- Status -->
 <div id="status" style="background:#fff3cd;color:#856404;padding:15px;border-radius:8px;margin-bottom:20px;text-align:center;font-weight:bold;">
     <span data-i18n="loading">Loading...</span>
 </div>
@@ -213,24 +205,6 @@ const translations = {
 
 // Current language
 let currentLang = localStorage.getItem('language') || 'en';
-
-// API Key management
-let apiKey = localStorage.getItem('hr_api_key') || '';
-
-function saveApiKey() {
-    const keyInput = document.getElementById('api-key');
-    if (keyInput.value) {
-        apiKey = keyInput.value;
-        localStorage.setItem('hr_api_key', apiKey);
-        // Re-initialize with new key
-        init();
-    }
-}
-
-// Load saved API key on page load
-if (apiKey) {
-    document.getElementById('api-key').value = apiKey;
-}
 
 // Node colors
 const colors = {
@@ -449,17 +423,12 @@ function updateNodesList(nodes) {
 
 function init() {
     console.log('init() called');
-    
-    const headers = {};
-    if (apiKey) {
-        headers['Authorization'] = 'Bearer ' + apiKey;
-    }
-    
+
     console.log('Fetching /graph...');
-    fetch('/graph', { headers })
+    fetch('/graph')
         .then(r => {
             console.log('Fetch response status:', r.status);
-            if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'Server error: ' + r.status);
+            if (!r.ok) throw new Error('Server error: ' + r.status);
             return r.json();
         })
         .then(data => {
@@ -535,11 +504,7 @@ function handleSearch(q) {
         document.getElementById('search-results').innerHTML = '';
         return;
     }
-    const headers = {};
-    if (apiKey) {
-        headers['Authorization'] = 'Bearer ' + apiKey;
-    }
-    fetch('/graph', { headers })
+    fetch('/graph')
         .then(r => r.json())
         .then(data => {
             const matches = data.nodes.filter(n => n.label.toLowerCase().includes(q.toLowerCase()));

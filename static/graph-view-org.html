@@ -3,176 +3,769 @@
 <head>
     <meta charset="UTF-8">
     <title>Org Chart</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reactflow@11.11.4/dist/umd/index.js"></script>
     <style>
-        * { margin: 0; padding: 0; }
-        html, body, #root { width: 100%; height: 100%; }
-        body { font-family: sans-serif; background: #f0f0f0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); }
+        .react-flow { position: absolute; width: 100%; height: 100%; top: 0; left: 0; direction: ltr; }
+        .react-flow__container { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+        .react-flow__pane { z-index: 1; cursor: grab; }
+        .react-flow__pane.dragging { cursor: grabbing; }
+        .react-flow__viewport { transform-origin: 0 0; z-index: 2; }
+        .react-flow__renderer { z-index: 4; }
+        .react-flow__edges { overflow: visible; }
+        .react-flow__edge-path { stroke: var(--edge-color); stroke-width: 2; fill: none; }
+        .react-flow__edge { pointer-events: visibleStroke; cursor: pointer; }
+        .react-flow__edge.selected .react-flow__edge-path { stroke: #555; }
+        .react-flow__handle { position: absolute; pointer-events: none; width: 10px; height: 10px; background: #1a192b; border: 2px solid #fff; border-radius: 50%; }
+        .react-flow__handle-bottom { top: auto; left: 50%; bottom: -6px; transform: translate(-50%, 0); }
+        .react-flow__handle-top { left: 50%; top: -6px; transform: translate(-50%, 0); }
+        .react-flow__node { position: absolute; user-select: none; pointer-events: all; transform-origin: 0 0; box-sizing: border-box; cursor: grab; }
+        .react-flow__node.dragging { cursor: grabbing; }
+        .react-flow__node.selected { border-color: var(--primary); }
+        .react-flow__controls { position: absolute; z-index: 5; margin: 15px; }
+        .react-flow__controls-button { border: none; background: var(--card); border-bottom: 1px solid var(--border); box-sizing: content-box; display: flex; justify-content: center; align-items: center; width: 16px; height: 16px; cursor: pointer; padding: 5px; }
+        .react-flow__controls-button:hover { background: var(--bg); }
+        .react-flow__controls-button svg { width: 100%; max-width: 12px; max-height: 12px; }
+        .react-flow__minimap { position: absolute; z-index: 5; background: var(--card); }
+        .react-flow__background { position: absolute; width: 100%; height: 100%; }
+        .react-flow__attribution { font-size: 10px; background: rgba(255,255,255,0.5); padding: 2px 3px; margin: 0; }
+        .react-flow__attribution a { text-decoration: none; color: #999; }
+        
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --edge-color: #667eea;
+        }
+        .dark {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        .theme-emerald { --primary: #10b981; --secondary: #059669; --edge-color: #10b981; }
+        .theme-sky { --primary: #0ea5e9; --secondary: #0284c7; --edge-color: #0ea5e9; }
+        .theme-sunset { --primary: #f97316; --secondary: #ea580c; --edge-color: #f97316; }
+        
+        .theme-btn { background: var(--bg); border: 2px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--text); transition: all 0.2s; }
+        .theme-btn.active { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border-color: var(--primary); }
+        .theme-btn:hover { border-color: var(--primary); }
+        #lang-selector button { background: var(--bg); border: 2px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; color: var(--text); transition: all 0.2s; }
+        #lang-selector button.active { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; border-color: var(--primary); }
+        #lang-selector button:hover { border-color: var(--primary); }
+        
+        .org-node { 
+            min-width: 160px; 
+            background: var(--card); 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
+            border: 2px solid var(--border); 
+            overflow: hidden; 
+            transition: all 0.2s; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .org-node:hover { box-shadow: 0 10px 15px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .org-node.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+        .org-node-header { padding: 6px 10px; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.02); }
+        .org-node-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 11px; flex-shrink: 0; }
+        .org-node-info { flex: 1; overflow: hidden; }
+        .org-node-label { font-weight: 600; font-size: 12px; color: var(--text); margin-bottom: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .org-node-pos { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .org-node-footer { padding: 4px 10px; background: var(--bg); border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: auto; }
+        
+        /* Employee Popup Styles */
+        .employee-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 1000; min-width: 400px; max-width: 500px; overflow: hidden; animation: popupFadeIn 0.2s ease-out; }
+        .popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; animation: overlayFadeIn 0.2s ease-out; }
+        .popup-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .popup-header h2 { margin: 0; font-size: 20px; font-weight: 600; color: var(--text); }
+        .popup-close { background: var(--bg); border: 2px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 14px; color: var(--text-muted); transition: all 0.2s; }
+        .popup-close:hover { background: var(--border); color: var(--text); }
+        .popup-body { padding: 24px; }
+        .popup-section { margin-bottom: 20px; }
+        .popup-section:last-child { margin-bottom: 0; }
+        .popup-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+        .popup-section-content { font-size: 14px; color: var(--text); }
+        .popup-avatar { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 24px; margin-bottom: 16px; }
+        .popup-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .popup-info-item { background: var(--bg); padding: 12px 16px; border-radius: 8px; }
+        .popup-info-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .popup-info-value { font-size: 14px; font-weight: 500; color: var(--text); }
+        .popup-direct-reports { background: var(--bg); border-radius: 8px; padding: 16px; }
+        .popup-report-item { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 6px; margin-bottom: 4px; }
+        .popup-report-item:last-child { margin-bottom: 0; }
+        .popup-report-item:hover { background: var(--border); }
+        .popup-report-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+        .popup-report-name { font-size: 13px; color: var(--text); }
+        
+        /* Zoom Panel Styles */
+        .zoom-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+            background: var(--card);
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        .zoom-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .zoom-separator {
+            width: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+        .zoom-level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 50px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        
+        /* Filter Panel Styles */
+        .filter-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            background: var(--card);
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            min-width: 180px;
+        }
+        .filter-panel-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .filter-select {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            transition: all 0.2s;
+        }
+        .filter-select:hover {
+            border-color: var(--primary);
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+        }
+        .filter-clear {
+            margin-top: 6px;
+            width: 100%;
+            padding: 6px 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-clear:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        .filter-apply {
+            margin-top: 6px;
+            width: 100%;
+            padding: 6px 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-apply:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .filter-apply:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        @keyframes popupFadeIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        var e = React.createElement;
-        var useState = React.useState;
-        var useEffect = React.useEffect;
-        var useMemo = React.useMemo;
-        var RF = ReactFlow;
-        
-        function NodeComp(props) {
-            var data = props.data || {};
-            return e('div', {
-                style: {
-                    padding: '10px 15px',
-                    background: 'white',
-                    borderRadius: '8px',
-                    border: '2px solid #667eea',
-                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-                    minWidth: '130px',
-                    textAlign: 'center'
-                }
-            }, [
-                e('div', {style: {fontWeight: 'bold', fontSize: '13px', marginBottom: '4px'}}, data.label),
-                e('div', {style: {fontSize: '11px', color: '#666'}}, data.position || ''),
-                e('div', {style: {fontSize: '10px', color: '#999'}}, data.department || '')
-            ]);
-        }
-        
+        const { useState, useEffect, useCallback, useMemo } = React;
+        const { ReactFlow: ReactFlowComponent, Background, Controls, MiniMap, Handle, Position, useNodesState, useEdgesState, MarkerType } = window.ReactFlow;
+
+        const departmentColors = {
+            'Engineering': '#667eea', 'Human Resources': '#10b981', 'HR': '#10b981',
+            'Sales': '#f97316', 'Marketing': '#ec4899', 'Finance': '#06b6d4',
+            'IT': '#6366f1', 'Operations': '#8b5cf6', 'Product': '#14b8a6',
+            'Research': '#f43f5e', 'Design': '#f59e0b', 'Customer Success': '#06b6d4',
+        };
+
+        const getInitials = (label) => label.split(' ').map(n => n[0] || '').join('').substring(0, 2).toUpperCase() || '??';
+
+        const OrgNode = ({ data, selected, onClick }) => {
+            const deptColor = departmentColors[data.department] || '#6366f1';
+            return (
+                <div className={`org-node ${selected ? 'selected' : ''}`} onClick={onClick}>
+                    <Handle type="target" position={Position.Top} style={{ background: deptColor, width: 10, height: 10, border: '2px solid #fff' }} />
+                    <div className="org-node-header">
+                        <div className="org-node-avatar" style={{ background: deptColor }}>
+                            {getInitials(data.label)}
+                        </div>
+                        <div className="org-node-info">
+                            <div className="org-node-label">{data.label}</div>
+                            <div className="org-node-pos">{data.position}</div>
+                        </div>
+                    </div>
+                    <div className="org-node-footer">
+                        <span>{data.department}</span>
+                        <span>{data.reports || 0} reports</span>
+                    </div>
+                    <Handle type="source" position={Position.Bottom} style={{ background: deptColor, width: 10, height: 10, border: '2px solid #fff' }} />
+                </div>
+            );
+        };
+
+        const nodeTypes = { orgNode: OrgNode };
+
         function App() {
-            var nodesState = useState([]);
-            var edgesState = useState([]);
-            var loading = useState(true);
-            var nodes = nodesState[0];
-            var edges = edgesState[0];
-            var setNodes = nodesState[1];
-            var setEdges = edgesState[1];
-            var setLoading = loading[1];
-            
-            var nodeTypes = useMemo(function() {
-                return { customNode: NodeComp };
-            }, []);
-            
-            useEffect(function() {
-                fetch('/graph-g6').then(function(r) { return r.json(); }).then(function(data) {
-                    var map = {};
+            const [nodes, setNodes, onNodesChange] = useNodesState([]);
+            const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+            const [allNodes, setAllNodes] = useState([]);
+            const [allEdges, setAllEdges] = useState([]);
+            const [selectedNode, setSelectedNode] = useState(null);
+            const [theme, setTheme] = useState('indigo');
+            const [darkMode, setDarkMode] = useState(false);
+            const [language, setLanguage] = useState('en');
+            const [loading, setLoading] = useState(true);
+            const [zoomLevel, setZoomLevel] = useState(100);
+            const [departments, setDepartments] = useState([]);
+            const [selectedDepartment, setSelectedDepartment] = useState('');
+            const [pendingDepartment, setPendingDepartment] = useState('');
+            const [appliedDepartment, setAppliedDepartment] = useState('');
+
+            const translations = {
+                en: { orgChart: 'Organization Chart', employees: 'Employees', edges: 'Edges', loading: 'Loading Organization Chart...', close: 'Close', position: 'Position', department: 'Department', reports: 'Direct Reports', zoomIn: 'Zoom In', zoomOut: 'Zoom Out', fitView: 'Fit View', reportsTo: 'Reports to', filterByDepartment: 'Filter by Department', allDepartments: 'All Departments', showingEmployees: 'Showing {count} employees', clearFilter: 'Clear Filter' },
+                fr: { orgChart: 'Organigramme', employees: 'Employés', edges: 'Liens', loading: 'Chargement...', close: 'Fermer', position: 'Poste', department: 'Département', reports: 'Rapports directs', zoomIn: 'Zoom +', zoomOut: 'Zoom -', fitView: 'Ajuster vue', reportsTo: 'Rapporte à', filterByDepartment: 'Filtrer par département', allDepartments: 'Tous les départements', showingEmployees: '{count} employés affichés', clearFilter: 'Effacer le filtre' },
+                it: { orgChart: 'Organigramma', employees: 'Dipendenti', edges: 'Liens', loading: 'Caricamento...', close: 'Chiudi', position: 'Posizione', department: 'Dipartimento', reports: 'Rapporti diretti', zoomIn: 'Zoom +', zoomOut: 'Zoom -', fitView: 'Adatta vista', reportsTo: 'Riporta a', filterByDepartment: 'Filtra per dipartimento', allDepartments: 'Tutti i dipartimenti', showingEmployees: '{count} dipendenti visualizzati', clearFilter: 'Rimuovi filtro' },
+                de: { orgChart: 'Organigramm', employees: 'Mitarbeiter', edges: 'Kanten', loading: 'Wird geladen...', close: 'Schließen', position: 'Position', department: 'Abteilung', reports: 'Direkt unterstellte', zoomIn: 'Zoom +', zoomOut: 'Zoom -', fitView: 'Ansicht anpassen', reportsTo: 'Berichtet an', filterByDepartment: 'Nach Abteilung filtern', allDepartments: 'Alle Abteilungen', showingEmployees: '{count} Mitarbeiter angezeigt', clearFilter: 'Filter aufheben' }
+            };
+
+            const t = translations[language];
+            const themeColor = useMemo(() => ({ indigo: '#667eea', emerald: '#10b981', sky: '#0ea5e9', sunset: '#f97316' }[theme] || '#667eea'), [theme]);
+
+            // Build hierarchical tree layout with proper spacing
+            const buildTreeLayout = (rootNodes, employeeMap, edgeColor, edgeLabel) => {
+                const NODE_WIDTH = 180;
+                const NODE_HEIGHT = 80;
+                const HORIZONTAL_GAP = 30;
+                const VERTICAL_GAP = 80;
+                
+                // Calculate subtree widths for proper positioning
+                const calculateSubtreeSize = (nodeId, visited) => {
+                    if (visited.has(nodeId)) return { width: NODE_WIDTH, height: NODE_HEIGHT };
+                    visited.add(nodeId);
+                    const node = employeeMap[nodeId];
+                    if (!node || node.children.length === 0) {
+                        return { width: NODE_WIDTH, height: NODE_HEIGHT };
+                    }
                     
-                    // Build employee map
-                    data.nodes.filter(function(n) { return n.nodeType === 'Employee'; }).forEach(function(n) {
-                        map[n.id] = { 
+                    let totalWidth = 0;
+                    let maxHeight = NODE_HEIGHT;
+                    const childSizes = node.children.map(childId => {
+                        const size = calculateSubtreeSize(childId, new Set(visited));
+                        totalWidth += size.width + HORIZONTAL_GAP;
+                        maxHeight = Math.max(maxHeight, size.height + VERTICAL_GAP);
+                        return size;
+                    });
+                    
+                    if (childSizes.length > 0) {
+                        totalWidth -= HORIZONTAL_GAP;
+                    }
+                    
+                    return { width: Math.max(totalWidth, NODE_WIDTH), height: maxHeight };
+                };
+                
+                const positions = {};
+                const allNodes = [];
+                const allEdges = [];
+                let xOffset = 50;
+                
+                const traverseAndPosition = (nodeId, level, x, y, visited) => {
+                    if (visited.has(nodeId)) return;
+                    visited.add(nodeId);
+                    
+                    const node = employeeMap[nodeId];
+                    if (!node) return;
+                    
+                    positions[nodeId] = { x, y };
+                    allNodes.push({
+                        id: String(nodeId),
+                        type: 'orgNode',
+                        position: { x, y },
+                        data: { 
+                            label: node.label, 
+                            position: node.position, 
+                            department: node.department, 
+                            reports: node.children.length,
+                            depth: level
+                        }
+                    });
+                    
+                    const childCount = node.children.length;
+                    if (childCount === 0) return;
+                    
+                    const childSubtrees = node.children.map(childId => {
+                        const size = calculateSubtreeSize(childId, new Set());
+                        return { id: childId, width: size.width };
+                    });
+                    
+                    const totalChildrenWidth = childSubtrees.reduce((sum, cs) => sum + cs.width, 0) + (childCount - 1) * HORIZONTAL_GAP;
+                    let currentX = x - totalChildrenWidth / 2 + NODE_WIDTH / 2;
+                    
+                    node.children.forEach((childId, i) => {
+                        const childWidth = childSubtrees[i].width;
+                        const childX = currentX + childWidth / 2 - NODE_WIDTH / 2;
+                        const childY = y + NODE_HEIGHT + VERTICAL_GAP;
+                        
+                        allEdges.push({
+                            id: `e${String(nodeId)}-${String(childId)}`,
+                            source: String(nodeId),
+                            target: String(childId),
+                            type: 'smoothstep',
+                            label: edgeLabel,
+                            labelStyle: { fill: edgeColor, fontSize: 10, fontWeight: 600 },
+                            labelBgStyle: { fill: 'var(--card)', fillOpacity: 0.9, rx: 4, ry: 4, padding: [2, 4] },
+                            style: { stroke: edgeColor, strokeWidth: 2 },
+                            markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor }
+                        });
+                        
+                        traverseAndPosition(childId, level + 1, childX, childY, visited);
+                        currentX += childWidth + HORIZONTAL_GAP;
+                    });
+                };
+                
+                const visited = new Set();
+                rootNodes.forEach((root) => {
+                    const rootSize = calculateSubtreeSize(root.id, new Set());
+                    const rootX = xOffset + rootSize.width / 2 - NODE_WIDTH / 2;
+                    traverseAndPosition(root.id, 0, rootX, 50, visited);
+                    xOffset += rootSize.width + HORIZONTAL_GAP * 2;
+                });
+                
+                return { nodes: allNodes, edges: allEdges };
+            };
+
+            useEffect(() => {
+                fetch('/graph-g6').then(r => r.json()).then(data => {
+                    const employeeMap = {};
+                    
+                    data.nodes.filter(n => n.nodeType === 'Employee').forEach(n => {
+                        employeeMap[n.id] = { 
                             id: String(n.id), 
                             label: n.label || '?', 
                             position: '', 
-                            department: '', 
-                            children: []
+                            department: 'Department', 
+                            children: [],
+                            managerId: null
                         };
                     });
                     
-                    // Build tree
-                    data.edges.forEach(function(ed) {
-                        var s = String(ed.source), t = String(ed.target);
-                        if (ed.label === 'REPORTS_TO' && map[s] && map[t]) {
-                            map[t].children.push(s);
-                            map[s].managerId = t;
+                    data.edges.forEach(e => {
+                        const s = String(e.source), t = String(e.target);
+                        if (e.label === 'REPORTS_TO' && employeeMap[s] && employeeMap[t]) {
+                            employeeMap[t].children.push(s);
+                            employeeMap[s].managerId = t;
                         }
-                        if (ed.label === 'WORKS_IN' && map[s]) {
-                            var p = data.nodes.find(function(x) { return String(x.id) === t; });
-                            if (p) map[s].position = p.label || '';
+                        if (e.label === 'WORKS_IN' && employeeMap[s]) {
+                            const position = data.nodes.find(x => String(x.id) === t);
+                            if (position) employeeMap[s].position = position.label || '';
                         }
-                        if (ed.label === 'BELONGS_TO' && map[s]) {
-                            var d = data.nodes.find(function(x) { return String(x.id) === t; });
-                            if (d) map[s].department = d.label || '';
+                        if (e.label === 'BELONGS_TO' && employeeMap[s]) {
+                            const dept = data.nodes.find(x => String(x.id) === t);
+                            if (dept) employeeMap[s].department = dept.label || '';
                         }
                     });
                     
-                    // Get roots
-                    var roots = Object.values(map).filter(function(n) { return !n.managerId; });
-                    console.log('Found ' + roots.length + ' root nodes');
+                    const rootNodes = Object.values(employeeMap).filter(n => !n.managerId);
+                    const { nodes: newNodes, edges: newEdges } = buildTreeLayout(rootNodes, employeeMap, themeColor, t.reportsTo);
                     
-                    // Traverse and collect nodes
-                    var allNodes = [];
-                    var allEdges = [];
-                    var visited = {};
-                    var level = 0;
+                    // Extract unique departments
+                    const deptSet = new Set(newNodes.map(n => n.data.department).filter(Boolean));
+                    const sortedDepts = Array.from(deptSet).sort();
+                    setDepartments(sortedDepts);
                     
-                    function traverse(id, currentLevel) {
-                        if (visited[id]) return;
-                        visited[id] = true;
-                        
-                        var node = map[id];
-                        if (!node) return;
-                        
-                        allNodes.push({
-                            id: id,
-                            type: 'customNode',
-                            position: { x: 0, y: currentLevel * 120 },
-                            data: {
-                                label: node.label,
-                                position: node.position,
-                                department: node.department
-                            }
-                        });
-                        
-                        node.children.forEach(function(childId) {
-                            allEdges.push({
-                                id: childId + '-' + id,
-                                source: childId,
-                                target: id,
-                                type: 'smoothstep'
-                            });
-                            traverse(childId, currentLevel + 1);
-                        });
-                    }
-                    
-                    roots.forEach(function(r) { traverse(r.id, 0); });
-                    console.log('Total nodes: ' + allNodes.length);
-                    
-                    // Group by level
-                    var levels = {};
-                    allNodes.forEach(function(n) {
-                        var y = n.position.y;
-                        if (!levels[y]) levels[y] = [];
-                        levels[y].push(n);
-                    });
-                    
-                    console.log('Levels found:', Object.keys(levels).map(function(y) { 
-                        return 'y=' + y + ' (' + levels[y].length + ' nodes)'; 
-                    }).join(', '));
-                    
-                    // Position nodes in each level
-                    Object.keys(levels).forEach(function(y) {
-                        var levelNodes = levels[y];
-                        var totalWidth = levelNodes.length * 160;
-                        var startX = -totalWidth / 2 + 80;
-                        
-                        levelNodes.forEach(function(n, i) {
-                            n.position.x = startX + i * 160;
-                            console.log('Node ' + n.data.label + ' at x=' + n.position.x + ', y=' + n.position.y);
-                        });
-                    });
-                    
-                    setNodes([].concat(allNodes));
-                    setEdges([].concat(allEdges));
+                    // Store all nodes and edges
+                    setAllNodes(newNodes);
+                    setAllEdges(newEdges);
+                    setNodes(newNodes);
+                    setEdges(newEdges);
                     setLoading(false);
+                    
+                    setTimeout(() => {
+                        if (window.reactFlowInstance && newNodes.length > 0) {
+                            fitToView(newNodes);
+                        }
+                    }, 100);
+                }).catch(err => { 
+                    console.error('Error loading org chart:', err); 
+                    setLoading(false); 
                 });
-            }, []);
+            }, [themeColor, t.reportsTo]);
+
+            // Filter nodes by department - show only selected department employees
+            useEffect(() => {
+                if (allNodes.length === 0) return;
+                
+                if (!appliedDepartment) {
+                    // Show all nodes when no filter is applied
+                    setNodes(allNodes);
+                    setEdges(allEdges);
+                } else {
+                    // Only show employees of the selected department
+                    const filteredNodes = allNodes.filter(n => n.data.department === appliedDepartment);
+                    const filteredNodeIds = new Set(filteredNodes.map(n => n.id));
+                    
+                    // Only show edges between nodes in the same department
+                    const filteredEdges = allEdges.filter(e => 
+                        filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
+                    );
+                    
+                    setNodes(filteredNodes);
+                    setEdges(filteredEdges);
+                }
+                
+                // Re-fit view after filtering
+                setTimeout(() => {
+                    const nodesToFit = appliedDepartment 
+                        ? allNodes.filter(n => n.data.department === appliedDepartment)
+                        : allNodes;
+                    fitToView(nodesToFit);
+                }, 150);
+            }, [appliedDepartment, allNodes, allEdges]);
+
+            // Fit view - uses filtered nodes when department filter is applied
+            const fitToView = (targetNodes = null) => {
+                if (!window.reactFlowInstance) return;
+                
+                // Use provided nodes, or filtered nodes, or current nodes, or allNodes
+                let nodesToFit = targetNodes;
+                if (!nodesToFit) {
+                    if (appliedDepartment && allNodes.length > 0) {
+                        nodesToFit = allNodes.filter(n => n.data.department === appliedDepartment);
+                    } else if (nodes.length > 0) {
+                        nodesToFit = nodes;
+                    } else if (allNodes.length > 0) {
+                        nodesToFit = allNodes;
+                    } else {
+                        return;
+                    }
+                }
+                
+                if (nodesToFit.length === 0) return;
+                
+                // Calculate bounds from nodes
+                const nodeBounds = nodesToFit.reduce((bounds, node) => {
+                    const nodeWidth = 180;
+                    const nodeHeight = 90;
+                    return {
+                        minX: Math.min(bounds.minX, node.position.x),
+                        maxX: Math.max(bounds.maxX, node.position.x + nodeWidth),
+                        minY: Math.min(bounds.minY, node.position.y),
+                        maxY: Math.max(bounds.maxY, node.position.y + nodeHeight)
+                    };
+                }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+                
+                // Add padding
+                const padding = 120;
+                const width = nodeBounds.maxX - nodeBounds.minX + padding * 2;
+                const height = nodeBounds.maxY - nodeBounds.minY + padding * 2;
+                
+                // Get container dimensions (accounting for filter panel at left)
+                const container = document.querySelector('.react-flow');
+                const filterPanelWidth = 220;
+                const headerHeight = 60;
+                const containerWidth = (container?.offsetWidth || window.innerWidth) - filterPanelWidth - 40;
+                const containerHeight = (container?.offsetHeight || window.innerHeight) - headerHeight - 80;
+                
+                // Calculate scale to fit
+                const scaleX = containerWidth / width;
+                const scaleY = containerHeight / height;
+                const scale = Math.min(scaleX, scaleY, 1.5);
+                
+                // Center the view (accounting for filter panel offset)
+                const centerX = (nodeBounds.minX + nodeBounds.maxX) / 2;
+                const centerY = (nodeBounds.minY + nodeBounds.maxY) / 2;
+                
+                window.reactFlowInstance.setViewport({
+                    x: filterPanelWidth + 20 + containerWidth / 2 - centerX * scale,
+                    y: headerHeight + 20 + containerHeight / 2 - centerY * scale,
+                    zoom: scale
+                });
+                
+                setZoomLevel(Math.round(scale * 100));
+            };
+
+            useEffect(() => {
+                const classes = [];
+                if (theme) classes.push(`theme-${theme}`);
+                if (darkMode) classes.push('dark');
+                document.body.className = classes.join(' ');
+            }, [theme, darkMode]);
+
+            const handleReactFlowReady = (instance) => { 
+                window.reactFlowInstance = instance; 
+                setTimeout(() => {
+                    fitToView(nodes.length > 0 ? nodes : allNodes);
+                }, 100);
+            };
             
-            if (loading[0]) {
-                return e('div', {style: {display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%'}}, 'Loading...');
-            }
+            const handleDepartmentChange = (e) => {
+                setPendingDepartment(e.target.value);
+            };
             
-            return e('div', {style: {width: '100%', height: '100%'}},
-                e(RF.ReactFlow, {nodes: nodes, edges: edges, nodeTypes: nodeTypes, fitView: true},
-                    e(RF.Background, {variant: 'dots', gap: 12, size: 1}),
-                    e(RF.Controls, null),
-                    e(RF.MiniMap, {nodeColor: '#667eea'})
-                )
+            const applyFilter = () => {
+                setAppliedDepartment(pendingDepartment);
+                // Fit view after applying filter
+                setTimeout(() => {
+                    const filteredNodes = pendingDepartment 
+                        ? allNodes.filter(n => n.data.department === pendingDepartment)
+                        : allNodes;
+                    fitToView(filteredNodes);
+                }, 100);
+            };
+            
+            const clearFilter = () => {
+                setPendingDepartment('');
+                setAppliedDepartment('');
+                // Fit view after clearing filter
+                setTimeout(() => {
+                    fitToView(allNodes);
+                }, 100);
+            };
+            
+            const zoomIn = () => {
+                if (window.reactFlowInstance) {
+                    const currentZoom = window.reactFlowInstance.getViewport().zoom;
+                    window.reactFlowInstance.setViewport({ zoom: currentZoom * 1.2, x: 0, y: 0 });
+                    setZoomLevel(Math.round(currentZoom * 1.2 * 100));
+                }
+            };
+            
+            const zoomOut = () => {
+                if (window.reactFlowInstance) {
+                    const currentZoom = window.reactFlowInstance.getViewport().zoom;
+                    window.reactFlowInstance.setViewport({ zoom: currentZoom / 1.2, x: 0, y: 0 });
+                    setZoomLevel(Math.round(currentZoom / 1.2 * 100));
+                }
+            };
+            
+            const handleNodeClick = (event, node) => { setSelectedNode(node); };
+            const closePopup = () => { setSelectedNode(null); };
+            const getDirectReports = (nodeId) => edges.filter(e => e.source === nodeId).map(e => nodes.find(n => n.id === e.target)).filter(Boolean);
+
+            if (loading) return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#666', fontSize: '16px'}}>{t.loading}</div>;
+
+            return (
+                <div style={{width: '100%', height: '100vh', display: 'flex', flexDirection: 'column'}}>
+                    <header style={{background: 'var(--card)', borderBottom: '1px solid var(--border)', padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '24px'}}>
+                            <h1 style={{fontSize: '18px', fontWeight: '600', color: 'var(--text)'}}>{t.orgChart}</h1>
+                            <div style={{display: 'flex', gap: '8px'}}>
+                                <div style={{background: 'var(--bg)', padding: '8px 12px', borderRadius: '8px', textAlign: 'center', borderLeft: '3px solid var(--primary)'}}>
+                                    <div style={{fontSize: '18px', fontWeight: '700', color: 'var(--primary)'}}>{nodes.length}</div>
+                                    <div style={{fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase'}}>{t.employees}</div>
+                                </div>
+                                <div style={{background: 'var(--bg)', padding: '8px 12px', borderRadius: '8px', textAlign: 'center', borderLeft: '3px solid var(--primary)'}}>
+                                    <div style={{fontSize: '18px', fontWeight: '700', color: 'var(--primary)'}}>{edges.length}</div>
+                                    <div style={{fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase'}}>{t.edges}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+                            <div id="lang-selector" style={{display: 'flex', gap: '5px'}}>
+                                {['en', 'fr', 'it', 'de'].map(lang => <button key={lang} onClick={() => setLanguage(lang)} className={language === lang ? 'active' : ''}>{lang.toUpperCase()}</button>)}
+                            </div>
+                            <div style={{display: 'flex', gap: '5px'}}>
+                                {['indigo', 'emerald', 'sky', 'sunset'].map(th => <button key={th} onClick={() => setTheme(th)} className={`theme-btn ${theme === th ? 'active' : ''}`}>{th.charAt(0).toUpperCase() + th.slice(1)}</button>)}
+                            </div>
+                            <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--primary)', border: '2px solid var(--border)'}}></div>
+                            <button onClick={() => setDarkMode(!darkMode)} style={{padding: '8px 12px', border: '2px solid var(--border)', borderRadius: '8px', background: 'var(--card)', cursor: 'pointer'}}>{darkMode ? '☀️' : '🌙'}</button>
+                            <button onClick={fitToView} style={{padding: '8px 12px', border: '2px solid var(--border)', borderRadius: '8px', background: 'var(--card)', cursor: 'pointer'}}>⏹</button>
+                            <a href="/" style={{padding: '8px 16px', color: 'var(--primary)', fontSize: '14px', textDecoration: 'none'}}>Dashboard</a>
+                        </div>
+                    </header>
+                    <div style={{flex: 1, position: 'relative'}} className="react-flow-container">
+                        <ReactFlowComponent 
+                            nodes={nodes} 
+                            edges={edges} 
+                            onNodesChange={onNodesChange}
+                            onEdgesChange={onEdgesChange}
+                            onNodeClick={handleNodeClick}
+                            onInit={handleReactFlowReady}
+                            nodeTypes={nodeTypes} 
+                            fitView
+                            attributionPosition="bottom-right"
+                            style={{width: '100%', height: '100%'}}
+                        >
+                            <Background variant="dots" gap={12} size={1} color="var(--border)" />
+                            <Controls />
+                            <MiniMap nodeColor="var(--primary)" maskColor="rgba(240, 240, 240, 0.6)" />
+                            
+                            {/* Filter Panel */}
+                            <div className="filter-panel">
+                                <div className="filter-panel-title">{t.filterByDepartment}</div>
+                                <select 
+                                    className="filter-select" 
+                                    value={pendingDepartment} 
+                                    onChange={handleDepartmentChange}
+                                >
+                                    <option value="">{t.allDepartments}</option>
+                                    {departments.map(dept => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
+                                </select>
+                                <button 
+                                    className="filter-apply" 
+                                    onClick={applyFilter}
+                                    disabled={pendingDepartment === appliedDepartment || !pendingDepartment}
+                                >
+                                    Apply Filter
+                                </button>
+                                {appliedDepartment && (
+                                    <button className="filter-clear" onClick={clearFilter}>
+                                        {t.clearFilter}
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Zoom Panel */}
+                            <div className="zoom-panel">
+                                <button className="zoom-btn" onClick={zoomIn} title={t.zoomIn}>+</button>
+                                <button className="zoom-btn" onClick={zoomOut} title={t.zoomOut}>−</button>
+                                <div className="zoom-separator"></div>
+                                <button className="zoom-btn" onClick={fitToView} title={t.fitView}>⏹</button>
+                                <div className="zoom-separator"></div>
+                                <div className="zoom-level">{zoomLevel}%</div>
+                            </div>
+                        </ReactFlowComponent>
+                        
+                        {/* Employee Detail Popup */}
+                        {selectedNode && (
+                            <>
+                                <div className="popup-overlay" onClick={closePopup}></div>
+                                <div className="employee-popup">
+                                    <div className="popup-header">
+                                        <h2>{selectedNode.data?.label || 'Employee'}</h2>
+                                        <button className="popup-close" onClick={closePopup}>{t.close}</button>
+                                    </div>
+                                    <div className="popup-body">
+                                        <div className="popup-section">
+                                            <div className="popup-avatar" style={{ background: departmentColors[selectedNode.data?.department] || '#6366f1' }}>
+                                                {getInitials(selectedNode.data?.label || '')}
+                                            </div>
+                                        </div>
+                                        <div className="popup-info-grid">
+                                            <div className="popup-info-item">
+                                                <div className="popup-info-label">{t.position}</div>
+                                                <div className="popup-info-value">{selectedNode.data?.position || 'Not assigned'}</div>
+                                            </div>
+                                            <div className="popup-info-item">
+                                                <div className="popup-info-label">{t.department}</div>
+                                                <div className="popup-info-value">{selectedNode.data?.department || 'Not assigned'}</div>
+                                            </div>
+                                            <div className="popup-info-item">
+                                                <div className="popup-info-label">Reports</div>
+                                                <div className="popup-info-value">{selectedNode.data?.reports || 0}</div>
+                                            </div>
+                                            <div className="popup-info-item">
+                                                <div className="popup-info-label">Level</div>
+                                                <div className="popup-info-value">{selectedNode.data?.depth !== undefined ? `Level ${selectedNode.data.depth}` : 'N/A'}</div>
+                                            </div>
+                                        </div>
+                                        {getDirectReports(selectedNode.id).length > 0 && (
+                                            <div className="popup-section" style={{marginTop: '20px'}}>
+                                                <div className="popup-section-title">{t.reports}</div>
+                                                <div className="popup-direct-reports">
+                                                    {getDirectReports(selectedNode.id).map(report => (
+                                                        <div key={report.id} className="popup-report-item">
+                                                            <div className="popup-report-avatar" style={{ background: departmentColors[report.data?.department] || '#6366f1' }}>
+                                                                {getInitials(report.data?.label || '')}
+                                                            </div>
+                                                            <span className="popup-report-name">{report.data?.label}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
             );
         }
-        
-        ReactDOM.createRoot(document.getElementById('root')).render(e(App));
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>

@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Organization Chart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --edge-color: #667eea;
+        }
+        .dark { 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --text: #f1f5f9; 
+            --text-muted: #94a3b8; 
+            --border: #334155; 
+        }
+        .theme-indigo { --primary: #667eea; --secondary: #764ba2; --edge-color: #667eea; }
+        .theme-emerald { --primary: #10b981; --secondary: #059669; --edge-color: #10b981; }
+        .theme-sky { --primary: #0ea5e9; --secondary: #0284c7; --edge-color: #0ea5e9; }
+        .theme-sunset { --primary: #f97316; --secondary: #ea580c; --edge-color: #f97316; }
+        
+        .org-node { 
+            min-width: 180px; 
+            background: var(--card); 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            border: 2px solid var(--border); 
+            overflow: hidden; 
+            transition: all 0.2s; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            cursor: pointer;
+        }
+        .org-node:hover { 
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1); 
+            transform: translateY(-2px); 
+        }
+        .org-node.selected { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.2); 
+        }
+        .spinner { 
+            width: 40px; 
+            height: 40px; 
+            border: 3px solid var(--border); 
+            border-top-color: var(--primary); 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .zoom-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: var(--card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        .zoom-btn:hover {
+            background: var(--bg);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .zoom-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .zoom-controls {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--card);
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+        }
+        .zoom-level {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Language selector styling */
+        #lang-selector {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+        #lang-selector button {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+            color: var(--text);
+        }
+        #lang-selector button.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-color: var(--primary);
+        }
+        #lang-selector button:hover {
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+    
+    <script>
+        const departmentColors = {
+            'Engineering': '#667eea', 'Human Resources': '#10b981', 'HR': '#10b981',
+            'Sales': '#f97316', 'Marketing': '#ec4899', 'Finance': '#06b6d4',
+            'IT': '#6366f1', 'Operations': '#8b5cf6', 'Product': '#14b8a6',
+            'Research': '#f43f5e', 'Design': '#f59e0b', 'Customer Success': '#06b6d4',
+        };
+        
+        const translations = {
+            en: { orgChart: 'Organization Chart', search: 'Search...', employees: 'Employees', depts: 'Depts', fit: 'Fit', dashboard: 'Dashboard' },
+            fr: { orgChart: 'Organigramme', search: 'Rechercher...', employees: 'Employés', depts: 'Dépts', fit: 'Ajuster', dashboard: 'Dashboard' },
+            it: { orgChart: 'Organigramma', search: 'Cerca...', employees: 'Dipendenti', depts: 'Dip.', fit: 'Adatta', dashboard: 'Dashboard' },
+            de: { orgChart: 'Organigramm', search: 'Suchen...', employees: 'Mitarbeiter', depts: 'Abteil.', fit: 'Anpassen', dashboard: 'Dashboard' }
+        };
+        
+        // State
+        let nodes = [];
+        let edges = [];
+        let graphNodes = [];
+        let graphEdges = [];
+        let loading = true;
+        let selectedNode = null;
+        let search = '';
+        let theme = 'indigo';
+        let layout = 'hierarchical';
+        let darkMode = false;
+        let lang = 'en';
+        let stats = { employees: 0, departments: 0, levels: 3 };
+        let zoom = 1;
+        let panX = 0;
+        let panY = 0;
+        
+        // Get translations for current language
+        function getT() {
+            return translations[lang] || translations.en;
+        }
+        
+        // Update body classes for theme and dark mode
+        function updateBodyClasses() {
+            const classes = [];
+            if (theme) {
+                classes.push(`theme-${theme}`);
+            }
+            if (darkMode) {
+                classes.push('dark');
+            }
+            const className = classes.join(' ');
+            console.log('Setting body class:', className);
+            console.log('Current theme:', theme, 'Dark mode:', darkMode);
+            document.body.className = className;
+
+            // Force repaint to ensure CSS variables update
+            document.body.style.display = 'none';
+            setTimeout(() => {
+                document.body.style.display = '';
+            }, 0);
+        }
+        
+        // Build tree from graph data
+        function buildTreeFromGraph(data) {
+            console.log('Building tree from graph data...');
+
+            if (!data.nodes || data.nodes.length === 0) {
+                return { nodes: [], edges: [] };
+            }
+
+            // Only process Employee nodes
+            const employeeNodes = data.nodes.filter(n => n.nodeType === 'Employee');
+            console.log(`Processing ${employeeNodes.length} employees`);
+
+            // Log sample edge labels
+            if (data.edges && data.edges.length > 0) {
+                const edgeLabels = [...new Set(data.edges.map(e => e.label))];
+                console.log('Available edge labels:', edgeLabels);
+                console.log('Sample edge:', data.edges[0]);
+            }
+
+            const nodeMap = {};
+            employeeNodes.forEach(n => {
+                nodeMap[String(n.id)] = {
+                    id: String(n.id),
+                    label: n.label || 'Unknown',
+                    nodeType: 'Employee',
+                    children: [],
+                    position: '',
+                    department: 'Department',
+                    reports: 0,
+                    managerId: null
+                };
+            });
+
+            // Process edges
+            let reportsCount = 0;
+            data.edges.forEach(e => {
+                const sourceId = String(e.source);
+                const targetId = String(e.target);
+                const edgeLabel = (e.label || '').toUpperCase();
+
+                if ((edgeLabel === 'REPORTS_TO' || edgeLabel.includes('REPORTS')) && nodeMap[sourceId] && nodeMap[targetId]) {
+                    // source reports to target, so target is the manager
+                    reportsCount++;
+                    nodeMap[targetId].children.push(sourceId);
+                    nodeMap[sourceId].managerId = targetId;
+                }
+                
+                if (e.label === 'WORKS_IN' && nodeMap[sourceId]) {
+                    const posNode = data.nodes.find(x => String(x.id) === targetId);
+                    if (posNode) nodeMap[sourceId].position = posNode.label;
+                }
+                
+                if (e.label === 'BELONGS_TO' && nodeMap[sourceId]) {
+                    const deptNode = data.nodes.find(x => String(x.id) === targetId);
+                    if (deptNode) nodeMap[sourceId].department = deptNode.label;
+                }
+            });
+
+            console.log(`Found ${reportsCount} REPORTS_TO relationships`);
+            // Count direct reports
+            Object.values(nodeMap).forEach(n => {
+                n.reports = n.children.length;
+            });
+            
+            // Find root nodes (employees with no manager)
+            let roots = Object.values(nodeMap).filter(node => node.managerId === null);
+            
+            // If no roots found, try to find top-level positions
+            if (roots.length === 0) {
+                const topPositions = ['CTO', 'CEO', 'CFO', 'Director', 'VP Engineering'];
+                for (const pos of topPositions) {
+                    const found = data.nodes.find(n => 
+                        n.nodeType === 'Position' && n.label?.toLowerCase().includes(pos.toLowerCase())
+                    );
+                    if (found) {
+                        const holder = data.edges.find(e => 
+                            String(e.target) === String(found.id) && e.label === 'WORKS_IN'
+                        )?.source;
+                        if (holder && nodeMap[String(holder)]) {
+                            roots.push(nodeMap[String(holder)]);
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Found ${roots.length} root employees`);
+            
+            const resultNodes = [];
+            const resultEdges = [];
+            const visited = new Set();
+            
+            function processNode(nodeId, depth = 0) {
+                if (visited.has(nodeId)) return;
+                visited.add(nodeId);
+                
+                const node = nodeMap[nodeId];
+                if (!node) return;
+                
+                // Get manager info
+                const manager = node.managerId ? nodeMap[node.managerId] : null;
+                
+                // Get direct reports
+                const directReports = node.children.map(childId => nodeMap[childId]).filter(Boolean);
+                
+                resultNodes.push({
+                    id: node.id,
+                    label: node.label,
+                    position: node.position,
+                    department: node.department,
+                    reports: node.reports,
+                    nodeType: node.nodeType,
+                    depth: depth,
+                    manager: manager ? { id: manager.id, label: manager.label } : null,
+                    directReports: directReports.map(dr => ({ id: dr.id, label: dr.label, position: dr.position, department: dr.department }))
+                });
+                
+                node.children.forEach(childId => {
+                    resultEdges.push({
+                        source: nodeId,
+                        target: childId
+                    });
+                    processNode(childId, depth + 1);
+                });
+            }
+            
+            roots.forEach(root => processNode(root.id, 0));
+            
+            console.log(`Final: ${resultNodes.length} nodes, ${resultEdges.length} edges`);
+            
+            return { nodes: resultNodes, edges: resultEdges };
+        }
+        
+        // Tree layout calculation
+        function calculateTreeLayout(graphNodes, graphEdges) {
+            const nodesByDepth = {};
+            graphNodes.forEach(n => {
+                if (!nodesByDepth[n.depth]) nodesByDepth[n.depth] = [];
+                nodesByDepth[n.depth].push(n);
+            });
+
+            const maxDepth = Math.max(...Object.keys(nodesByDepth).map(Number));
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const levelHeight = 160;
+            const levelWidth = 220;
+            
+            const positions = {};
+            
+            Object.keys(nodesByDepth).forEach(depth => {
+                const depthNum = parseInt(depth);
+                const levelNodes = nodesByDepth[depthNum];
+                const levelWidthTotal = levelNodes.length * levelWidth;
+                const startX = -levelWidthTotal / 2 + levelWidth / 2;
+                
+                levelNodes.forEach((n, i) => {
+                    positions[n.id] = {
+                        x: startX + i * levelWidth,
+                        y: depthNum * levelHeight - (maxDepth * levelHeight) / 2
+                    };
+                });
+            });
+            
+            return { positions, maxDepth, width: (Math.max(...Object.values(positions).map(p => Math.abs(p.x))) * 2 + nodeWidth + 100), height: (maxDepth + 1) * levelHeight + 100 };
+        }
+        
+        // Compact tree layout
+        function calculateCompactLayout(graphNodes, graphEdges) {
+            const nodesByDepth = {};
+            graphNodes.forEach(n => {
+                if (!nodesByDepth[n.depth]) nodesByDepth[n.depth] = [];
+                nodesByDepth[n.depth].push(n);
+            });
+
+            const maxDepth = Math.max(...Object.keys(nodesByDepth).map(Number));
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const levelHeight = 120;
+            const levelWidth = 200;
+            
+            const positions = {};
+            
+            Object.keys(nodesByDepth).forEach(depth => {
+                const depthNum = parseInt(depth);
+                const levelNodes = nodesByDepth[depthNum];
+                const levelWidthTotal = levelNodes.length * levelWidth;
+                const startX = -levelWidthTotal / 2 + levelWidth / 2;
+                
+                levelNodes.forEach((n, i) => {
+                    positions[n.id] = {
+                        x: startX + i * levelWidth,
+                        y: depthNum * levelHeight - (maxDepth * levelHeight) / 2
+                    };
+                });
+            });
+            
+            return { positions, maxDepth, width: (Math.max(...Object.values(positions).map(p => Math.abs(p.x))) * 2 + nodeWidth + 100), height: (maxDepth + 1) * levelHeight + 100 };
+        }
+        
+        // Radial layout
+        function calculateRadialLayout(graphNodes, graphEdges) {
+            const nodesByDepth = {};
+            graphNodes.forEach(n => {
+                if (!nodesByDepth[n.depth]) nodesByDepth[n.depth] = [];
+                nodesByDepth[n.depth].push(n);
+            });
+
+            const maxDepth = Math.max(...Object.keys(nodesByDepth).map(Number));
+            const centerX = 0;
+            const centerY = 0;
+            const levelRadius = 200; // Increased radius per level
+            const nodeWidth = 180;
+            const nodeHeight = 100;
+
+            const positions = {};
+
+            // Position nodes by depth ring
+            Object.keys(nodesByDepth).forEach(depth => {
+                const depthNum = parseInt(depth);
+                const nodesAtDepth = nodesByDepth[depthNum];
+                const radius = depthNum * levelRadius + 100; // Start with offset for root nodes
+
+                // Distribute nodes evenly around the ring at this depth
+                const angleStep = (2 * Math.PI) / nodesAtDepth.length;
+
+                nodesAtDepth.forEach((n, i) => {
+                    const angle = i * angleStep - Math.PI / 2; // Start from top (-90 degrees)
+                    positions[n.id] = {
+                        x: centerX + Math.cos(angle) * radius,
+                        y: centerY + Math.sin(angle) * radius
+                    };
+                });
+            });
+
+            // Calculate overall dimensions with padding
+            const outerRadius = (maxDepth + 1) * levelRadius + 150;
+            const totalWidth = outerRadius * 2 + nodeWidth + 100;
+            const totalHeight = outerRadius * 2 + nodeHeight + 100;
+
+            console.log(`Radial layout: ${graphNodes.length} nodes across ${maxDepth + 1} levels`);
+
+            return { positions, maxDepth, width: totalWidth, height: totalHeight };
+        }
+        
+        // Hierarchical Org Chart layout
+        function calculateHierarchicalLayout(graphNodes, graphEdges) {
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const horizontalSpacing = 220; // Space between siblings
+            const verticalSpacing = 160; // Space between levels
+
+            const positions = {};
+            const nodeMap = {};
+
+            // Build node map for easy lookup
+            graphNodes.forEach(n => {
+                nodeMap[n.id] = { ...n, width: nodeWidth, children: [] };
+            });
+
+            // Build parent-child relationships from edges
+            // Edges go from source (employee) to target (manager who receives reports)
+            console.log('Building parent-child relationships from', graphEdges.length, 'edges');
+            graphEdges.forEach(e => {
+                const sourceId = String(e.source);
+                const targetId = String(e.target);
+
+                if (nodeMap[targetId]) {
+                    // target is a manager, source is an employee who reports to them
+                    console.log(`  ${sourceId} (${nodeMap[sourceId]?.label || 'Unknown'}) reports to ${targetId} (${nodeMap[targetId]?.label || 'Unknown'})`);
+                    nodeMap[targetId].children.push(sourceId);
+                } else {
+                    console.log(`  ⚠ Target ${targetId} not in nodeMap`);
+                }
+            });
+
+            // Build parent-child relationships from edges
+            // Edges go from source (employee) to target (manager who receives reports)
+            graphEdges.forEach(e => {
+                if (nodeMap[e.target]) {
+                    // target is the manager, source is the employee who reports to them
+                    nodeMap[e.target].children.push(e.source);
+                }
+            });
+
+            // Find root nodes (nodes with no parents)
+            const rootNodes = graphNodes.filter(n => !n.managerId);
+            console.log(`Hierarchical layout: Found ${rootNodes.length} root nodes`);
+            if (rootNodes.length > 5) {
+                console.log(`  ⚠ Many root nodes - tree may be fragmented. Sample:`, rootNodes.slice(0, 3).map(r => r.label));
+            }
+            rootNodes.forEach((r, i) => {
+                if (i < 5) {
+                    console.log(`  Root ${i+1}: ${r.label} (${r.id}), depth: ${r.depth}, reports: ${r.children?.length || 0}`);
+                }
+            });
+
+            // Calculate subtree width for each node
+            function calculateSubtreeWidth(nodeId, visited = new Set()) {
+                if (visited.has(nodeId)) return nodeWidth;
+                visited.add(nodeId);
+
+                const node = nodeMap[nodeId];
+                if (!node || node.children.length === 0) {
+                    return nodeWidth;
+                }
+
+                const childrenWidth = node.children.reduce((sum, childId) => {
+                    return sum + calculateSubtreeWidth(childId, visited) + horizontalSpacing;
+                }, 0) - horizontalSpacing;
+
+                return Math.max(nodeWidth, childrenWidth);
+            }
+
+            // Position nodes recursively
+            function positionNode(nodeId, x, y, level, visited = new Set()) {
+                if (visited.has(nodeId)) {
+                    console.log(`  ⚠ Already visited node ${nodeId}`);
+                    return;
+                }
+                visited.add(nodeId);
+
+                positions[nodeId] = { x, y };
+                console.log(`  Positioned node ${nodeMap[nodeId]?.label || 'Unknown'} (${nodeId}) at (${x}, ${y}), level ${level}`);
+
+                const node = nodeMap[nodeId];
+                if (!node || node.children.length === 0) return;
+
+                // Calculate total width of all children
+                const childrenWidth = node.children.reduce((sum, childId) => {
+                    return sum + calculateSubtreeWidth(childId);
+                }, 0) + (node.children.length - 1) * horizontalSpacing;
+
+                // Start positioning children centered under parent
+                let childX = x - childrenWidth / 2;
+
+                node.children.forEach(childId => {
+                    const childWidth = calculateSubtreeWidth(childId);
+                    const centerX = childX + childWidth / 2;
+                    positionNode(childId, centerX, y + verticalSpacing, level + 1, visited);
+                    childX += childWidth + horizontalSpacing;
+                });
+            }
+
+            // Start positioning from roots centered
+            let totalWidth = 0;
+            rootNodes.forEach(root => {
+                totalWidth += calculateSubtreeWidth(root.id) + horizontalSpacing;
+            });
+            totalWidth -= horizontalSpacing;
+
+            let startX = -totalWidth / 2;
+            const rootVisited = new Set(); // Track all positioned nodes to prevent duplicates
+            rootNodes.forEach(root => {
+                const rootWidth = calculateSubtreeWidth(root.id);
+                const centerX = startX + rootWidth / 2;
+                positionNode(root.id, centerX, 0, 0, rootVisited);
+                startX += rootWidth + horizontalSpacing;
+            });
+
+            // Calculate overall dimensions
+            const allPositions = Object.values(positions);
+
+            if (allPositions.length === 0) {
+                console.log('⚠ No nodes positioned in hierarchical layout!');
+                return { positions: {}, maxDepth: 1, width: nodeWidth, height: nodeHeight };
+            }
+
+            const minX = Math.min(...allPositions.map(p => p.x));
+            const maxX = Math.max(...allPositions.map(p => p.x));
+            const maxY = Math.max(...allPositions.map(p => p.y));
+
+            const maxWidth = (maxX - minX) + nodeWidth + horizontalSpacing;
+            const maxHeight = maxY + nodeHeight + verticalSpacing * 2;
+
+            console.log(`Hierarchical layout: ${Object.keys(positions).length} nodes positioned`);
+            console.log(`  Width: ${maxWidth}, Height: ${maxHeight}`);
+            console.log(`  Position range: x: ${minX} to ${maxX}, y: 0 to ${maxY}`);
+
+            return {
+                positions,
+                maxDepth: rootNodes.length > 0 ? Math.max(...graphNodes.map(n => n.depth)) + 1 : 1,
+                width: maxWidth,
+                height: maxHeight
+            };
+        }
+
+        // Grid layout
+        function calculateGridLayout(graphNodes, graphEdges) {
+            const cols = Math.ceil(Math.sqrt(graphNodes.length));
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const cellWidth = 200;
+            const cellHeight = 120;
+            
+            const positions = {};
+            const offsetX = -(cols * cellWidth) / 2;
+            const offsetY = -((Math.ceil(graphNodes.length / cols) * cellHeight) / 2);
+            
+            graphNodes.forEach((n, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                positions[n.id] = {
+                    x: offsetX + col * cellWidth,
+                    y: offsetY + row * cellHeight
+                };
+            });
+            
+            return { 
+                positions, 
+                maxDepth: 1, 
+                width: cols * cellWidth + 100, 
+                height: Math.ceil(graphNodes.length / cols) * cellHeight + 100 
+            };
+        }
+        
+        // Main layout function
+        function calculateLayout(graphNodes, graphEdges) {
+            switch(layout) {
+                case 'hierarchical':
+                    return calculateHierarchicalLayout(graphNodes, graphEdges);
+                case 'compact':
+                    return calculateCompactLayout(graphNodes, graphEdges);
+                case 'radial':
+                    return calculateRadialLayout(graphNodes, graphEdges);
+                case 'grid':
+                    return calculateGridLayout(graphNodes, graphEdges);
+                default:
+                    return calculateTreeLayout(graphNodes, graphEdges);
+            }
+        }
+        
+        // Render functions
+        function getInitials(label) {
+            return label.split(' ').map(n => n[0] || '').join('').substring(0, 2).toUpperCase() || '??';
+        }
+        
+        function renderNode(node) {
+            const deptColor = departmentColors[node.department] || '#6366f1';
+            const isSelected = selectedNode && selectedNode.id === node.id;
+            
+            return `
+                <div class="org-node ${isSelected ? 'selected' : ''}" 
+                     onclick="selectNode('${node.id}')"
+                     data-id="${node.id}">
+                    <div style="padding: 8px 12px; background: ${deptColor}15; display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: ${deptColor}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">
+                            ${getInitials(node.label)}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text);">${node.label}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${node.position || 'Position'}</div>
+                        </div>
+                    </div>
+                    <div style="padding: 6px 12px; background: var(--bg); border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+                        <span>${node.department}</span>
+                        <span>👥 ${node.reports}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderSVGEdges(positions, edges, containerWidth, containerHeight) {
+            console.log(`renderSVGEdges called with ${edges.length} edges, layout: ${layout}`);
+            if (edges.length === 0) {
+                console.log('No edges to render');
+                return '';
+            }
+
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const offsetX = containerWidth / 2;
+            const offsetY = containerHeight / 2;
+
+            let validEdges = 0;
+
+            if (layout === 'radial') {
+                const paths = edges.map(e => {
+                    const sourcePos = positions[e.source];
+                    const targetPos = positions[e.target];
+                    if (!sourcePos || !targetPos) return '';
+
+                    validEdges++;
+                    const x1 = sourcePos.x + offsetX + nodeWidth / 2;
+                    const y1 = sourcePos.y + offsetY + nodeHeight / 2;
+                    const x2 = targetPos.x + offsetX + nodeWidth / 2;
+                    const y2 = targetPos.y + offsetY + nodeHeight / 2;
+
+                    console.log(`  Radial edge ${e.source}->${e.target}: (${x1},${y1}) to (${x2},${y2})`);
+
+                    return `<path d="M ${x1} ${y1} L ${x2} ${y2}"
+                            fill="none" stroke="#667eea" stroke-width="3" opacity="0.8"/>`;
+                }).join('');
+
+                console.log(`Radial layout: ${validEdges} valid edges rendered`);
+                return paths;
+            }
+
+            const paths = edges.map(e => {
+                const sourcePos = positions[e.source];
+                const targetPos = positions[e.target];
+                if (!sourcePos || !targetPos) return '';
+
+                validEdges++;
+                const x1 = sourcePos.x + offsetX + nodeWidth / 2;
+                const y1 = sourcePos.y + offsetY + nodeHeight;
+                const x2 = targetPos.x + offsetX + nodeWidth / 2;
+                const y2 = targetPos.y + offsetY;
+
+                const midY = (y1 + y2) / 2;
+
+                console.log(`  Edge ${e.source}->${e.target}: (${x1},${y1}) to (${x2},${y2})`);
+
+                return `<path d="M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}"
+                        fill="none" stroke="#667eea" stroke-width="3" opacity="0.8"/>`;
+            }).join('');
+
+            console.log(`Tree layout: ${validEdges} valid edges rendered`);
+            return paths;
+        }
+        
+        function render() {
+            const app = document.getElementById('app');
+            const t = getT();
+            
+            if (loading) {
+                app.innerHTML = `
+                    <div style="min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center;">
+                        <div style="text-align: center;">
+                            <div class="spinner" style="margin: 0 auto 16px;"></div>
+                            <p style="color: var(--text-muted);">Loading from FalkorDB...</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (graphNodes.length === 0) {
+                app.innerHTML = `
+                    <div style="min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center;">
+                        <p style="color: var(--text-muted);">No nodes found. Check console for errors.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const { positions, maxDepth, width: layoutWidth, height: layoutHeight } = calculateLayout(graphNodes, graphEdges);
+
+            const nodeHeight = 100;
+            const nodeWidth = 180;
+            const padding = 50;
+
+            const width = layoutWidth + padding * 2;
+            const height = layoutHeight + padding * 2;
+
+            const minX = -width / 2;
+            const minY = -height / 2;
+
+            const svgContent = renderSVGEdges(positions, graphEdges, width, height);
+            const nodesContent = graphNodes.map(n => {
+                const pos = positions[n.id];
+                if (!pos) return '';
+                const nodeLeft = pos.x + width/2 - nodeWidth/2;
+                const nodeTop = pos.y + height/2 - nodeHeight/2;
+                if (graphNodes.indexOf(n) < 3) {
+                    console.log(`  Node ${n.id} (${n.label}): pos=(${pos.x},${pos.y}), screen=(${nodeLeft},${nodeTop})`);
+                }
+                return `<div style="position: absolute; left: ${nodeLeft}px; top: ${nodeTop}px;">
+                    ${renderNode(n)}
+                </div>`;
+            }).join('');
+            app.innerHTML = `
+                <div style="min-height: 100vh; background: var(--bg); overflow: hidden;">
+                    <header style="background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 24px;">
+                            <h1 style="font-size: 18px; font-weight: 600; color: var(--text);">${getT().orgChart}</h1>
+                            <div style="display: flex; gap: 8px;">
+                                <div style="background: var(--bg); padding: 8px 12px; border-radius: 8px; text-align: center; border-left: 3px solid var(--primary);">
+                                    <div style="font-size: 18px; font-weight: 700; color: var(--primary);">${stats.employees}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">${getT().employees}</div>
+                                </div>
+                                <div style="background: var(--bg); padding: 8px 12px; border-radius: 8px; text-align: center; border-left: 3px solid var(--primary);">
+                                    <div style="font-size: 18px; font-weight: 700; color: var(--primary);">${stats.departments}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">${getT().depts}</div>
+                                </div>
+                                <div style="background: var(--bg); padding: 8px 12px; border-radius: 8px; text-align: center; border-left: 3px solid #667eea;">
+                                    <div style="font-size: 18px; font-weight: 700; color: #667eea;">${graphEdges.length}</div>
+                                    <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Edges</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="text" placeholder="${getT().search}"
+                                style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; width: 200px; background: var(--card); color: var(--text);"
+                                onchange="handleSearch(this.value)">
+                            <div id="lang-selector">
+                                <button onclick="handleLang('en')" class="${lang === 'en' ? 'active' : ''}">EN</button>
+                                <button onclick="handleLang('fr')" class="${lang === 'fr' ? 'active' : ''}">FR</button>
+                                <button onclick="handleLang('it')" class="${lang === 'it' ? 'active' : ''}">IT</button>
+                                <button onclick="handleLang('de')" class="${lang === 'de' ? 'active' : ''}">DE</button>
+                            </div>
+                            <select onchange="handleTheme(this.value)" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--card); color: var(--text); cursor: pointer;">
+                                <option value="indigo" ${theme === 'indigo' ? 'selected' : ''}>Indigo</option>
+                                <option value="emerald" ${theme === 'emerald' ? 'selected' : ''}>Emerald</option>
+                                <option value="sky" ${theme === 'sky' ? 'selected' : ''}>Sky</option>
+                                <option value="sunset" ${theme === 'sunset' ? 'selected' : ''}>Sunset</option>
+                            </select>
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); border: 2px solid var(--border);"></div>
+                            <select onchange="handleLayout(this.value)" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--card); color: var(--text); cursor: pointer;">
+                                <option value="hierarchical" ${layout === 'hierarchical' ? 'selected' : ''}>Org Chart</option>
+                                <option value="tree" ${layout === 'tree' ? 'selected' : ''}>Tree</option>
+                                <option value="compact" ${layout === 'compact' ? 'selected' : ''}>Compact</option>
+                                <option value="radial" ${layout === 'radial' ? 'selected' : ''}>Radial</option>
+                                <option value="grid" ${layout === 'grid' ? 'selected' : ''}>Grid</option>
+                            </select>
+                            <button onclick="toggleDarkMode()" style="padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; background: var(--card); cursor: pointer;">
+                                ${darkMode ? '☀️' : '🌙'}
+                            </button>
+                            <a href="/" style="padding: 8px 16px; color: var(--primary); font-size: 14px; text-decoration: none;">${getT().dashboard}</a>
+                        </div>
+                    </header>
+                    <div id="graph-container" style="height: calc(100vh - 65px); position: relative; overflow: hidden; background: var(--bg); cursor: grab;"
+                         onmousedown="startPan(event)" onmousemove="panGraph(event)" onmouseup="endPan()" onmouseleave="endPan()" onwheel="handleWheel(event)">
+                        <div id="graph-content" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(${zoom}); transition: transform 0.1s ease-out; transform-origin: center;">
+                            <div style="position: relative; width: ${width}px; height: ${height}px;">
+                                <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; pointer-events: none;">
+                                    ${svgContent}
+                                </svg>
+                                <div style="position: relative; z-index: 2;">
+                                    ${nodesContent}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Zoom Controls -->
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                        <div class="zoom-level">${Math.round(zoom * 100)}%</div>
+                        <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                        <button class="zoom-btn" onclick="resetZoom()" title="Reset">⟲</button>
+                        <button class="zoom-btn" onclick="fitToView()" title="Fit to View">⊡</button>
+                    </div>
+                    
+                    ${selectedNode ? `
+                    <!-- Employee Detail Popup -->
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 100; display: flex; align-items: center; justify-content: center;" onclick="closePopup()">
+                        <div style="background: var(--card); border-radius: 16px; width: 380px; max-height: 80vh; overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); border: 1px solid var(--border);" onclick="event.stopPropagation()">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                                <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--text);">Employee Details</h2>
+                                <button onclick="closePopup()" style="background: none; border: none; cursor: pointer; font-size: 24px; color: var(--text-muted); padding: 0; line-height: 1;">×</button>
+                            </div>
+                            <div style="padding: 24px;">
+                                <!-- Header -->
+                                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
+                                    <div style="width: 56px; height: 56px; border-radius: 50%; background: ${departmentColors[selectedNode.department] || '#6366f1'}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 20px;">
+                                        ${getInitials(selectedNode.label)}
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 20px; font-weight: 600; color: var(--text);">${selectedNode.label}</div>
+                                        <div style="font-size: 14px; color: var(--text-muted);">${selectedNode.position || 'Position'}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Info Grid -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                                    <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Department</div>
+                                        <div style="font-weight: 500; color: var(--text);">${selectedNode.department}</div>
+                                    </div>
+                                    <div style="background: var(--bg); padding: 12px; border-radius: 8px;">
+                                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Direct Reports</div>
+                                        <div style="font-weight: 500; color: var(--text);">${selectedNode.reports}</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Manager -->
+                                ${selectedNode.manager ? `
+                                <div style="margin-bottom: 20px;">
+                                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Reports To</div>
+                                    <div onclick="selectNode('${selectedNode.manager.id}')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg); border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--bg)'">
+                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: ${departmentColors[selectedNode.manager.department] || '#6366f1'}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">
+                                            ${getInitials(selectedNode.manager.label)}
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 500; color: var(--text);">${selectedNode.manager.label}</div>
+                                            <div style="font-size: 12px; color: var(--text-muted);">${selectedNode.manager.position || ''}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ` : ''}
+                                
+                                <!-- Direct Reports -->
+                                ${selectedNode.directReports && selectedNode.directReports.length > 0 ? `
+                                <div>
+                                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Direct Reports (${selectedNode.directReports.length})</div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow: auto;">
+                                        ${selectedNode.directReports.map(report => `
+                                            <div onclick="selectNode('${report.id}')" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg); border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--bg)'">
+                                                <div style="width: 32px; height: 32px; border-radius: 50%; background: ${departmentColors[report.department] || '#6366f1'}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 12px;">
+                                                    ${getInitials(report.label)}
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight: 500; color: var(--text); font-size: 14px;">${report.label}</div>
+                                                    <div style="font-size: 12px; color: var(--text-muted);">${report.position || ''}</div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        function selectNode(id) {
+            const node = graphNodes.find(n => n.id === id);
+            selectedNode = node;
+            render();
+        }
+        
+        function closePopup() {
+            selectedNode = null;
+            render();
+        }
+        
+        function handleSearch(value) {
+            search = value;
+            if (value) {
+                const results = graphNodes.filter(n => 
+                    n.label.toLowerCase().includes(value.toLowerCase()) || 
+                    (n.position && n.position.toLowerCase().includes(value.toLowerCase()))
+                ).slice(0, 10);
+                console.log('Search results:', results);
+            }
+        }
+        
+        function handleLang(value) {
+            lang = value;
+            // Update active button state
+            document.querySelectorAll('#lang-selector button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const activeBtn = document.querySelector(`#lang-selector button[onclick="handleLang('${value}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+            render();
+        }
+        
+        function handleTheme(value) {
+            console.log('handleTheme called with:', value);
+            theme = value;
+            updateBodyClasses();
+            render();
+        }
+        
+        function handleLayout(value) {
+            layout = value;
+            render();
+        }
+        
+        function toggleDarkMode() {
+            darkMode = !darkMode;
+            console.log('toggleDarkMode, darkMode is now:', darkMode);
+            updateBodyClasses();
+            render();
+        }
+        
+        function zoomIn() {
+            zoom = Math.min(zoom * 1.2, 3);
+            render();
+        }
+        
+        function zoomOut() {
+            zoom = Math.max(zoom / 1.2, 0.25);
+            render();
+        }
+        
+        function resetZoom() {
+            zoom = 1;
+            panX = 0;
+            panY = 0;
+            render();
+        }
+        
+        function fitToView() {
+            const container = document.getElementById('graph-container');
+            if (container && graphNodes.length > 0) {
+                const containerRect = container.getBoundingClientRect();
+                
+                // Calculate bounds of all nodes
+                let minX = Infinity, maxX = Infinity, minY = Infinity, maxY = Infinity;
+                const { positions } = calculateLayout(graphNodes, graphEdges);
+                
+                Object.values(positions).forEach(pos => {
+                    if (pos.x < minX || minX === Infinity) minX = pos.x;
+                    if (pos.x > maxX || maxX === Infinity) maxX = pos.x;
+                    if (pos.y < minY || minY === Infinity) minY = pos.y;
+                    if (pos.y > maxY || maxY === Infinity) maxY = pos.y;
+                });
+                
+                const graphWidth = maxX - minX + 200;
+                const graphHeight = maxY - minY + 150;
+                
+                // Calculate zoom to fit
+                const scaleX = containerRect.width / graphWidth;
+                const scaleY = containerRect.height / graphHeight;
+                zoom = Math.min(scaleX, scaleY, 1) * 0.9;
+                
+                panX = 0;
+                panY = 0;
+                
+                const content = document.getElementById('graph-content');
+                if (content) {
+                    content.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoom})`;
+                }
+                
+                // Update zoom display
+                const zoomLevel = document.querySelector('.zoom-level');
+                if (zoomLevel) {
+                    zoomLevel.textContent = Math.round(zoom * 100) + '%';
+                }
+            }
+        }
+        
+        // Pan functionality
+        let isPanning = false;
+        let startX, startY;
+        
+        function startPan(e) {
+            // Don't start panning if clicking on a node or any interactive element
+            if (e.target.closest('.org-node') || e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) {
+                return;
+            }
+
+            if (e.button === 0) {
+                isPanning = true;
+                startX = e.clientX - panX;
+                startY = e.clientY - panY;
+                e.target.style.cursor = 'grabbing';
+            }
+        }
+        
+        function panGraph(e) {
+            if (isPanning) {
+                panX = e.clientX - startX;
+                panY = e.clientY - startY;
+                const content = document.getElementById('graph-content');
+                if (content) {
+                    content.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoom})`;
+                }
+            }
+        }
+        
+        function endPan() {
+            isPanning = false;
+            const container = document.getElementById('graph-container');
+            if (container) {
+                container.style.cursor = 'grab';
+            }
+        }
+        
+        // Zoom with mouse wheel
+        function handleWheel(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newZoom = Math.max(0.25, Math.min(3, zoom * delta));
+            
+            if (newZoom !== zoom) {
+                zoom = newZoom;
+                const content = document.getElementById('graph-content');
+                if (content) {
+                    content.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${zoom})`;
+                }
+                // Update zoom display
+                const zoomLevel = document.querySelector('.zoom-level');
+                if (zoomLevel) {
+                    zoomLevel.textContent = Math.round(zoom * 100) + '%';
+                }
+            }
+        }
+        
+        // Fetch data
+        async function fetchData() {
+            console.log('=== FETCH DATA ===');
+            loading = true;
+            render();
+            
+            try {
+                const res = await fetch('/graph-g6');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                const data = await res.json();
+                console.log('API response received:', { nodes: data.nodes?.length, edges: data.edges?.length });
+
+                // Log sample data structure
+                if (data.nodes && data.nodes.length > 0) {
+                    console.log('Sample node:', data.nodes[0]);
+                }
+                if (data.edges && data.edges.length > 0) {
+                    console.log('Sample edge:', data.edges[0]);
+                }
+
+                const { nodes: treeNodes, edges: treeEdges } = buildTreeFromGraph(data);
+
+                console.log('Tree nodes:', treeNodes.length, 'Tree edges:', treeEdges.length);
+                if (treeEdges.length > 0) {
+                    console.log('Sample tree edge:', treeEdges[0]);
+                }
+
+                graphNodes = treeNodes;
+                graphEdges = treeEdges;
+                
+                stats = { 
+                    employees: data.nodes?.filter(n => n.nodeType === 'Employee').length || 0, 
+                    departments: data.nodes?.filter(n => n.nodeType === 'Department').length || 0, 
+                    levels: 4 
+                };
+                
+            } catch (err) {
+                console.error('Error fetching data:', err);
+            } finally {
+                loading = false;
+                render();
+            }
+        }
+        
+        // Initialize
+        updateBodyClasses();
+        fetchData();
+    </script>
+</body>
+</html>

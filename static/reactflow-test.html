@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Flow Minimal Test</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body, #root {
+            width: 100%;
+            height: 100%;
+        }
+        #root {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { ReactFlow, Background, Controls, MiniMap } = ReactFlow;
+        
+        console.log('React Flow minimal test starting...');
+        console.log('React:', typeof React);
+        console.log('ReactDOM:', typeof ReactDOM);
+        console.log('ReactFlow:', typeof ReactFlow);
+        
+        // Simple test nodes
+        const initialNodes = [
+            {
+                id: '1',
+                position: { x: 250, y: 50 },
+                data: { label: 'CEO - John Smith' },
+                type: 'input'
+            },
+            {
+                id: '2',
+                position: { x: 100, y: 200 },
+                data: { label: 'CTO - Jane Doe' }
+            },
+            {
+                id: '3',
+                position: { x: 400, y: 200 },
+                data: { label: 'CFO - Bob Wilson' }
+            }
+        ];
+        
+        const initialEdges = [
+            { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
+            { id: 'e1-3', source: '1', target: '3', type: 'smoothstep' }
+        ];
+        
+        function SimpleFlow() {
+            const [nodes, setNodes] = useState(initialNodes);
+            const [edges, setEdges] = useState(initialEdges);
+            
+            console.log('SimpleFlow component rendering...');
+            
+            return React.createElement('div', { 
+                style: { width: '100%', height: '100vh' }
+            },
+                React.createElement(ReactFlow, {
+                    nodes: nodes,
+                    edges: edges,
+                    fitView: true,
+                    style: { background: '#f5f7fa' }
+                },
+                    React.createElement(Background, { variant: 'dots', gap: 12, size: 1 }),
+                    React.createElement(Controls),
+                    React.createElement(MiniMap)
+                )
+            );
+        }
+        
+        console.log('Creating React root...');
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        console.log('Rendering SimpleFlow...');
+        root.render(React.createElement(SimpleFlow));
+        console.log('✅ Minimal test app rendered');
+    </script>
+</body>
+</html>

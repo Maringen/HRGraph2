@@ -187,12 +187,6 @@
                 <div class="stat"><div class="stat-number" id="s-projects">-</div><div class="stat-label" data-i18n="projects">Projects</div></div>
                 <div class="stat"><div class="stat-number" id="s-edges">-</div><div class="stat-label" data-i18n="relations">Relations</div></div>
             </div>
-            <!-- API Key Input -->
-            <div style="display:flex;align-items:center;gap:8px;margin-left:15px;">
-                <input type="password" id="api-key" placeholder="API key" 
-                       style="padding:6px 10px;border:2px solid #ddd;border-radius:6px;font-size:12px;width:100px;">
-                <button onclick="saveApiKey()" style="background:#667eea;color:white;padding:6px 12px;border:none;border-radius:6px;font-size:12px;cursor:pointer;">OK</button>
-            </div>
             <div id="lang-selector">
                 <button onclick="setLanguage('en')" class="active">EN</button>
                 <button onclick="setLanguage('fr')">FR</button>
@@ -675,24 +669,6 @@
             'default': { color: '#ccc', width: 1, arrow: 'to' }
         };
 
-        // API Key management
-        let apiKey = localStorage.getItem('hr_api_key') || '';
-
-        function saveApiKey() {
-            const keyInput = document.getElementById('api-key');
-            if (keyInput.value) {
-                apiKey = keyInput.value;
-                localStorage.setItem('hr_api_key', apiKey);
-                // Re-initialize graph with new key
-                initGraph();
-            }
-        }
-
-        // Load saved API key on page load
-        if (apiKey) {
-            document.getElementById('api-key').value = apiKey;
-        }
-
         let currentLang = 'en';
         let network = null;
         let graphData = null;
@@ -889,16 +865,11 @@
             
             const t = translations[currentLang];
             
-            const headers = {};
-            if (apiKey) {
-                headers['Authorization'] = 'Bearer ' + apiKey;
-            }
-            
             console.log('Fetching /graph...');
-            fetch('/graph', { headers })
+            fetch('/graph')
                 .then(r => {
                     console.log('Fetch response:', r.status);
-                    if (!r.ok) throw new Error(r.status === 401 ? 'Invalid API key' : 'Server error: ' + r.status);
+                    if (!r.ok) throw new Error('Server error: ' + r.status);
                     return r.json();
                 })
                 .then(data => {
@@ -1066,19 +1037,29 @@
                         // Add zoom event listener
                         network.on('zoom', function (params) {
                             const scale = params.scale;
+                            // Only update if label visibility should change
+                            const shouldShow = scale > 1.5;
+                            // Check if we need to update (simple optimization)
+                            const firstEdgeId = network.body.data.edges.getIds()[0];
+                            if (firstEdgeId) {
+                                const firstEdge = network.body.data.edges.get(firstEdgeId);
+                                const currentlyVisible = firstEdge.font && firstEdge.font.size > 0;
+                                if (shouldShow === currentlyVisible) return;
+                            }
+
                             const edgeIds = network.body.data.edges.getIds();
-                            const newOptions = {};
-                            const showLabels = scale > 1.5;
-                            edgeIds.forEach(edgeId => {
-                                newOptions[edgeId] = {
-                                    font: { 
-                                        size: showLabels ? 10 : 0, 
-                                        color: showLabels ? edgeConfig['default'].color : 'transparent',
-                                        strokeWidth: showLabels ? 0 : 0
+                            const updates = edgeIds.map(edgeId => {
+                                const edge = network.body.data.edges.get(edgeId);
+                                return {
+                                    id: edgeId,
+                                    font: {
+                                        size: shouldShow ? 10 : 0,
+                                        color: shouldShow ? (edge.color?.color || '#ccc') : 'transparent',
+                                        strokeWidth: shouldShow ? 0 : 0
                                     }
                                 };
                             });
-                            network.body.data.edges.update(newOptions);
+                            network.body.data.edges.update(updates);
                         });
                     } catch (err) {
                         console.error('Error creating network:', err);
@@ -1276,16 +1257,23 @@
 
         function applyFilters() {
             if (!network || !graphData) return;
-            
+
             const t = translations[currentLang];
-            
+
             // Get dropdown filter values
             const selectedSkill = document.getElementById('filter-skill-select').value;
             const selectedDepartment = document.getElementById('filter-department-select').value;
             const selectedEmployee = document.getElementById('filter-employee-select').value;
             const selectedPosition = document.getElementById('filter-position-select').value;
             const selectedProject = document.getElementById('filter-project-select').value;
-            
+
+            // Get checkbox filter values
+            const showEmployee = document.getElementById('filter-employee').checked;
+            const showDepartment = document.getElementById('filter-department').checked;
+            const showPosition = document.getElementById('filter-position').checked;
+            const showProject = document.getElementById('filter-project').checked;
+            const showSkill = document.getElementById('filter-skill').checked;
+
             // Store original node properties
             if (originalNodeColors.size === 0) {
                 network.body.data.nodes.forEach(node => {
@@ -1293,11 +1281,11 @@
                     originalNodeSizes.set(node.id, node.size);
                 });
             }
-            
-            // Determine which node is selected
+
+            // Determine which node is selected via dropdowns
             let selectedNode = null;
             let selectedType = '';
-            
+
             if (selectedSkill) {
                 selectedNode = graphData.nodes.find(n => n.label === selectedSkill && getNodeType(n.label, n.labels) === 'Skill');
                 selectedType = 'Skill';
@@ -1314,130 +1302,160 @@
                 selectedNode = graphData.nodes.find(n => n.label === selectedProject && getNodeType(n.label, n.labels) === 'Project');
                 selectedType = 'Project';
             }
-            
-            // If no filter selected, show all nodes normally
-            if (!selectedNode) {
-                // Restore original appearance for all nodes
-                const nodeUpdates = [];
-                network.body.data.nodes.forEach(node => {
-                    nodeUpdates.push({
-                        id: node.id,
-                        color: originalNodeColors.get(node.id),
-                        size: originalNodeSizes.get(node.id),
-                        opacity: 1,
-                        font: { size: 12, color: '#333' }
-                    });
+
+            const nodeUpdates = [];
+
+            // Case 1: Dropdown selection active (Priority)
+            if (selectedNode) {
+                // Find all nodes directly connected to the selected node
+                const connectedNodeIds = new Set([selectedNode.id]);
+
+                graphData.edges.forEach(edge => {
+                    if (String(edge.source) === String(selectedNode.id)) {
+                        connectedNodeIds.add(String(edge.target));
+                    } else if (String(edge.target) === String(selectedNode.id)) {
+                        connectedNodeIds.add(String(edge.source));
+                    }
                 });
+
+                // Apply visual updates: highlight selected node and connected nodes, grey out others
+                network.body.data.nodes.forEach(node => {
+                    const isSelected = String(node.id) === String(selectedNode.id);
+                    const isConnected = connectedNodeIds.has(String(node.id));
+
+                    if (isSelected) {
+                        // Highlight the selected node with sparkle effect - 2x normal size
+                        nodeUpdates.push({
+                            id: node.id,
+                            color: {
+                                background: '#667eea',
+                                border: '#667eea',
+                                highlight: { background: '#764ba2', border: '#764ba2' }
+                            },
+                            size: originalNodeSizes.get(node.id) * 2,
+                            opacity: 1,
+                            hidden: false,
+                            font: {
+                                size: 16,
+                                color: '#667eea',
+                                bold: true,
+                                face: 'Arial',
+                                background: 'rgba(255,255,255,0.9)',
+                                strokeWidth: 3,
+                                strokeColor: '#ffffff'
+                            },
+                            borderWidth: 4,
+                            shapeProperties: {
+                                borderDashed: true
+                            },
+                            shadow: {
+                                enabled: true,
+                                color: 'rgba(102, 126, 234, 0.8)',
+                                size: 20,
+                                x: 0,
+                                y: 0
+                            },
+                            labelCfg: {
+                                position: 'top',
+                                offset: 15,
+                                style: {
+                                    fill: '#667eea',
+                                    fontSize: 16,
+                                    fontWeight: 'bold',
+                                    background: 'rgba(255,255,255,0.9)',
+                                    padding: [4, 8, 4, 8],
+                                    borderRadius: 4,
+                                    borderColor: '#667eea',
+                                    borderWidth: 1
+                                }
+                            }
+                        });
+                    } else if (isConnected) {
+                        // Show connected nodes at normal size
+                        nodeUpdates.push({
+                            id: node.id,
+                            color: originalNodeColors.get(node.id),
+                            size: originalNodeSizes.get(node.id),
+                            opacity: 1,
+                            hidden: false,
+                            font: { size: 12, color: '#333' }
+                        });
+                    } else {
+                        // Grey out unrelated nodes
+                        nodeUpdates.push({
+                            id: node.id,
+                            opacity: 0.1,
+                            hidden: false,
+                            font: { size: 8, color: '#ccc' }
+                        });
+                    }
+                });
+
                 network.body.data.nodes.update(nodeUpdates);
-                
+
+                // Add sparkle effect to selected node via canvas manipulation
+                setTimeout(() => {
+                    const canvas = network.canvas.frame.canvas;
+                    const ctx = canvas.getContext('2d');
+                    addSparkleEffect(network, selectedNode.id, ctx);
+                }, 100);
+
                 // Update filter results
                 const resultsDiv = document.getElementById('filter-results');
-                resultsDiv.classList.remove('active');
-                resultsDiv.innerHTML = `<span data-i18n="filterNoFilters">${t.filterNoFilters}</span>`;
-                
-                // Fit view to show all nodes
-                network.fit({ animation: true });
-                return;
+                resultsDiv.classList.add('active');
+                resultsDiv.textContent = `${selectedType}: ${selectedNode.label} → ${connectedNodeIds.size - 1} direct connection${connectedNodeIds.size - 1 !== 1 ? 's' : ''}`;
+
+                // Focus on the selected node
+                network.focus(selectedNode.id, { animation: true, scale: 1.2 });
             }
-            
-            // Find all nodes directly connected to the selected node
-            const connectedNodeIds = new Set([selectedNode.id]);
-            
-            graphData.edges.forEach(edge => {
-                if (String(edge.source) === String(selectedNode.id)) {
-                    connectedNodeIds.add(String(edge.target));
-                } else if (String(edge.target) === String(selectedNode.id)) {
-                    connectedNodeIds.add(String(edge.source));
-                }
-            });
-            
-            // Apply visual updates: highlight selected node and connected nodes, grey out others
-            const nodeUpdates = [];
-            network.body.data.nodes.forEach(node => {
-                const isSelected = String(node.id) === String(selectedNode.id);
-                const isConnected = connectedNodeIds.has(String(node.id));
-                
-                if (isSelected) {
-                    // Highlight the selected node with sparkle effect - 2x normal size
-                    nodeUpdates.push({
-                        id: node.id,
-                        color: { 
-                            background: '#667eea', 
-                            border: '#667eea',
-                            highlight: { background: '#764ba2', border: '#764ba2' }
-                        },
-                        size: originalNodeSizes.get(node.id) * 2,
-                        opacity: 1,
-                        font: { 
-                            size: 16, 
-                            color: '#667eea', 
-                            bold: true,
-                            face: 'Arial',
-                            background: 'rgba(255,255,255,0.9)',
-                            strokeWidth: 3,
-                            strokeColor: '#ffffff'
-                        },
-                        borderWidth: 4,
-                        shapeProperties: {
-                            borderDashed: true
-                        },
-                        shadow: {
-                            enabled: true,
-                            color: 'rgba(102, 126, 234, 0.8)',
-                            size: 20,
-                            x: 0,
-                            y: 0
-                        },
-                        labelCfg: {
-                            position: 'top',
-                            offset: 15,
-                            style: {
-                                fill: '#667eea',
-                                fontSize: 16,
-                                fontWeight: 'bold',
-                                background: 'rgba(255,255,255,0.9)',
-                                padding: [4, 8, 4, 8],
-                                borderRadius: 4,
-                                borderColor: '#667eea',
-                                borderWidth: 1
-                            }
-                        }
-                    });
-                } else if (isConnected) {
-                    // Show connected nodes at normal size
-                    nodeUpdates.push({
-                        id: node.id,
-                        color: originalNodeColors.get(node.id),
-                        size: originalNodeSizes.get(node.id),
-                        opacity: 1,
-                        font: { size: 12, color: '#333' }
-                    });
+            // Case 2: No dropdown selected, filter by node types (Checkboxes)
+            else {
+                clearSparkleEffect();
+
+                let visibleCount = 0;
+
+                network.body.data.nodes.forEach(node => {
+                    const type = node.type;
+                    let isVisible = false;
+
+                    if (type === 'Employee' && showEmployee) isVisible = true;
+                    else if (type === 'Department' && showDepartment) isVisible = true;
+                    else if (type === 'Position' && showPosition) isVisible = true;
+                    else if (type === 'Project' && showProject) isVisible = true;
+                    else if (type === 'Skill' && showSkill) isVisible = true;
+
+                    if (isVisible) {
+                        visibleCount++;
+                        nodeUpdates.push({
+                            id: node.id,
+                            color: originalNodeColors.get(node.id),
+                            size: originalNodeSizes.get(node.id),
+                            opacity: 1,
+                            hidden: false,
+                            font: { size: 12, color: '#333' }
+                        });
+                    } else {
+                        nodeUpdates.push({
+                            id: node.id,
+                            hidden: true,
+                            opacity: 0
+                        });
+                    }
+                });
+
+                network.body.data.nodes.update(nodeUpdates);
+
+                // Update filter results
+                const resultsDiv = document.getElementById('filter-results');
+
+                if (!showEmployee || !showDepartment || !showPosition || !showProject || !showSkill) {
+                    resultsDiv.classList.add('active');
+                    resultsDiv.textContent = t.filterResults.replace('{count}', visibleCount);
                 } else {
-                    // Grey out unrelated nodes
-                    nodeUpdates.push({
-                        id: node.id,
-                        opacity: 0.1,
-                        font: { size: 8, color: '#ccc' }
-                    });
+                    resultsDiv.classList.remove('active');
+                    resultsDiv.textContent = t.filterNoFilters;
                 }
-            });
-            
-            network.body.data.nodes.update(nodeUpdates);
-            
-            // Add sparkle effect to selected node via canvas manipulation
-            setTimeout(() => {
-                const canvas = network.canvas.frame.canvas;
-                const ctx = canvas.getContext('2d');
-                addSparkleEffect(network, selectedNode.id, ctx);
-            }, 100);
-            
-            // Update filter results
-            const resultsDiv = document.getElementById('filter-results');
-            resultsDiv.classList.add('active');
-            resultsDiv.innerHTML = `<span>${selectedType}: ${selectedNode.label} → ${connectedNodeIds.size - 1} direct connection${connectedNodeIds.size - 1 !== 1 ? 's' : ''}</span>`;
-            
-            // Focus on the selected node
-            network.focus(selectedNode.id, { animation: true, scale: 1.2 });
+            }
         }
 
         // Sparkle effect animation
