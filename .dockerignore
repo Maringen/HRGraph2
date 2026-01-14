@@ -1,0 +1,14 @@
+libs_310/
+libs_musl/
+libs_legacy/
+libs.zip
+rootfs.cpio
+build_rootfs/
+__pycache__/
+*.pyc
+.git/
+.env
+hr_vault/
+venv/
+libs/
+node_modules/

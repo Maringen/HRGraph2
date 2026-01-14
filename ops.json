@@ -1,0 +1,25 @@
+{
+  "args": [
+    "main.py"
+  ],
+  "env": {
+    "FALKORDB_HOST": "172.17.0.1",
+    "PORT": "5001",
+    "HOST": "0.0.0.0",
+    "PYTHONPATH": "/libs"
+  },
+  "dirs": [
+    "static",
+    "hr_vault",
+    "libs",
+    "lib"
+  ],
+  "files": [
+    "main.py",
+    "temporal_graph.py",
+    "config.py",
+    "models.py",
+    "requirements.txt",
+    ".env"
+  ]
+}

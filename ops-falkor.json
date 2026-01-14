@@ -1,0 +1,20 @@
+{
+    "Program": "redis-server-falkor",
+    "Args": [
+        "/redis.conf"
+    ],
+    "Files": [
+        "falkor_module.so",
+        "libgomp.so.1",
+        "libssl.so.3",
+        "libcrypto.so.3",
+        "libstdc++.so.6",
+        "redis.conf"
+    ],
+    "Mounts": {
+        "falkor_data": "/data"
+    },
+    "RunConfig": {
+        "Memory": "1024M"
+    }
+}

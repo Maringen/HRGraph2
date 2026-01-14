@@ -1,3 +1,7 @@
+
+import patches
+patches.bootstrap()
+
 from fastapi import (
     FastAPI,
     HTTPException,
@@ -44,7 +48,6 @@ VAULT_DIR.mkdir(exist_ok=True)
 from typing import Optional, Dict, Any, List, Set
 
 
-
 def validate_filename(filename: str) -> str:
     if not filename:
         raise HTTPException(status_code=400, detail="Filename cannot be empty")
@@ -74,8 +77,15 @@ def validate_file_size(file_size: int) -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global graph
+
+
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type("static/index.html")
+
+
     try:
         graph = HRTemporalGraph()
+
         yield
     except ConnectionError as e:
         print(f"Failed to connect to database: {e}")
@@ -113,6 +123,8 @@ app.add_middleware(
 )
 
 
+
+
 @app.middleware("http")
 async def add_security_headers(request, call_next):
     response = await call_next(request)
@@ -139,6 +151,9 @@ async def add_security_headers(request, call_next):
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+
+
+
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_exception_handler(request, exc):
     return JSONResponse(
@@ -147,8 +162,21 @@ async def rate_limit_exception_handler(request, exc):
     )
 
 
+from fastapi.responses import HTMLResponse
+
+# Cache index.html content
+index_html_content = ""
+
 @app.get("/")
 async def read_root():
+    global index_html_content
+    # Try lazy load if empty (e.g. startup failed)
+    if not index_html_content and os.path.exists("static/index.html"):
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            index_html_content = f.read()
+            
+    if index_html_content:
+        return HTMLResponse(content=index_html_content)
     return FileResponse("static/index.html")
 
 
@@ -234,6 +262,60 @@ async def get_graph(request: Request):
         error_detail = f"Internal server error: {str(e)}\n{traceback.format_exc()}"
         raise HTTPException(status_code=500, detail=error_detail)
 
+
+@app.get("/ontology")
+@rate_limiter.limit("5/minute")
+async def get_ontology(request: Request):
+    """
+    Get the HR graph ontology for GraphRAG.
+    Returns node types, relationship types, sample entities, and descriptions.
+    """
+    try:
+        if not graph:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable - graph not initialized"
+            )
+
+        ontology = await graph.get_ontology()
+        return ontology
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+
+        error_detail = f"Internal server error: {str(e)}\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=error_detail)
+
+
+@app.post("/query-rag")
+@rate_limiter.limit("20/minute")
+async def query_rag(query_data: QueryRequest, request: Request):
+    """
+    GraphRAG query that uses ontology context to enhance natural language queries.
+    Provides entity types, relationship patterns, and suggested Cypher queries.
+    """
+    try:
+        if not graph:
+            raise HTTPException(
+                status_code=503, detail="Service unavailable - graph not initialized"
+            )
+
+        if not query_data.query or len(query_data.query.strip()) == 0:
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+        result = await graph.query_with_ontology(query_data.query)
+        return {"result": result, "timestamp": time.time()}
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        import traceback
+
+        error_detail = f"Internal server error: {str(e)}\n{traceback.format_exc()}"
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 @app.get("/graph-diff")
@@ -358,7 +440,6 @@ async def get_graph_diff(
         raise HTTPException(status_code=500, detail=error_detail)
 
 
-
 @app.post("/upload")
 @rate_limiter.limit("5/minute")
 async def upload_file(
@@ -442,8 +523,8 @@ if __name__ == "__main__":
     print("   ✅ CORS Protection")
     print("   ✅ Trusted Hosts")
     print("=" * 50)
-    print(f"🌐 Server: http://localhost:5000")
-    print(f"📖 Health: http://localhost:5000/health")
-    print("=" * 50)
-
-    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")
+    # For Unikernels/Docker, we must listen on 0.0.0.0 to be accessible
+    host = os.getenv("HOST", "0.0.0.0") 
+    port = int(os.getenv("PORT", 5000))
+    print(f"🌐 Server: http://{host}:{port}")
+    uvicorn.run(app, host=host, port=port, log_level="info")
