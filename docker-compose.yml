@@ -1,71 +1,56 @@
-version: '3.8'
-
-
-
 services:
-
   falkordb:
-
     image: falkordb/falkordb:latest
-
     container_name: falkordb_server
-
     ports:
-
       - "6379:6379"
-
       - "7687:7687"  # Port Bolt
-
     volumes:
-
       - falkordb_data:/data
-
-    # On laisse l'image charger ses modules par défaut, 
-
-    # mais on active Bolt via les variables d'environnement si nécessaire
-
-    # ou via les arguments Redis classiques.
-
-    command: ["redis-server", "--loadmodule", "/usr/lib/redis/modules/falkordb.so", "bolt-port", "7687"]
-
     healthcheck:
-
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-
       interval: 10s
-
       timeout: 5s
-
       retries: 5
-
-
+    restart: unless-stopped
 
   falkordb-browser:
-
     image: falkordb/falkordb-browser:latest
-
     container_name: falkordb_gui
-
     ports:
-
-      - "3001:3000" # Port standard 3000
-
+      - "3001:3000"  # Port standard 3000
     environment:
-
       - REDIS_HOST=falkordb
-
       - REDIS_PORT=6379
-
     depends_on:
-
       falkordb:
-
         condition: service_healthy
+    restart: unless-stopped
 
-    restart: always
-
-
+  app:
+    build: .
+    image: hrgraph:latest
+    container_name: hrgraph_app
+    env_file:
+      - .env
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      FALKORDB_DB: hr_temporal
+      GRAPHITI_DB_URL: bolt://falkordb:7687
+      HOST: 0.0.0.0
+      PORT: "5000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - hr_vault:/app/hr_vault
+      - app_data:/app/data
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
-
   falkordb_data:
+  hr_vault:
+  app_data:

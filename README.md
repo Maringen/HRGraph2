@@ -11,11 +11,35 @@ This project implements a production-grade HR Knowledge Management system using 
 - **Sigma.js**: Custom frontend for graph visualization
 - **GPT-4o/Claude 3.5 Sonnet**: LLM for processing
 
-## Setup
+## Quick start (Docker)
+
+The whole stack (FalkorDB + web UI + API) runs with one command:
+
+```bash
+cp .env.example .env      # then fill in OPENAI_API_KEY / ANTHROPIC_API_KEY
+docker compose up -d --build
+```
+
+| Service          | URL                     |
+| ---------------- | ----------------------- |
+| API / dashboard  | http://localhost:5000   |
+| FalkorDB Browser | http://localhost:3001   |
+| FalkorDB (Redis) | localhost:6379          |
+| FalkorDB (Bolt)  | localhost:7687          |
+
+Useful commands:
+
+```bash
+docker compose logs -f app     # follow API logs
+docker compose ps              # service status
+docker compose down            # stop (add -v to wipe graph data)
+```
+
+## Setup (local, without Docker)
 
 1. Start infrastructure:
    ```bash
-   docker-compose up -d
+   docker compose up -d falkordb falkordb-browser
    ```
 
 2. Install dependencies:

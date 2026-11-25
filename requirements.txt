@@ -6,8 +6,8 @@ python-multipart
 python-dotenv
 pydantic
 PyPDF2
+pdfminer.six
 PyJWT
 aiofiles
 slowapi
 python-jose[cryptography]
-secrets
