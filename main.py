@@ -1,6 +1,10 @@
 
-import patches
-patches.bootstrap()
+try:
+    import patches
+    patches.bootstrap()
+except ImportError:
+    pass
+
 
 from fastapi import (
     FastAPI,

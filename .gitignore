@@ -10,6 +10,13 @@
 
 
 
+# --- Python ---
+
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
 # --- Docker & Données ---
 
 # Ignore les données locales de Neo4j (trop volumineux et confidentiel)
